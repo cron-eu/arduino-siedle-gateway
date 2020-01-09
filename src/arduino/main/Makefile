@@ -7,6 +7,9 @@ all: build
 
 setup: arduino-dev-setup
 
+clean:
+	rm -rf build
+
 arduino-dev-setup: arduino_samd_platform arduino_libraries
 
 arduino_samd_platform: $(ARDUINO_HARDWARE_DIR)/samd
@@ -19,4 +22,5 @@ $(ARDUINO_LIBRARIES_DIR)/%:
 	arduino-cli lib install $(notdir ${@})
 
 build: setup
-	arduino-cli compile --fqbn  $(ARDUINO_BOARD) main.ino
+	mkdir -p build
+	arduino-cli compile --fqbn  $(ARDUINO_BOARD) -o build/main main.ino
