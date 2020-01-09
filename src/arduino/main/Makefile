@@ -1,8 +1,9 @@
 ARDUINO_LIBRARIES_DIR := ~/Documents/Arduino/libraries
 ARDUINO_HARDWARE_DIR := ~/Library/Arduino15/packages/arduino/hardware
 ARDUINO_LIBRARIES := Scheduler WiFiNINA
+ARDUINO_BOARD := arduino:samd:mkrwifi1010
 
-all: setup
+all: build
 
 setup: arduino-dev-setup
 
@@ -16,3 +17,6 @@ $(ARDUINO_HARDWARE_DIR)/%:
 
 $(ARDUINO_LIBRARIES_DIR)/%:
 	arduino-cli lib install $(notdir ${@})
+
+build: setup
+	arduino-cli compile --fqbn  $(ARDUINO_BOARD) main.ino
