@@ -4,7 +4,7 @@ Setup Dev Environment
 Arduino IDE
 --
 
-Install [Arduino IDE](https://www.arduino.cc/en/Main/Software) (optional).
+Install [Arduino IDE](https://www.arduino.cc/en/Main/Software).
 
 Install also the [arduino-cli](https://github.com/arduino/arduino-cli):
 
@@ -23,6 +23,6 @@ This will install the samd Arduino Core and the required libraries (when not alr
 Clion IDE
 --
 
-Install [CLion](https://www.jetbrains.com/clion/) (JetBrains).
+Install [CLion](https://www.jetbrains.com/clion/) (optional).
 
 Note: the Clion IDE is useful for development, but not a hard requirement, a regular Editor, e.g. atom is also fine.
