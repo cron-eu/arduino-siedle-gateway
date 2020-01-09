@@ -7,7 +7,9 @@
 class WebServer {
 public:
     WebServer(uint16_t);
+
     void begin();
+
     void loop();
 
 private:
