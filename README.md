@@ -10,7 +10,8 @@ This repository holds the documentation and software needed to build a Slack int
 Project Folder Structure
 ---
 
-* `Arduino/**` Sourcecode of the firmware (C++)
+* `src/**` Sourcecode
+  * `src/arduino/**` Arduino firmware (c++)
 * `doc/*` Documentation Files (Markdown)
 
 
