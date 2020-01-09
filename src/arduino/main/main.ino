@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "User_Setup.h"
 
+#include <Scheduler.h>
 #include <WiFiNINA.h>
 #include "wifi_client_secrets.h"
 
@@ -8,6 +9,23 @@
 
 int status = WL_IDLE_STATUS;
 WebServer webServer(80);
+
+void statusLEDLoop() {
+    if (status == WL_CONNECTED) {
+        digitalWrite(LED_BUILTIN, LOW);
+        delay(5000);
+        return;
+    }
+
+    digitalWrite(LED_BUILTIN, HIGH);
+    delay(500);
+    digitalWrite(LED_BUILTIN, LOW);
+    delay(500);
+}
+
+void webServerLoop() {
+    webServer.loop();
+}
 
 void printWifiStatus() {
     // print the SSID of the network you're attached to:
@@ -29,6 +47,8 @@ void printWifiStatus() {
 }
 
 void setup() {
+    Scheduler.start(statusLEDLoop);
+
     char ssid[] = SECRET_SSID;    // network SSID (name)
     char pass[] = SECRET_PASS;    // network password (use for WPA, or use as key for WEP)
 
@@ -49,20 +69,27 @@ void setup() {
     }
 
     // attempt to connect to Wifi network:
-    while (status != WL_CONNECTED) {
+    for(;;) {
         Serial.print("Attempting to connect to Network named: ");
         Serial.println(ssid);                   // print the network name (SSID);
 
         // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
         status = WiFi.begin(ssid, pass);
-        // wait 10 seconds for connection:
-        delay(10000);
+
+        if (status == WL_AP_CONNECTED) {
+            break;
+        } else {
+            // retry after 10s
+            delay(10000);
+        }
     }
 
     printWifiStatus();
     webServer.begin();
+
+    Scheduler.startLoop(webServerLoop);
 }
 
 void loop() {
-    webServer.loop();
+    delay(10000);
 }
