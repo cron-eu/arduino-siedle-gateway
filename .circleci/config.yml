@@ -1,0 +1,29 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/buildpack-deps:stretch-curl
+    environment:
+      ARDUINO_IDE_VERSION: 1.8.5
+      BOARD: arduino:samd:mkrwifi1010
+      LIBRARIES: Scheduler,WiFiNINA
+
+    steps:
+      - checkout
+      - run: cp src/arduino/main/wifi_client_secrets_example.h src/arduino/main/wifi_client_secrets.h
+      - restore_cache:
+          key: arduino-ide-{{ .Environment.ARDUINO_IDE_VERSION }}-{{ .Environment.BOARD }}-v1
+
+      - run:
+          name: Install the Arduino IDE version ${ARDUINO_IDE_VERSION}
+          command: "test -d arduino-ide || curl http://downloads.arduino.cc/arduino-$ARDUINO_IDE_VERSION-linux64.tar.xz |  tar --xz -xf -"
+      - run: "test -d arduino-ide || mv arduino-$ARDUINO_IDE_VERSION arduino-ide"
+      - run: "test -d ../.arduino15/packages/arduino/hardware/samd || arduino-ide/arduino --install-boards arduino:samd"
+      - run: arduino-ide/arduino --install-library ${LIBRARIES} ; true
+      - run: arduino-ide/arduino --verbose-build --verify --board $BOARD $PWD/src/arduino/main/main.ino
+
+      - save_cache:
+          key: arduino-ide-{{ .Environment.ARDUINO_IDE_VERSION }}-{{ .Environment.BOARD }}-v1
+          paths:
+            - "arduino-ide"
+            - "../.arduino15"
