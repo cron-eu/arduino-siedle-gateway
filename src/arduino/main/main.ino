@@ -16,11 +16,10 @@ void statusLEDLoop() {
         delay(5000);
         return;
     }
-
     digitalWrite(LED_BUILTIN, HIGH);
-    delay(500);
+    delay(250);
     digitalWrite(LED_BUILTIN, LOW);
-    delay(500);
+    delay(250);
 }
 
 void webServerLoop() {
@@ -34,8 +33,6 @@ void printWifiStatus() {
 
     // print your board's IP address:
     IPAddress ip = WiFi.localIP();
-    Serial.print("IP Address: ");
-    Serial.println(ip);
 
     // print the received signal strength:
     long rssi = WiFi.RSSI();
@@ -47,7 +44,11 @@ void printWifiStatus() {
 }
 
 void setup() {
-    Scheduler.start(statusLEDLoop);
+    Scheduler.startLoop(statusLEDLoop);
+    Serial.begin(115200);
+    pinMode(LED_BUILTIN, OUTPUT);
+
+    Serial.println("Booting..");
 
     char ssid[] = SECRET_SSID;    // network SSID (name)
     char pass[] = SECRET_PASS;    // network password (use for WPA, or use as key for WEP)
@@ -69,19 +70,15 @@ void setup() {
     }
 
     // attempt to connect to Wifi network:
-    for(;;) {
+    while (status != WL_CONNECTED) {
         Serial.print("Attempting to connect to Network named: ");
         Serial.println(ssid);                   // print the network name (SSID);
 
         // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
         status = WiFi.begin(ssid, pass);
-
-        if (status == WL_AP_CONNECTED) {
-            break;
-        } else {
-            // retry after 10s
-            delay(10000);
-        }
+        if (status == WL_CONNECTED) break;
+        // wait 10 seconds for connection:
+        delay(10000);
     }
 
     printWifiStatus();
