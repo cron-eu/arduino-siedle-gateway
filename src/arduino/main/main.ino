@@ -5,7 +5,7 @@
 #include <WiFiNINA.h>
 #include "wifi_client_secrets.h"
 
-#include "WebServer.h"
+#include "src/WebServer/WebServer.h"
 
 int status = WL_IDLE_STATUS;
 WebServer webServer(80);
