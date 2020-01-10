@@ -21,7 +21,6 @@ void WebServer::loop() {
         while (client.connected()) {            // loop while the client's connected
             if (client.available()) {             // if there's bytes to read from the client,
                 char c = client.read();             // read a byte, then
-                Serial.write(c);                    // print it out the serial monitor
                 if (c == '\n') {                    // if the byte is a newline character
 
                     // if the current line is blank, you got two newline characters in a row.
