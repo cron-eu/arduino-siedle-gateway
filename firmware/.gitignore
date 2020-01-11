@@ -2,3 +2,4 @@
 CMakeListsPrivate.txt
 *secrets.h
 /cmake-build-mkrwifi1010/
+/.idea/workspace.xml
