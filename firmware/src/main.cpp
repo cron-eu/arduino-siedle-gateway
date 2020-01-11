@@ -84,6 +84,7 @@ void setup() {
 
   printWifiStatus();
   webServer.begin();
+  WiFi.lowPowerMode();
 
   Scheduler.startLoop(webServerLoop);
 }
