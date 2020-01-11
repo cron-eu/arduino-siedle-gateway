@@ -14,11 +14,19 @@ Make sure you do already have the Python 2.7 bin dir (`$HOME/Library/Python/2.7/
 Development and Upload
 ----
 
-CLion IDE is being used for development. The device firmware is in the `firmware/` folder. To e.g. upload a new firmware via USB, do:
+CLion IDE is being used for development. The device firmware is in the `firmware/` folder. Chdir to `firmware` and then:
 
 ```bash
-cd firmware
-run --target upload --upload-port /dev/cu.usbmodem14701
+platformio update
+
+# if using CLion
+platformio init --ide clion --board mkrwifi1010 # this will create the excluded file CMakeListsPrivate.txt
+```
+
+To e.g. upload a new firmware via USB, do:
+
+```bash
+platformio run --target upload --upload-port /dev/cu.usbmodem14701
 ```
 
 Clion IDE
