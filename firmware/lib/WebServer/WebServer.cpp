@@ -9,8 +9,9 @@ void WebServer::begin() {
 float get_battery_voltage() {
   auto sensorValue = analogRead(ADC_BATTERY);
 
-  // Convert the analog reading (which goes from 0 - 1023) to a voltage (0 - 4.3V):
-  return sensorValue * (4.3 / 1023.0);
+  // Convert the analog reading (which goes from 0 - 1023) to the battery voltage
+  // see https://content.arduino.cc/assets/MKRWiFi1010V2.0_sch.pdf
+  return (float)sensorValue * 3.3 / 1023.0 / (1200.0 / (1200.0 + 330.0));
 }
 
 void WebServer::loop() {
