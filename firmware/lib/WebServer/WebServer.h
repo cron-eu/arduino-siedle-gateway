@@ -1,5 +1,9 @@
-#ifndef web_server_h
-#define web_server_h
+//
+// Created by Remus Lazar on 11.01.20.
+//
+
+#ifndef FIRMWARE_WEBSERVER_H
+#define FIRMWARE_WEBSERVER_H
 
 #include <Arduino.h>
 #include <WiFiNINA.h>
@@ -16,4 +20,4 @@ private:
     WiFiServer _server;
 };
 
-#endif
+#endif //FIRMWARE_WEBSERVER_H
