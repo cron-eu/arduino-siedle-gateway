@@ -19,3 +19,7 @@ Newer Siedle devices use a bus protocol called "In-Home-Bus". The bus is a 2-wir
 The cheapest Siedle Device is the BTS 850 (~50 €).
 
 There is a blog post on mikrocontroller.net about [building a WiFi enabled MQTT Gateway](https://www.mikrocontroller.net/topic/308271) based on an Arduino, the C source code also [being available](https://www.mikrocontroller.net/attachment/360089/siedle-client.ino).
+
+### Gyrator Circuit
+
+See the [Eingangskondensator dämpft Audio auf Busleitung](https://www.mikrocontroller.net/topic/343694) form article for details.
