@@ -10337,7 +10337,7 @@ In this library the device names are the same as the pin names of the symbols, t
 </classes>
 <parts>
 <part name="FRAME1" library="frames" deviceset="FRAME_A_L" device=""/>
-<part name="R1" library="rcl" deviceset="R-EU_" device="0204/7" value="100"/>
+<part name="R1" library="rcl" deviceset="R-EU_" device="0204/7" value="220"/>
 <part name="D1" library="diode" deviceset="1N4004" device=""/>
 <part name="X1" library="con-phoenix-254" deviceset="MPT2" device=""/>
 <part name="GND1" library="supply1" deviceset="GND" device=""/>
@@ -10357,6 +10357,8 @@ In this library the device names are the same as the pin names of the symbols, t
 <sheets>
 <sheet>
 <plain>
+<text x="5.08" y="167.64" size="1.778" layer="91">Ta</text>
+<text x="5.08" y="160.02" size="1.778" layer="91">Tb</text>
 </plain>
 <instances>
 <instance part="FRAME1" gate="G$1" x="0" y="0"/>
