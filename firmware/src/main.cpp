@@ -29,7 +29,10 @@ void statusLEDLoop() {
   // hack.. to be reverted
   busVoltage = siedleClient.getBusvoltage();
   webServer.busVoltage = busVoltage;
-
+  while (siedleClient.buffer.available()) {
+      auto payload = siedleClient.buffer.read_char();
+      webServer.buffer.store_char(payload);
+  }
 }
 
 void siedleClientLoop() {

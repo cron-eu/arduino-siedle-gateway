@@ -5,9 +5,9 @@
 #include <Arduino.h>
 #include "SiedleClient.h"
 
-#define R2_VAL 33000.0
-#define R3_VAL 2200.0
-#define BIT_DURATION 1980
+#define R2_VAL 10000.0
+#define R3_VAL 1100.0
+#define BIT_DURATION 2000
 
 // Bus Voltage = ADC Raw Value * ADC_FACTOR; the ADC Raw Value being the raw value
 // as returned by analogRead()
@@ -23,6 +23,18 @@ SiedleClient::SiedleClient(uint8_t inputPin) {
 }
 
 void SiedleClient::loop() {
+
+    auto micros_next_bit = micros() + BIT_DURATION * 1.25;
+
+    // analogRead on the MKR series takes about 500us, so after 2 reads we should be about fine
+    if (readBit() == HIGH) {
+        yield();
+        return;
+    }
+
+    // Make sure we do get the start bit
+    // TODO: refactor this to be more DRY
+
     if (readBit() == HIGH) {
         yield();
         return;
@@ -30,8 +42,6 @@ void SiedleClient::loop() {
 
     // we got the start bit, lets read all 32 bits in
     uint32_t cmnd = 0x0;
-
-    auto micros_next_bit = micros() + BIT_DURATION * 1.25;
 
     for (int i = 31; i >= 0; i--) {
         while (micros() < micros_next_bit) {

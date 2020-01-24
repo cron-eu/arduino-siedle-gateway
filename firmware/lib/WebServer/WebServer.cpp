@@ -57,7 +57,10 @@ void WebServer::loop() {
               client.print("<h4>Received:</h4>");
 
               client.print("<pre>");
-              client.print("TODO!!");
+              while (buffer.available()) {
+                  client.print(buffer.read_char(), HEX);
+                  client.println();
+              }
               client.print("</pre>");
 
               // The HTTP response ends with another blank line:

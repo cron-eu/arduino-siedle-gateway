@@ -17,6 +17,7 @@ public:
     void loop();
 
     float busVoltage;
+    RingBufferN<100> buffer;
 
 private:
     WiFiServer _server;
