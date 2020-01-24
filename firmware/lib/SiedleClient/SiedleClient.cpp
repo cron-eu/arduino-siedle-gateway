@@ -24,8 +24,6 @@ SiedleClient::SiedleClient(uint8_t inputPin) {
 
 void SiedleClient::loop() {
 
-    unsigned long micros_next_bit = micros() + ( BIT_DURATION * 1.25 );
-
     // analogRead on the MKR series takes about 500us, so after 2 reads we should be about fine
     if (readBit() == HIGH) {
         yield();
@@ -40,20 +38,21 @@ void SiedleClient::loop() {
         return;
     }
 
+    unsigned long sample_micros = micros();
+    unsigned long sample_interval = BIT_DURATION;
+
     // we got the start bit, lets read all 32 bits in
     uint32_t cmnd = 0x0;
 
     for (int i = 31; i >= 0; i--) {
-        while (micros() < micros_next_bit) {
+        while (micros() - sample_micros < sample_interval) {
             yield();
         }
         bitWrite(cmnd, i, readBit());
-        micros_next_bit += BIT_DURATION;
+        sample_micros += sample_interval;
     }
 
-    if (!buffer.isFull()) {
-        buffer.store_char(cmnd);
-    }
+    putCmd(cmnd);
 
     // Make sure we wait until the master pushes up the bus voltage
     while(readBit() != HIGH) {
@@ -70,4 +69,20 @@ int SiedleClient::readBit() {
 float SiedleClient::getBusvoltage() {
     auto a = analogRead(inputPin);
     return (float)a * ADC_FACTOR;
+}
+
+bool SiedleClient::available() {
+    return read_index != write_index;
+}
+
+siedle_cmd_t SiedleClient::getCmd() {
+    if (!available()) { return 0; }
+    auto payload = buffer[read_index];
+    if (read_index++ == sizeof(buffer) - 1) { read_index = 0; }
+    return payload;
+}
+
+void SiedleClient::putCmd(siedle_cmd_t cmd) {
+    buffer[write_index] = cmd;
+    if (write_index++ == sizeof(buffer) - 1) { write_index = 0; }
 }

@@ -5,16 +5,28 @@
 #ifndef FIRMWARE_SIEDLECLIENT_H
 #define FIRMWARE_SIEDLECLIENT_H
 
+#define siedle_cmd_t uint32_t
+
+// length of the cmd buffer
+#define BUFLEN 32
+
 #include <Arduino.h>
 
 class SiedleClient {
 public:
     SiedleClient(uint8_t inputPin);
-    RingBufferN<100> buffer;
     void loop();
     float getBusvoltage();
+    bool available();
+    siedle_cmd_t getCmd();
 
 private:
+    // buffer is a circular buffer
+    siedle_cmd_t buffer[BUFLEN];
+    int read_index = 0;
+    int write_index = 0;
+    void putCmd(siedle_cmd_t cmd);
+
     uint8_t inputPin;
     int readBit();
 };
