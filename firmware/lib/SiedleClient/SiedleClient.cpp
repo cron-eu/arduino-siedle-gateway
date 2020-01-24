@@ -24,7 +24,7 @@ SiedleClient::SiedleClient(uint8_t inputPin) {
 
 void SiedleClient::loop() {
 
-    auto micros_next_bit = micros() + BIT_DURATION * 1.25;
+    unsigned long micros_next_bit = micros() + ( BIT_DURATION * 1.25 );
 
     // analogRead on the MKR series takes about 500us, so after 2 reads we should be about fine
     if (readBit() == HIGH) {
@@ -71,4 +71,3 @@ float SiedleClient::getBusvoltage() {
     auto a = analogRead(inputPin);
     return (float)a * ADC_FACTOR;
 }
-
