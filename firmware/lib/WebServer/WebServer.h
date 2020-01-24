@@ -16,6 +16,8 @@ public:
 
     void loop();
 
+    float busVoltage;
+
 private:
     WiFiServer _server;
 };

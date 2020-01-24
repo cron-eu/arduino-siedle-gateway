@@ -5,9 +5,15 @@
 #include <wifi_client_secrets.h>
 
 #include <WebServer.h>
+#include <SiedleClient.h>
+
+#define SIEDLE_A_IN A0
 
 int status = WL_IDLE_STATUS;
 WebServer webServer(80);
+SiedleClient siedleClient(SIEDLE_A_IN);
+
+float busVoltage = 0;
 
 void statusLEDLoop() {
   if (status == WL_CONNECTED) {
@@ -19,6 +25,15 @@ void statusLEDLoop() {
   delay(250);
   digitalWrite(LED_BUILTIN, LOW);
   delay(250);
+
+  // hack.. to be reverted
+  busVoltage = siedleClient.getBusvoltage();
+  webServer.busVoltage = busVoltage;
+
+}
+
+void siedleClientLoop() {
+    siedleClient.loop();
 }
 
 void webServerLoop() {
@@ -87,6 +102,7 @@ void setup() {
   WiFi.lowPowerMode();
 
   Scheduler.startLoop(webServerLoop);
+    Scheduler.startLoop(siedleClientLoop);
 }
 #pragma clang diagnostic pop
 
