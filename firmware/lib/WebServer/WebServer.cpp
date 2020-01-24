@@ -41,27 +41,12 @@ void WebServer::loop() {
                         client.print(get_battery_voltage());
                         client.print("</dd>");
 
-                        client.print("<h3>Siedle Bus Debug</h3>");
-                        client.print("<dl>");
-                        client.print("<dt>Current Bus Voltage / V</dt>");
-                        client.print("<dd>");
-                        client.print(busVoltage);
-                        client.print("</dd>");
-
-                        client.print("<dt>Current ADC Value</dt>");
-                        client.print("<dd>");
-                        client.print(analogRead(A0));
-                        client.print("</dd>");
-
-
-                        client.print("<h4>Received:</h4>");
-
-                        client.print("<pre>");
-                        while (buffer.available()) {
-                            client.print(buffer.read_char(), HEX);
-                            client.println();
+                        if (printDebug != NULL) {
+                            client.print("<h4>Received Data:</h4>");
+                            client.println("<pre>");
+                            printDebug(&client);
+                            client.println("</pre>");
                         }
-                        client.print("</pre>");
 
                         // The HTTP response ends with another blank line:
                         client.println();

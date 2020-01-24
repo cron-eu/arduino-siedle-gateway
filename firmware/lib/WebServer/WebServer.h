@@ -13,11 +13,9 @@ public:
     WebServer(uint16_t);
 
     void begin();
+    void (*printDebug)(Print *handler) = NULL;
 
     void loop();
-
-    float busVoltage;
-    RingBufferN<100> buffer;
 
 private:
     WiFiServer _server;

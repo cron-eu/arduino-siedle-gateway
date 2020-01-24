@@ -9,11 +9,24 @@
 
 #define SIEDLE_A_IN A0
 
+#define LOG_SIZE 100
+
+struct SiedleLogEntry {
+    unsigned long timestamp;
+    siedle_cmd_t cmd;
+};
+
 int status = WL_IDLE_STATUS;
 WebServer webServer(80);
 SiedleClient siedleClient(SIEDLE_A_IN);
+SiedleLogEntry siedleLog[LOG_SIZE];
+int siedleLogIndex = 0;
 
-float busVoltage = 0;
+void saveSiedleLog(siedle_cmd_t cmd) {
+    SiedleLogEntry entry = { millis(), cmd };
+    siedleLog[siedleLogIndex] = entry;
+    if (siedleLogIndex++ == sizeof(siedleLog) - 1) { siedleLogIndex = 0; }
+}
 
 void statusLEDLoop() {
     if (status == WL_CONNECTED) {
@@ -25,18 +38,23 @@ void statusLEDLoop() {
     delay(250);
     digitalWrite(LED_BUILTIN, LOW);
     delay(250);
-
-    // hack.. to be reverted
-    busVoltage = siedleClient.getBusvoltage();
-    webServer.busVoltage = busVoltage;
-    while (siedleClient.buffer.available()) {
-        auto payload = siedleClient.buffer.read_char();
-        webServer.buffer.store_char(payload);
-    }
 }
 
 void siedleClientLoop() {
     siedleClient.loop();
+    while (siedleClient.available()) {
+        auto cmd = siedleClient.getCmd();
+        saveSiedleLog(cmd);
+    }
+}
+
+void printDebug(Print *handler) {
+    for (int i = 0; i < sizeof(siedleLog); i++) {
+        auto entry = siedleLog[i];
+        handler->print(entry.timestamp);
+        handler->print(": ");
+        handler->println(entry.cmd, HEX);
+    }
 }
 
 void webServerLoop() {
@@ -64,6 +82,7 @@ void printWifiStatus() {
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 
 void setup() {
+    webServer.printDebug = printDebug;
     Scheduler.startLoop(statusLEDLoop);
     Serial.begin(115200);
     pinMode(LED_BUILTIN, OUTPUT);
