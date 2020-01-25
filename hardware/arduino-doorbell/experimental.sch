@@ -10345,8 +10345,8 @@ In this library the device names are the same as the pin names of the symbols, t
 <part name="SUPPLY2" library="supply2" deviceset="+UB" device=""/>
 <part name="SUPPLY1" library="supply2" deviceset="+5V" device=""/>
 <part name="DC1" library="dc-dc-converter" deviceset="NME" device=""/>
-<part name="R2" library="rcl" deviceset="R-EU_" device="0204/7" value="33k"/>
-<part name="R3" library="rcl" deviceset="R-EU_" device="0204/7" value="2k2"/>
+<part name="R2" library="rcl" deviceset="R-EU_" device="0204/7" value="10k"/>
+<part name="R3" library="rcl" deviceset="R-EU_" device="0204/7" value="1k1"/>
 <part name="GND2" library="supply1" deviceset="GND" device=""/>
 <part name="T1" library="transistor" deviceset="BC337" device=""/>
 <part name="R4" library="rcl" deviceset="R-EU_" device="0204/7" value="220"/>
