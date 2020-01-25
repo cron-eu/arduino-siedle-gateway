@@ -17,6 +17,10 @@ enum SiedleClientState {
 
 class SiedleClient {
 public:
+    /**
+     * @param inputPin analog input pin
+     * @param outputPin digital out pin (*negated*)
+     */
     SiedleClient(uint8_t inputPin, uint8_t outputPin);
     /**
      * Tries to receive data, if available.

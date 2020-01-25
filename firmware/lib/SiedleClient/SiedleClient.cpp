@@ -30,6 +30,8 @@ SiedleClient::SiedleClient(uint8_t inputPin, uint8_t outputPin) {
 
 bool SiedleClient::receiveLoop() {
 
+    if (state == transmitting) { return false; }
+
     unsigned long const sample_interval = BIT_DURATION;
     unsigned long sample_micros = micros();
 
@@ -84,7 +86,7 @@ bool SiedleClient::sendCmd(siedle_cmd_t tx_cmd) {
     state = transmitting;
     for (int i=31; i >= 0; i--) {
         auto bit = bitRead(tx_cmd, i);
-        digitalWrite(outputPin, bit);
+        digitalWrite(outputPin, !bit);
         while (micros() - last_micros < BIT_DURATION) { yield(); }
         last_micros += BIT_DURATION;
 
@@ -100,7 +102,7 @@ bool SiedleClient::sendCmd(siedle_cmd_t tx_cmd) {
         }
     }
 
-    digitalWrite(outputPin, HIGH);
+    digitalWrite(outputPin, LOW);
     state = idle;
     return true;
 }
