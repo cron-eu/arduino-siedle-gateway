@@ -55,6 +55,8 @@ void printDebug(Print *handler) {
         handler->print(": ");
         handler->println(entry.cmd, HEX);
     }
+    handler->print("Rx Count: ");
+    handler->println(siedleClient.getRxCount());
 }
 
 void webServerLoop() {

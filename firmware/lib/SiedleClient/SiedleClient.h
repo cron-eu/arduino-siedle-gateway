@@ -12,6 +12,11 @@
 
 #include <Arduino.h>
 
+enum SiedleClientState {
+    idle,
+    receiving
+};
+
 class SiedleClient {
 public:
     SiedleClient(uint8_t inputPin);
@@ -19,6 +24,8 @@ public:
     float getBusvoltage();
     bool available();
     siedle_cmd_t getCmd();
+    SiedleClientState getState() { return state; }
+    int getRxCount() { return rxCount; }
 
 private:
     // buffer is a circular buffer
@@ -26,6 +33,8 @@ private:
     int read_index = 0;
     int write_index = 0;
     void putCmd(siedle_cmd_t cmd);
+    SiedleClientState state = idle;
+    int rxCount = 0;
 
     uint8_t inputPin;
     int readBit();

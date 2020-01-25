@@ -25,26 +25,22 @@ SiedleClient::SiedleClient(uint8_t inputPin) {
 void SiedleClient::loop() {
 
     // analogRead on the MKR series takes about 500us, so after 2 reads we should be about fine
-    if (readBit() == HIGH) {
-        yield();
-        return;
+    for (int i = 0; i <= 1; i++) {
+        if (readBit() == HIGH) {
+            yield();
+            return;
+        }
     }
 
-    // Make sure we do get the start bit
-    // TODO: refactor this to be more DRY
-
-    if (readBit() == HIGH) {
-        yield();
-        return;
-    }
-
+    state = receiving;
     unsigned long sample_micros = micros();
     unsigned long sample_interval = BIT_DURATION;
 
     // we got the start bit, lets read all 32 bits in
     uint32_t cmnd = 0x0;
 
-    for (int i = 31; i >= 0; i--) {
+    // we do already have the first bit (#31, this being a logical 0), so let's read in the remaining 31 bits
+    for (int i = 30; i >= 0; i--) {
         while (micros() - sample_micros < sample_interval) {
             yield();
         }
@@ -55,9 +51,12 @@ void SiedleClient::loop() {
     putCmd(cmnd);
 
     // Make sure we wait until the master pushes up the bus voltage
-    while(readBit() != HIGH) {
+    while(readBit() == LOW) {
         delay(1);
     }
+
+    rxCount++;
+    state = idle;
 }
 
 int SiedleClient::readBit() {
