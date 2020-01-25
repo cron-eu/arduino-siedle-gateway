@@ -20,12 +20,14 @@ int status = WL_IDLE_STATUS;
 WebServer webServer(80);
 SiedleClient siedleClient(SIEDLE_A_IN);
 SiedleLogEntry siedleLog[LOG_SIZE];
-int siedleLogIndex = 0;
+unsigned int siedleLogIndex = 0;
 
 void saveSiedleLog(siedle_cmd_t cmd) {
     SiedleLogEntry entry = { millis(), cmd };
-    siedleLog[siedleLogIndex] = entry;
-    if (siedleLogIndex++ == sizeof(siedleLog) - 1) { siedleLogIndex = 0; }
+
+    if (siedleLogIndex < sizeof(siedleLog)) {
+        siedleLog[siedleLogIndex++] = entry;
+    } // else: buffer full
 }
 
 void statusLEDLoop() {
@@ -42,14 +44,15 @@ void statusLEDLoop() {
 
 void siedleClientLoop() {
     siedleClient.loop();
-    while (siedleClient.available()) {
+
+    if (siedleClient.available()) {
         auto cmd = siedleClient.getCmd();
         saveSiedleLog(cmd);
     }
 }
 
 void printDebug(Print *handler) {
-    for (int i = 0; i < sizeof(siedleLog); i++) {
+    for (int i = 0; i < siedleLogIndex; i++) {
         auto entry = siedleLog[i];
         handler->print(entry.timestamp);
         handler->print(": ");
@@ -57,6 +60,14 @@ void printDebug(Print *handler) {
     }
     handler->print("Rx Count: ");
     handler->println(siedleClient.getRxCount());
+
+    handler->print("Bus Voltage: ");
+    handler->println(siedleClient.getBusvoltage());
+
+    handler->print("Siedle Client State: ");
+    handler->println(siedleClient.getState());
+
+    siedleLogIndex = 0;
 }
 
 void webServerLoop() {
