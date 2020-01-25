@@ -90,9 +90,6 @@ void printWifiStatus() {
     Serial.println(ip);
 }
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
-
 void setup() {
     webServer.printDebug = printDebug;
     Scheduler.startLoop(statusLEDLoop);
@@ -135,13 +132,6 @@ void setup() {
     Scheduler.startLoop(siedleClientLoop);
 }
 
-#pragma clang diagnostic pop
-
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
-
 void loop() {
     delay(1000);
 }
-
-#pragma clang diagnostic pop
