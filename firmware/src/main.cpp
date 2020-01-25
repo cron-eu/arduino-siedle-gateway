@@ -9,6 +9,8 @@
 #include <CircularBuffer.h>
 
 #define SIEDLE_A_IN A0
+#define SIEDLE_TX_PIN 0
+
 #define LOG_SIZE 100
 
 typedef struct {
@@ -18,7 +20,7 @@ typedef struct {
 
 int status = WL_IDLE_STATUS;
 WebServer webServer(80);
-SiedleClient siedleClient(SIEDLE_A_IN);
+SiedleClient siedleClient(SIEDLE_A_IN, SIEDLE_TX_PIN);
 CircularBuffer<SiedleLogEntry, LOG_SIZE> siedleRxLog;
 
 void statusLEDLoop() {
@@ -59,8 +61,10 @@ void printDebug(Print *handler) {
         handler->println(entry.cmd, HEX);
     }
 
-    handler->print("Rx Count: ");
-    handler->println(siedleClient.rxCount);
+    handler->print("Rx/Tx count: ");
+    handler->print(siedleClient.rxCount);
+    handler->print("/");
+    handler->println(siedleClient.txCount);
 
     handler->print("Bus Voltage: ");
     handler->println(siedleClient.getBusvoltage());

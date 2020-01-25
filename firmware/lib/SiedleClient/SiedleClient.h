@@ -11,12 +11,13 @@
 
 enum SiedleClientState {
     idle,
-    receiving
+    receiving,
+    transmitting
 };
 
 class SiedleClient {
 public:
-    SiedleClient(uint8_t inputPin);
+    SiedleClient(uint8_t inputPin, uint8_t outputPin);
     /**
      * Tries to receive data, if available.
      *
@@ -26,14 +27,18 @@ public:
      */
     bool receiveLoop();
     unsigned int rxCount = 0;
+    unsigned int txCount = 0;
     // Last received command
     siedle_cmd_t cmd;
+    // Send a command. Returns false if there was an error while trying to send, e.g. the bus master did not respond on time.
+    bool sendCmd(siedle_cmd_t cmd);
     SiedleClientState state = idle;
     float getBusvoltage();
 
 private:
     int readBit();
     uint8_t inputPin;
+    uint8_t outputPin;
 };
 
 #endif //FIRMWARE_SIEDLECLIENT_H
