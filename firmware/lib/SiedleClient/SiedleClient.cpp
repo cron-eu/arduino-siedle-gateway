@@ -22,7 +22,7 @@ SiedleClient::SiedleClient(uint8_t inputPin) {
     this->inputPin = inputPin;
 }
 
-void SiedleClient::loop() {
+bool SiedleClient::receiveLoop() {
 
     unsigned long const sample_interval = BIT_DURATION;
     unsigned long sample_micros = micros();
@@ -31,7 +31,7 @@ void SiedleClient::loop() {
     for (int i = 0; i <= 1; i++) {
         if (readBit() == HIGH) {
             yield();
-            return;
+            return false;
         }
     }
 
@@ -57,34 +57,17 @@ void SiedleClient::loop() {
         yield();
     }
 
-    putCmd(cmnd);
+    this->cmd = cmnd;
     rxCount++;
 
     state = idle;
-    yield();
 }
 
-int SiedleClient::readBit() {
+inline int SiedleClient::readBit() {
     return getBusvoltage() <= ADC_HIGH_THRESHOLD_VOLTAGE ? LOW : HIGH;
 }
 
 float SiedleClient::getBusvoltage() {
     auto a = analogReadFast(inputPin);
     return (float)a * (float)ADC_FACTOR;
-}
-
-bool SiedleClient::available() {
-    return read_index != write_index;
-}
-
-siedle_cmd_t SiedleClient::getCmd() {
-    if (!available()) { return 0; }
-    auto payload = buffer[read_index++];
-    if (read_index == BUFLEN) { read_index = 0; }
-    return payload;
-}
-
-void SiedleClient::putCmd(siedle_cmd_t cmd) {
-    buffer[write_index++] = cmd;
-    if (write_index == BUFLEN) { write_index = 0; }
 }

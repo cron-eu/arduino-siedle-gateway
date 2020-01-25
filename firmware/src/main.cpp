@@ -6,9 +6,9 @@
 
 #include <WebServer.h>
 #include <SiedleClient.h>
+#include <CircularBuffer.h>
 
 #define SIEDLE_A_IN A0
-
 #define LOG_SIZE 100
 
 typedef struct {
@@ -19,15 +19,7 @@ typedef struct {
 int status = WL_IDLE_STATUS;
 WebServer webServer(80);
 SiedleClient siedleClient(SIEDLE_A_IN);
-SiedleLogEntry siedleLog[LOG_SIZE];
-char siedleLogIndex = 0;
-
-void saveSiedleLog(siedle_cmd_t cmd) {
-    if (siedleLogIndex < LOG_SIZE) {
-        SiedleLogEntry entry = { millis(), cmd };
-        siedleLog[siedleLogIndex++] = entry;
-    } // else: buffer full
-}
+CircularBuffer<SiedleLogEntry, LOG_SIZE> siedleRxLog;
 
 void statusLEDLoop() {
     if (status == WL_CONNECTED) {
@@ -44,30 +36,32 @@ void statusLEDLoop() {
 }
 
 void siedleClientLoop() {
-    siedleClient.loop();
-
-    if (siedleClient.available()) {
-        auto cmd = siedleClient.getCmd();
-        saveSiedleLog(cmd);
+    if (siedleClient.receiveLoop()) {
+        siedleRxLog.push({ millis(), siedleClient.cmd });
     }
+    yield();
 }
 
 void printDebug(Print *handler) {
-    for (unsigned int i = 0; i < siedleLogIndex; i++) {
-        auto entry = siedleLog[i];
+    for (unsigned int i = 0; i < siedleRxLog.capacity; i++) {
+        SiedleLogEntry entry = siedleRxLog[i];
         handler->print(entry.timestamp);
         handler->print(": ");
         handler->println(entry.cmd, HEX);
     }
+
     handler->print("Rx Count: ");
-    handler->println(siedleClient.getRxCount());
+    handler->println(siedleClient.rxCount);
 
     handler->print("Bus Voltage: ");
     handler->println(siedleClient.getBusvoltage());
 }
 
 void webServerLoop() {
-    webServer.loop();
+    if (siedleClient.state == idle) {
+        webServer.loop();
+    }
+    yield();
 }
 
 void printWifiStatus() {

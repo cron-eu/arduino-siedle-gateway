@@ -63,5 +63,4 @@ void WebServer::loop() {
         // close the connection:
         client.stop();
     }
-    yield();
 }
