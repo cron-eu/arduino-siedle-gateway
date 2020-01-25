@@ -24,6 +24,9 @@ SiedleClient::SiedleClient(uint8_t inputPin) {
 
 void SiedleClient::loop() {
 
+    unsigned long const sample_interval = BIT_DURATION;
+    unsigned long sample_micros = micros();
+
     // analogRead on the MKR series takes about 500us, so after 2 reads we should be about fine
     for (int i = 0; i <= 1; i++) {
         if (readBit() == HIGH) {
@@ -32,8 +35,9 @@ void SiedleClient::loop() {
         }
     }
 
-    unsigned long sample_interval = BIT_DURATION;
-    unsigned long sample_micros = micros();
+    while (micros() - sample_micros < sample_interval / 2 ) { yield(); }
+
+    sample_micros = micros();
 
     uint32_t cmnd = 0x0;
 
