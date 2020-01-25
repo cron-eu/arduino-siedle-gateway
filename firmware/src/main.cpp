@@ -29,6 +29,15 @@ void statusLEDLoop() {
         delay(3000);
         return;
     }
+
+    if (status == WL_NO_MODULE) {
+        digitalWrite(LED_BUILTIN, HIGH);
+        delay(100);
+        digitalWrite(LED_BUILTIN, LOW);
+        delay(100);
+        return;
+    }
+
     digitalWrite(LED_BUILTIN, HIGH);
     delay(250);
     digitalWrite(LED_BUILTIN, LOW);
@@ -98,12 +107,7 @@ void setup() {
     // check for the WiFi module:
     if (WiFi.status() == WL_NO_MODULE) {
         Serial.println("Communication with WiFi module failed!");
-        // don't continue
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wmissing-noreturn"
-        while (true);
-#pragma clang diagnostic pop
+        return;
     }
 
     String fv = WiFi.firmwareVersion();
