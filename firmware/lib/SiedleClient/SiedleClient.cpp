@@ -4,6 +4,7 @@
 
 #include <Arduino.h>
 #include "SiedleClient.h"
+#include "avdweb_AnalogReadFast.h"
 
 #define R2_VAL 10000.0
 #define R3_VAL 1100.0
@@ -11,14 +12,13 @@
 
 // Bus Voltage = ADC Raw Value * ADC_FACTOR; the ADC Raw Value being the raw value
 // as returned by analogRead()
-#define ADC_FACTOR ( (R2_VAL + R3_VAL) / R3_VAL * (3.3 / 4096.0 ) )
+#define ADC_FACTOR ( (R2_VAL + R3_VAL) / R3_VAL * (3.3 / 1024.0 ) )
 
 // Detect a logical HIGH for voltages ABOVE this threshold
-#define ADC_HIGH_THRESHOLD_VOLTAGE ( 5.0 )
+#define ADC_HIGH_THRESHOLD_VOLTAGE ( 4.5 )
 
 SiedleClient::SiedleClient(uint8_t inputPin) {
     pinMode(inputPin, INPUT);
-    analogReadResolution(12);
     this->inputPin = inputPin;
 }
 
@@ -52,23 +52,24 @@ void SiedleClient::loop() {
         sample_micros += sample_interval;
     }
 
+    // Make sure we wait until the master pushes up the bus voltage
+    while(readBit() == LOW) {
+        yield();
+    }
+
     putCmd(cmnd);
     rxCount++;
 
-    // Make sure we wait until the master pushes up the bus voltage
-    while(readBit() == LOW) {
-        delay(1);
-    }
-
     state = idle;
+    yield();
 }
 
-inline int SiedleClient::readBit() {
+int SiedleClient::readBit() {
     return getBusvoltage() <= ADC_HIGH_THRESHOLD_VOLTAGE ? LOW : HIGH;
 }
 
 float SiedleClient::getBusvoltage() {
-    auto a = analogRead(inputPin);
+    auto a = analogReadFast(inputPin);
     return (float)a * (float)ADC_FACTOR;
 }
 
@@ -78,12 +79,12 @@ bool SiedleClient::available() {
 
 siedle_cmd_t SiedleClient::getCmd() {
     if (!available()) { return 0; }
-    auto payload = buffer[read_index];
-    if (read_index++ == sizeof(buffer) - 1) { read_index = 0; }
+    auto payload = buffer[read_index++];
+    if (read_index == BUFLEN) { read_index = 0; }
     return payload;
 }
 
 void SiedleClient::putCmd(siedle_cmd_t cmd) {
-    buffer[write_index] = cmd;
-    if (write_index++ == sizeof(buffer) - 1) { write_index = 0; }
+    buffer[write_index++] = cmd;
+    if (write_index == BUFLEN) { write_index = 0; }
 }

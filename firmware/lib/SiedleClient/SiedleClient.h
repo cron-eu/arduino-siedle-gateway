@@ -22,6 +22,7 @@ public:
     SiedleClient(uint8_t inputPin);
     void loop();
     float getBusvoltage();
+    int readBit();
     bool available();
     siedle_cmd_t getCmd();
     SiedleClientState getState() { return state; }
@@ -30,14 +31,13 @@ public:
 private:
     // buffer is a circular buffer
     siedle_cmd_t buffer[BUFLEN];
-    int read_index = 0;
-    int write_index = 0;
+    char read_index = 0;
+    char write_index = 0;
     void putCmd(siedle_cmd_t cmd);
     SiedleClientState state = idle;
-    int rxCount = 0;
+    unsigned int rxCount = 0;
 
     uint8_t inputPin;
-    int readBit();
 };
 
 

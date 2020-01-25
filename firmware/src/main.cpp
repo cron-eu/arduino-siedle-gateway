@@ -11,29 +11,30 @@
 
 #define LOG_SIZE 100
 
-struct SiedleLogEntry {
+typedef struct {
     unsigned long timestamp;
     siedle_cmd_t cmd;
-};
+} SiedleLogEntry;
 
 int status = WL_IDLE_STATUS;
 WebServer webServer(80);
 SiedleClient siedleClient(SIEDLE_A_IN);
 SiedleLogEntry siedleLog[LOG_SIZE];
-unsigned int siedleLogIndex = 0;
+char siedleLogIndex = 0;
 
 void saveSiedleLog(siedle_cmd_t cmd) {
-    SiedleLogEntry entry = { millis(), cmd };
-
-    if (siedleLogIndex < sizeof(siedleLog)) {
+    if (siedleLogIndex < LOG_SIZE) {
+        SiedleLogEntry entry = { millis(), cmd };
         siedleLog[siedleLogIndex++] = entry;
     } // else: buffer full
 }
 
 void statusLEDLoop() {
     if (status == WL_CONNECTED) {
+        digitalWrite(LED_BUILTIN, HIGH);
+        delay(150);
         digitalWrite(LED_BUILTIN, LOW);
-        delay(5000);
+        delay(3000);
         return;
     }
     digitalWrite(LED_BUILTIN, HIGH);
@@ -52,7 +53,7 @@ void siedleClientLoop() {
 }
 
 void printDebug(Print *handler) {
-    for (int i = 0; i < siedleLogIndex; i++) {
+    for (unsigned int i = 0; i < siedleLogIndex; i++) {
         auto entry = siedleLog[i];
         handler->print(entry.timestamp);
         handler->print(": ");
@@ -63,11 +64,6 @@ void printDebug(Print *handler) {
 
     handler->print("Bus Voltage: ");
     handler->println(siedleClient.getBusvoltage());
-
-    handler->print("Siedle Client State: ");
-    handler->println(siedleClient.getState());
-
-    siedleLogIndex = 0;
 }
 
 void webServerLoop() {
@@ -147,7 +143,7 @@ void setup() {
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 
 void loop() {
-    delay(10000);
+    delay(1000);
 }
 
 #pragma clang diagnostic pop
