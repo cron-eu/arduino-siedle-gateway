@@ -14,7 +14,7 @@
 #define ADC_FACTOR ( (R2_VAL + R3_VAL) / R3_VAL * (3.3 / 4096.0 ) )
 
 // Detect a logical HIGH for voltages ABOVE this threshold
-#define ADC_HIGH_THRESHOLD_VOLTAGE ( 4.0 )
+#define ADC_HIGH_THRESHOLD_VOLTAGE ( 3.5 )
 
 SiedleClient::SiedleClient(uint8_t inputPin) {
     pinMode(inputPin, INPUT);
@@ -32,18 +32,18 @@ void SiedleClient::loop() {
         }
     }
 
-    state = receiving;
-    unsigned long sample_micros = micros();
     unsigned long sample_interval = BIT_DURATION;
+    unsigned long sample_micros = micros();
 
-    // we got the start bit, lets read all 32 bits in
     uint32_t cmnd = 0x0;
 
-    // we do already have the first bit (#31, this being a logical 0), so let's read in the remaining 31 bits
+    // we do already got the first bit, this being a logical 0
+    // read in the remaining 31 bits now
+    state = receiving;
     for (int i = 30; i >= 0; i--) {
-        while (micros() - sample_micros < sample_interval) {
-            yield();
-        }
+        // no worries about rollover
+        // @see https://arduino.stackexchange.com/questions/12587/how-can-i-handle-the-millis-rollover
+        while (micros() - sample_micros < sample_interval) { yield(); }
         bitWrite(cmnd, i, readBit());
         sample_micros += sample_interval;
     }
@@ -59,13 +59,11 @@ void SiedleClient::loop() {
     state = idle;
 }
 
-int SiedleClient::readBit() {
-    auto a = analogRead(inputPin);
-    float voltage = (float)a * ADC_FACTOR;
-    return voltage >= ADC_HIGH_THRESHOLD_VOLTAGE ? HIGH : LOW;
+inline int SiedleClient::readBit() {
+    return getBusvoltage() >= ADC_HIGH_THRESHOLD_VOLTAGE ? HIGH : LOW;
 }
 
-float SiedleClient::getBusvoltage() {
+inline float SiedleClient::getBusvoltage() {
     auto a = analogRead(inputPin);
     return (float)a * ADC_FACTOR;
 }
