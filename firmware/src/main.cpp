@@ -2,7 +2,12 @@
 
 #include <Scheduler.h>
 #include <WiFiNINA.h>
+#include <ArduinoBearSSL.h>
+#include <ArduinoECCX08.h>
+#include <ArduinoMqttClient.h>
+
 #include <wifi_client_secrets.h>
+#include <aws_iot_secrets.h>
 
 #include <WebServer.h>
 #include <SiedleClient.h>
@@ -25,6 +30,15 @@ WebServer webServer(80);
 SiedleClient siedleClient(SIEDLE_A_IN, SIEDLE_TX_PIN);
 CircularBuffer<SiedleLogEntry, LOG_SIZE> siedleRxLog;
 RTCZero rtc;
+
+WiFiClient    wifiClient;            // Used for the TCP socket connection
+BearSSLClient sslClient(wifiClient); // Used for SSL/TLS connection, integrates with ECC508
+MqttClient    mqttClient(sslClient);
+
+const char* certificate  = SECRET_CERTIFICATE;
+const char broker[]      = SECRET_BROKER;
+const char ssid[] = SECRET_SSID;    // network SSID (name)
+const char pass[] = SECRET_PASS;    // network password (use for WPA, or use as key for WEP)
 
 void statusLEDLoop() {
     if (status == WL_CONNECTED) {
@@ -85,6 +99,10 @@ void printDebug(Print *handler) {
     handler->println(siedleClient.getBusvoltage());
     handler->print(" V</dd></dl>");
 
+    handler->print("<dl><dt>AWS MQTT Link</dt><dd>");
+    handler->println(mqttClient.connected() ? "OK" : "Not Connected");
+    handler->print("</dd></dl>");
+
     auto size = min(siedleRxLog.capacity, siedleClient.rxCount);
     handler->print("<h3>Received Data</h3><table><tr><th>Timestamp</th><th>Command</th></tr>");
     for (unsigned int i = 0; i < size; i++) {
@@ -125,6 +143,75 @@ void printWifiStatus() {
     Serial.println(ip);
 }
 
+void connectMQTT() {
+    Serial.print("Attempting to MQTT broker: ");
+    Serial.print(broker);
+    Serial.println(" ");
+
+    while (!mqttClient.connect(broker, 8883)) {
+        // failed, retry
+        Serial.print(".");
+        delay(5000);
+    }
+    Serial.println();
+
+    Serial.println("You're connected to the MQTT broker");
+    Serial.println();
+
+    // subscribe to a topic
+    mqttClient.subscribe("arduinodoorbell/incoming");
+}
+
+unsigned long getTime() {
+    // get the current time from the WiFi module
+    return WiFi.getTime();
+}
+
+void onMessageReceived(int messageSize) {
+    // we received a message, print out the topic and contents
+    Serial.print("Received a message with topic '");
+    Serial.print(mqttClient.messageTopic());
+    Serial.print("', length ");
+    Serial.print(messageSize);
+    Serial.println(" bytes:");
+
+    // use the Stream interface to print the contents
+    while (mqttClient.available()) {
+        Serial.print((char)mqttClient.read());
+    }
+    Serial.println();
+
+    Serial.println();
+}
+
+inline void setupMQTT() {
+    ECCX08.begin();
+
+    // Set a callback to get the current time
+    // used to validate the servers certificate
+    ArduinoBearSSL.onGetTime(getTime);
+
+    // Set the ECCX08 slot to use for the private key
+    // and the accompanying public certificate for it
+    sslClient.setEccSlot(0, certificate);
+
+    // Optional, set the client id used for MQTT,
+    // each device that is connected to the broker
+    // must have a unique client id. The MQTTClient will generate
+    // a client id for you based on the millis() value if not set
+    //
+    // mqttClient.setId("clientId");
+
+    // Set the message callback, this function is
+    // called when the MQTTClient receives a message
+    mqttClient.onMessage(onMessageReceived);
+
+    if (!mqttClient.connected()) {
+        // MQTT client is disconnected, connect
+        connectMQTT();
+    }
+}
+
 void __unused setup() {
     webServer.printDebug = printDebug;
     Scheduler.startLoop(statusLEDLoop);
@@ -133,9 +220,6 @@ void __unused setup() {
     pinMode(LED_BUILTIN, OUTPUT);
 
     Serial.println("Booting..");
-
-    char ssid[] = SECRET_SSID;    // network SSID (name)
-    char pass[] = SECRET_PASS;    // network password (use for WPA, or use as key for WEP)
 
     // check for the WiFi module:
     if (WiFi.status() == WL_NO_MODULE) {
@@ -165,10 +249,39 @@ void __unused setup() {
     WiFi.lowPowerMode();
 
     Scheduler.startLoop(webServerLoop);
+
+    setupMQTT();
+
     Scheduler.startLoop(siedleClientLoop);
     Scheduler.startLoop(ntpLoop);
 }
 
+int mqttSentCount = 0;
+
 void __unused loop() {
-    delay(1000);
+
+//    if (!mqttClient.connected()) {
+//        Serial.println("MQTT not connected. Re-connecting..");
+//        connectMQTT();
+//        return;
+//    }
+
+    // poll for new MQTT messages and send keep alives
+    mqttClient.poll();
+
+    // check if we have some messages to send
+    auto toSendCount = siedleClient.rxCount - mqttSentCount;
+
+    if (toSendCount > 0) {
+        auto entry = siedleRxLog.last();
+        mqttClient.beginMessage("siedle/received");
+        char buf[32];
+        sprintf(buf, "{\"ts\":%lu,\"cmd\":%lu}", entry.timestamp, entry.cmd);
+        mqttClient.print(buf);
+        mqttClient.endMessage();
+        mqttSentCount++;
+    }
+
+    yield();
+//    delay(1000);
 }
