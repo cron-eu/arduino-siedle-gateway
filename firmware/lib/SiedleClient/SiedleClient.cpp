@@ -38,12 +38,11 @@ bool SiedleClient::receiveLoop() {
     // analogRead on the MKR series takes about 500us, so after 2 reads we should be about fine
     for (int i = 0; i <= 1; i++) {
         if (readBit() == HIGH) {
-            yield();
             return false;
         }
     }
 
-    while (micros() - sample_micros < sample_interval / 2 ) { yield(); }
+    while (micros() - sample_micros < sample_interval / 2 ) { }
 
     sample_micros = micros();
 
@@ -55,7 +54,7 @@ bool SiedleClient::receiveLoop() {
     for (int i = 30; i >= 0; i--) {
         // no worries about rollover
         // @see https://arduino.stackexchange.com/questions/12587/how-can-i-handle-the-millis-rollover
-        while (micros() - sample_micros < sample_interval) { yield(); }
+        while (micros() - sample_micros < sample_interval) { }
         bitWrite(cmnd, i, readBit());
         sample_micros += sample_interval;
     }
@@ -66,9 +65,7 @@ bool SiedleClient::receiveLoop() {
     }
 
     // Make sure we wait until the master pushes up the bus voltage
-    while(readBit() == LOW) {
-        yield();
-    }
+    while (getBusvoltage() < ADC_CARRIED_HIGH_THRESHOLD_VOLTAGE) { }
 
     this->cmd = cmnd;
     rxCount++;
@@ -94,7 +91,7 @@ bool SiedleClient::sendCmd(siedle_cmd_t tx_cmd) {
     for (int i=31; i >= 0; i--) {
         auto bit = bitRead(tx_cmd, i);
         digitalWrite(outputPin, !bit);
-        while (micros() - last_micros < BIT_DURATION) { yield(); }
+        while (micros() - last_micros < BIT_DURATION) { }
         last_micros += BIT_DURATION;
 
         // Check if the bus master holds the bus voltage below a specific threshold
