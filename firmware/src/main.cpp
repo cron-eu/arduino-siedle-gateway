@@ -2,12 +2,18 @@
 
 #include <Scheduler.h>
 #include <WiFiNINA.h>
+
+#define USE_MQTT
+
+#ifdef USE_MQTT
 #include <ArduinoBearSSL.h>
 #include <ArduinoECCX08.h>
 #include <ArduinoMqttClient.h>
+#include <aws_iot_secrets.h>
+
+#endif
 
 #include <wifi_client_secrets.h>
-#include <aws_iot_secrets.h>
 
 #include <WebServer.h>
 #include <SiedleClient.h>
@@ -31,12 +37,15 @@ SiedleClient siedleClient(SIEDLE_A_IN, SIEDLE_TX_PIN);
 CircularBuffer<SiedleLogEntry, LOG_SIZE> siedleRxLog;
 RTCZero rtc;
 
+#ifdef USE_MQTT
 WiFiClient    wifiClient;            // Used for the TCP socket connection
 BearSSLClient sslClient(wifiClient); // Used for SSL/TLS connection, integrates with ECC508
 MqttClient    mqttClient(sslClient);
 
 const char* certificate  = SECRET_CERTIFICATE;
 const char broker[]      = SECRET_BROKER;
+#endif
+
 const char ssid[] = SECRET_SSID;    // network SSID (name)
 const char pass[] = SECRET_PASS;    // network password (use for WPA, or use as key for WEP)
 
@@ -99,9 +108,11 @@ void printDebug(Print *handler) {
     handler->println(siedleClient.getBusvoltage());
     handler->print(" V</dd></dl>");
 
+#ifdef USE_MQTT
     handler->print("<dl><dt>AWS MQTT Link</dt><dd>");
     handler->println(mqttClient.connected() ? "OK" : "Not Connected");
     handler->print("</dd></dl>");
+#endif
 
     auto size = min(siedleRxLog.capacity, siedleClient.rxCount);
     handler->print("<h3>Received Data</h3><table><tr><th>Timestamp</th><th>Command</th></tr>");
@@ -143,6 +154,7 @@ void printWifiStatus() {
     Serial.println(ip);
 }
 
+#ifdef USE_MQTT
 void connectMQTT() {
     Serial.print("Attempting to MQTT broker: ");
     Serial.print(broker);
@@ -211,6 +223,7 @@ inline void setupMQTT() {
         connectMQTT();
     }
 }
+#endif
 
 void __unused setup() {
     webServer.printDebug = printDebug;
@@ -250,7 +263,9 @@ void __unused setup() {
 
     Scheduler.startLoop(webServerLoop);
 
+#ifdef USE_MQTT
     setupMQTT();
+#endif
 
     Scheduler.startLoop(siedleClientLoop);
     Scheduler.startLoop(ntpLoop);
@@ -266,22 +281,29 @@ void __unused loop() {
 //        return;
 //    }
 
+#ifdef USE_MQTT
     // poll for new MQTT messages and send keep alives
     mqttClient.poll();
 
     // check if we have some messages to send
     auto toSendCount = siedleClient.rxCount - mqttSentCount;
 
+    yield();
+
     if (toSendCount > 0) {
         auto entry = siedleRxLog.last();
-        mqttClient.beginMessage("siedle/received");
         char buf[32];
         sprintf(buf, "{\"ts\":%lu,\"cmd\":%lu}", entry.timestamp, entry.cmd);
+
+        mqttClient.beginMessage("siedle/received");
         mqttClient.print(buf);
         mqttClient.endMessage();
+
         mqttSentCount++;
     }
 
     yield();
-//    delay(1000);
+#else
+    delay(1000);
+#endif
 }
