@@ -10,7 +10,7 @@
 #include <RTCZero.h>
 #include <time.h>
 
-#define SIEDLE_A_IN A0
+#define SIEDLE_A_IN A1
 #define SIEDLE_TX_PIN 0
 
 #define LOG_SIZE 100
