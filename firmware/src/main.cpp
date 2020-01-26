@@ -7,6 +7,8 @@
 #include <WebServer.h>
 #include <SiedleClient.h>
 #include <CircularBuffer.h>
+#include <RTCZero.h>
+#include <time.h>
 
 #define SIEDLE_A_IN A0
 #define SIEDLE_TX_PIN 0
@@ -22,6 +24,7 @@ int status = WL_IDLE_STATUS;
 WebServer webServer(80);
 SiedleClient siedleClient(SIEDLE_A_IN, SIEDLE_TX_PIN);
 CircularBuffer<SiedleLogEntry, LOG_SIZE> siedleRxLog;
+RTCZero rtc;
 
 void statusLEDLoop() {
     if (status == WL_CONNECTED) {
@@ -46,35 +49,62 @@ void statusLEDLoop() {
     delay(250);
 }
 
+// This loop synchronized the internal RTC with the time got from an NTP server, using the WiFi Library
+void ntpLoop() {
+    auto epoch = WiFi.getTime();
+    if (epoch == 0) {
+        delay(3000); // retry in 3 seconds
+        return;
+    }
+
+    rtc.setEpoch(epoch);
+
+    // next sync in 5 minutes
+    delay(5 * 60 * 1000);
+}
+
 void siedleClientLoop() {
     if (siedleClient.receiveLoop()) {
-        siedleRxLog.push({ millis(), siedleClient.cmd });
+        siedleRxLog.push({ rtc.getEpoch(), siedleClient.cmd });
     }
     yield();
 }
 
 void printDebug(Print *handler) {
+
+    time_t time;
+
+    handler->print("<h3>Device Status</h3>");
+
+    handler->print("<dl><dt>Date/Time (UTC)</dt><dd>");
+    time = rtc.getEpoch();
+    handler->println(ctime(&time));
+    handler->print("</dd></dl>");
+
+    handler->print("<dl><dt>Bus Voltage</dt><dd>");
+    handler->println(siedleClient.getBusvoltage());
+    handler->print(" V</dd></dl>");
+
     auto size = min(siedleRxLog.capacity, siedleClient.rxCount);
+    handler->print("<h3>Received Data</h3><table><tr><th>Timestamp</th><th>Command</th></tr>");
     for (unsigned int i = 0; i < size; i++) {
         SiedleLogEntry entry = siedleRxLog[i];
-        handler->print(entry.timestamp);
-        handler->print(": ");
-        handler->println(entry.cmd, HEX);
+        time = entry.timestamp;
+        char line[100];
+
+        sprintf(line, "<tr><td>%s</th><td><pre>%08lx</pre></td></tr>",
+                ctime(&time),
+                entry.cmd
+        );
+
+        handler->print(line);
     }
 
-    handler->print("Rx/Tx count: ");
-    handler->print(siedleClient.rxCount);
-    handler->print("/");
-    handler->println(siedleClient.txCount);
-
-    handler->print("Bus Voltage: ");
-    handler->println(siedleClient.getBusvoltage());
+    handler->print("</table>");
 }
 
 void webServerLoop() {
-    if (siedleClient.state == idle) {
-        webServer.loop();
-    }
+    webServer.loop();
     yield();
 }
 
@@ -95,9 +125,10 @@ void printWifiStatus() {
     Serial.println(ip);
 }
 
-void setup() {
+void __unused setup() {
     webServer.printDebug = printDebug;
     Scheduler.startLoop(statusLEDLoop);
+    rtc.begin();
     Serial.begin(115200);
     pinMode(LED_BUILTIN, OUTPUT);
 
@@ -135,8 +166,9 @@ void setup() {
 
     Scheduler.startLoop(webServerLoop);
     Scheduler.startLoop(siedleClientLoop);
+    Scheduler.startLoop(ntpLoop);
 }
 
-void loop() {
+void __unused loop() {
     delay(1000);
 }

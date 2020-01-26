@@ -6,13 +6,13 @@ void WebServer::begin() {
     _server.begin();
 }
 
-float get_battery_voltage() {
-    auto sensorValue = analogRead(ADC_BATTERY);
-
-    // Convert the analog reading (which goes from 0 - 1023) to the battery voltage
-    // see https://content.arduino.cc/assets/MKRWiFi1010V2.0_sch.pdf
-    return (float) sensorValue * 3.3 / 1023.0 / (1200.0 / (1200.0 + 330.0));
-}
+//float get_battery_voltage() {
+//    auto sensorValue = analogRead(ADC_BATTERY);
+//
+//    // Convert the analog reading (which goes from 0 - 1023) to the battery voltage
+//    // see https://content.arduino.cc/assets/MKRWiFi1010V2.0_sch.pdf
+//    return (float) sensorValue * 3.3 / 1023.0 / (1200.0 / (1200.0 + 330.0));
+//}
 
 void WebServer::loop() {
     WiFiClient client = _server.available();   // listen for incoming clients
@@ -33,19 +33,16 @@ void WebServer::loop() {
                         client.println("Content-type:text/html");
                         client.println();
 
-                        client.print("<h1>Hello from Arduino MKR 1010 WiFi :-)</h1>");
-                        client.print("<h3>Battery Voltage</h3>");
-                        client.print("<dl>");
-                        client.print("<dt>ADC Output</dt>");
-                        client.print("<dd>");
-                        client.print(get_battery_voltage());
-                        client.print("</dd>");
+                        client.print("<h1>Arduino Doorbell</h1>");
+//                        client.print("<h3>Battery Voltage</h3>");
+//                        client.print("<dl>");
+//                        client.print("<dt>ADC Output</dt>");
+//                        client.print("<dd>");
+//                        client.print(get_battery_voltage());
+//                        client.print("</dd>");
 
                         if (printDebug != NULL) {
-                            client.print("<h4>Received Data:</h4>");
-                            client.println("<pre>");
                             printDebug(&client);
-                            client.println("</pre>");
                         }
 
                         // The HTTP response ends with another blank line:
