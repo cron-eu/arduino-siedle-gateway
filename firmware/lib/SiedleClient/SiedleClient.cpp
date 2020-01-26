@@ -60,6 +60,11 @@ bool SiedleClient::receiveLoop() {
         sample_micros += sample_interval;
     }
 
+    if (cmnd == 0) {
+        state = idle;
+        return false;
+    }
+
     // Make sure we wait until the master pushes up the bus voltage
     while(readBit() == LOW) {
         yield();
