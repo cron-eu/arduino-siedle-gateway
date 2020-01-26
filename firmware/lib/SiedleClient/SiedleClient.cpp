@@ -69,6 +69,8 @@ bool SiedleClient::receiveLoop() {
     rxCount++;
 
     state = idle;
+
+    return true;
 }
 
 inline int SiedleClient::readBit() {
