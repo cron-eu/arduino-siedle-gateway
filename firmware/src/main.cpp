@@ -64,8 +64,8 @@ void ntpLoop() {
 }
 
 void siedleClientLoop() {
-    if (siedleClient.receiveLoop()) {
-        siedleRxLog.push({ rtc.getEpoch(), siedleClient.cmd });
+    if (siedleClient.available()) {
+        siedleRxLog.push({ rtc.getEpoch(), siedleClient.read() });
     }
     yield();
 }
@@ -81,9 +81,9 @@ void printDebug(Print *handler) {
     handler->println(ctime(&time));
     handler->print("</dd></dl>");
 
-    handler->print("<dl><dt>Bus Voltage</dt><dd>");
-    handler->println(siedleClient.getBusvoltage());
-    handler->print(" V</dd></dl>");
+//    handler->print("<dl><dt>Bus Voltage</dt><dd>");
+//    handler->println(siedleClient.getBusvoltage());
+//    handler->print(" V</dd></dl>");
 
     auto size = min(siedleRxLog.capacity, siedleClient.rxCount);
     handler->print("<h3>Received Data</h3><table><tr><th>Timestamp</th><th>Command</th></tr>");
@@ -133,6 +133,8 @@ void __unused setup() {
     pinMode(LED_BUILTIN, OUTPUT);
 
     Serial.println("Booting..");
+
+    siedleClient.begin();
 
     char ssid[] = SECRET_SSID;    // network SSID (name)
     char pass[] = SECRET_PASS;    // network password (use for WPA, or use as key for WEP)
