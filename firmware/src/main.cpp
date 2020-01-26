@@ -21,7 +21,7 @@
 #include <RTCZero.h>
 #include <time.h>
 
-#define SIEDLE_A_IN A0
+#define SIEDLE_A_IN A1
 #define SIEDLE_TX_PIN 0
 
 #define LOG_SIZE 100
@@ -87,8 +87,8 @@ void ntpLoop() {
 }
 
 void siedleClientLoop() {
-    if (siedleClient.receiveLoop()) {
-        siedleRxLog.push({ rtc.getEpoch(), siedleClient.cmd });
+    if (siedleClient.available()) {
+        siedleRxLog.push({ rtc.getEpoch(), siedleClient.read() });
     }
     yield();
 }
@@ -104,9 +104,9 @@ void printDebug(Print *handler) {
     handler->println(ctime(&time));
     handler->print("</dd></dl>");
 
-    handler->print("<dl><dt>Bus Voltage</dt><dd>");
-    handler->println(siedleClient.getBusvoltage());
-    handler->print(" V</dd></dl>");
+//    handler->print("<dl><dt>Bus Voltage</dt><dd>");
+//    handler->println(siedleClient.getBusvoltage());
+//    handler->print(" V</dd></dl>");
 
 #ifdef USE_MQTT
     handler->print("<dl><dt>AWS MQTT Link</dt><dd>");
@@ -233,6 +233,8 @@ void __unused setup() {
     pinMode(LED_BUILTIN, OUTPUT);
 
     Serial.println("Booting..");
+
+    siedleClient.begin();
 
     // check for the WiFi module:
     if (WiFi.status() == WL_NO_MODULE) {

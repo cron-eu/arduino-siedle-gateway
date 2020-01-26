@@ -18,31 +18,46 @@ enum SiedleClientState {
 class SiedleClient {
 public:
     /**
+     * SiedleClient provides high level methods to send and receive data. The latter is being done using a ISR to avoid
+     * timing issues.
+     *
+     * Important Note: This Class is not yet ready to be instantiate more than once! (because the ISR is not multi-
+     * instance ready)
+     *
      * @param inputPin analog input pin
      * @param outputPin digital out pin (*negated*)
      */
     SiedleClient(uint8_t inputPin, uint8_t outputPin);
     /**
-     * Tries to receive data, if available.
+     * Attach the ISR and start receiving data.
      *
-     * This method should be put in a runloop, e.g. using the Scheduler library
-     *
-     * @return New Data available
+     * @return false if there was an error
      */
-    bool receiveLoop();
+    bool begin();
+    void end();
     unsigned int rxCount = 0;
     unsigned int txCount = 0;
-    // Last received command
-    siedle_cmd_t cmd;
+
     // Send a command. Returns false if there was an error while trying to send, e.g. the bus master did not respond on time.
     bool sendCmd(siedle_cmd_t cmd);
     SiedleClientState state = idle;
     float getBusvoltage();
+    void rxISR();
+    bool available() {
+        return _available;
+    }
+    siedle_cmd_t read() {
+        _available = false;
+        return cmd;
+    }
 
 private:
     int readBit();
     uint8_t inputPin;
     uint8_t outputPin;
+    // Last received command
+    volatile siedle_cmd_t cmd;
+    volatile bool _available = false;
 };
 
 #endif //FIRMWARE_SIEDLECLIENT_H

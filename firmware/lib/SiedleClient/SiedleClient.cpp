@@ -21,6 +21,15 @@
 // If the voltage is greater than this threshold, we assume that there was an error.
 #define ADC_CARRIED_HIGH_THRESHOLD_VOLTAGE ( 12.0 )
 
+static SiedleClient *currentInstance = NULL;
+
+// Just a wrapper to call the class instance method
+static void _rxISR() {
+    if (currentInstance) {
+        currentInstance->rxISR();
+    }
+}
+
 SiedleClient::SiedleClient(uint8_t inputPin, uint8_t outputPin) {
     pinMode(inputPin, INPUT);
     pinMode(outputPin, OUTPUT);
@@ -28,51 +37,61 @@ SiedleClient::SiedleClient(uint8_t inputPin, uint8_t outputPin) {
     this->outputPin = outputPin;
 }
 
-bool SiedleClient::receiveLoop() {
+bool SiedleClient::begin() {
+    if (currentInstance) { return false; }
+    currentInstance = this;
+    attachInterrupt(digitalPinToInterrupt(inputPin), _rxISR, FALLING);
+    return true;
+}
 
-    if (state == transmitting) { return false; }
+void __unused SiedleClient::end() {
+    detachInterrupt(digitalPinToInterrupt(inputPin));
+}
 
+void SiedleClient::rxISR() {
     unsigned long const sample_interval = BIT_DURATION;
-    unsigned long sample_micros = micros();
+    int i;
+    uint32_t cmnd = 0x0;
 
-    // analogRead on the MKR series takes about 500us, so after 2 reads we should be about fine
-    for (int i = 0; i <= 1; i++) {
-        if (readBit() == HIGH) {
-            return false;
-        }
+    if (state == transmitting) { return; }
+
+    // we detach the interrupt here because we want to do a analogRead() later on
+    // we must re-enable the interrupt prior to leaving this method, else the ISR will never be called again!
+    // use the bailout label to prematurely bail out if needed.
+    detachInterrupt(digitalPinToInterrupt(inputPin));
+
+    // wait for the FALLING slope
+    i = 0;
+    while (readBit() == HIGH) {
+        if (i>10) { goto bailout; }
+        delayMicroseconds(50);
     }
 
-    while (micros() - sample_micros < sample_interval / 2 ) { }
-
-    sample_micros = micros();
-
-    uint32_t cmnd = 0x0;
+    delayMicroseconds(sample_interval * 1.5);
 
     // we do already got the first bit, this being a logical 0
     // read in the remaining 31 bits now
     state = receiving;
-    for (int i = 30; i >= 0; i--) {
-        // no worries about rollover
-        // @see https://arduino.stackexchange.com/questions/12587/how-can-i-handle-the-millis-rollover
-        while (micros() - sample_micros < sample_interval) { }
+    for (i = 30; i >= 0; i--) {
         bitWrite(cmnd, i, readBit());
-        sample_micros += sample_interval;
+        delayMicroseconds(sample_interval - 10);
     }
 
     if (cmnd == 0) {
         state = idle;
-        return false;
+        goto bailout;
     }
 
-    // Make sure we wait until the master pushes up the bus voltage
-    while (getBusvoltage() < ADC_CARRIED_HIGH_THRESHOLD_VOLTAGE) { }
-
-    this->cmd = cmnd;
+    cmd = cmnd;
     rxCount++;
 
+    _available = true;
     state = idle;
 
-    return true;
+    bailout:
+    pinMode(inputPin, INPUT);
+    delayMicroseconds(100);
+    attachInterrupt(digitalPinToInterrupt(inputPin), _rxISR, FALLING);
 }
 
 inline int SiedleClient::readBit() {
