@@ -54,7 +54,8 @@ void siedleClientLoop() {
 }
 
 void printDebug(Print *handler) {
-    for (unsigned int i = 0; i < siedleRxLog.capacity; i++) {
+    auto size = min(siedleRxLog.capacity, siedleClient.rxCount);
+    for (unsigned int i = 0; i < size; i++) {
         SiedleLogEntry entry = siedleRxLog[i];
         handler->print(entry.timestamp);
         handler->print(": ");
