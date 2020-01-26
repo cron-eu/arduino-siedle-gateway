@@ -275,13 +275,18 @@ void __unused setup() {
 
 int mqttSentCount = 0;
 
+unsigned long reconnectMillis = 0;
+
 void __unused loop() {
 
-//    if (!mqttClient.connected()) {
-//        Serial.println("MQTT not connected. Re-connecting..");
-//        connectMQTT();
-//        return;
-//    }
+    if (!mqttClient.connected()) {
+        auto elapsed = millis() - reconnectMillis;
+        if (elapsed > 30000) {
+            mqttClient.connect(broker, 8883);
+            reconnectMillis = millis();
+            return;
+        }
+    }
 
 #ifdef USE_MQTT
     // poll for new MQTT messages and send keep alives
