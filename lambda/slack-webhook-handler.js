@@ -55,13 +55,13 @@ exports.handler = (event, context) => {
           text: `Received command \`${cmdHex}\` @ ${timestamp.toLocaleString()}`,
         }
       },
-      {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `> ${decimalToRadix(event.cmd, 2,32)}`,
-        }
-      },
+      // {
+      //   type: "section",
+      //   text: {
+      //     type: "mrkdwn",
+      //     text: `> ${decimalToRadix(event.cmd, 2,32)}`,
+      //   }
+      // },
     ],
   };
 
