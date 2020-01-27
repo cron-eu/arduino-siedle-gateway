@@ -11,6 +11,6 @@
 
 // Siedle Log size (used for internal buffering in cases where the MQTT server is not reachable) and also for
 // the Web UI
-#define LOG_SIZE 100
+#define LOG_SIZE 32
 
 #endif //FIRMWARE_SETTINGS_H
