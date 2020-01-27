@@ -1,30 +1,23 @@
 #include <Arduino.h>
-
 #include <WiFiNINA.h>
 
-#define USE_MQTT
+#include <hardware.h>
+#include <settings.h>
 
 #ifdef USE_MQTT
 #include <ArduinoBearSSL.h>
 #include <ArduinoECCX08.h>
 #include <ArduinoMqttClient.h>
 #include <aws_iot_secrets.h>
-
 #endif
 
 #include <wifi_client_secrets.h>
-
 #include <WebServer.h>
 #include <SiedleClient.h>
 #include <CircularBuffer.h>
 #include <RTCZero.h>
 #include <time.h>
 #include <MemoryUtils.h>
-
-#define SIEDLE_A_IN A1
-#define SIEDLE_TX_PIN 0
-
-#define LOG_SIZE 100
 
 typedef struct {
     unsigned long timestamp;
