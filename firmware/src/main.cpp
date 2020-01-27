@@ -118,18 +118,18 @@ void printDebug(Print *handler) {
 
     handler->print("<h3>Device Status</h3>");
 
-    handler->print("<dl><dt>Uptime:</dt><dd>");
+    handler->print("<dl><dt>Uptime</dt><dd>");
 
     auto uptime = getUptime();
     if (uptime > 24 * 3600) {
         handler->print((float)uptime / (24 * 3600), 1);
-        handler->print("day(s)");
+        handler->print(" days");
     } else if (uptime > 3600) {
         handler->print((float)uptime / 3600, 1);
-        handler->print("hour(s)");
+        handler->print(" hr");
     } else {
         handler->print((float)uptime / 60, 0);
-        handler->print("minute(s)");
+        handler->print(" min");
     }
 
     handler->print("</dd></dl>");
