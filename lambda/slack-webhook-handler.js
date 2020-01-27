@@ -3,14 +3,14 @@ const util = require('util');
 
 exports.handler = (event, context) => {
 
-  function decimalToHex(d, padding) {
-    let hex = Number(d).toString(16);
+  function decimalToRadix(d, radix, padding) {
+    let s = Number(d).toString(radix);
 
-    while (hex.length < padding) {
-      hex = "0" + hex;
+    while (s.length < padding) {
+      s = '0' + s;
     }
 
-    return hex;
+    return s;
   }
 
   const slackWebHook = process.env.SLACK_WEB_HOOK;
@@ -37,7 +37,14 @@ exports.handler = (event, context) => {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `Received command \`${decimalToHex(event.cmd, 8)}\` @ ${timestamp.toLocaleString()}`,
+          text: `Received command \`${decimalToRadix(event.cmd, 16,8)}\` @ ${timestamp.toLocaleString()}`,
+        }
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `> ${decimalToRadix(event.cmd, 2,32)}`,
         }
       },
     ],
