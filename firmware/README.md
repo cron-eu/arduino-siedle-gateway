@@ -15,9 +15,31 @@ Device Setup and Configuration
 
 An Overview about how the software and hardware works and guide to setup and configure the hardware.
 
-### Technical Overview
+Technical Overview
+---
 
-t.b.c.
+### Receive
+
+The Arduino uses a simple hardware for the power supply and also for converting the Siedle Bus voltage to a range compatible with the SAMD21 micro (which uses 3.3V supply).
+
+Using an ISR (interrupt service routine) the Arduino Firmware listens on the Siedle bus and captures all incoming messages, posting them using MQTT.
+
+The messaged posted are simple JSON messages like:
+
+```json
+{
+ "ts": 1580122760,
+ "cmd": 1151144720
+}
+``` 
+
+`ts` being the unix timestamp (UTC, synchronized via NTP), the `cmd` being the command itself - which is a 32 Bit unsigned integer.
+
+The communication with the AWS MQTT Broker is encrypted with an X.509 certificate (see below).
+
+### Transmit
+
+Currently not implemented, WIP.
 
 ### Crypto Chip, X.509 Certificate
 
