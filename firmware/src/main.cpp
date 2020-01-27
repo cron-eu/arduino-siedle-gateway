@@ -19,6 +19,7 @@
 #include <CircularBuffer.h>
 #include <RTCZero.h>
 #include <time.h>
+#include <MemoryUtils.h>
 
 #define SIEDLE_A_IN A1
 #define SIEDLE_TX_PIN 0
@@ -132,6 +133,10 @@ void printDebug(Print *handler) {
         handler->print(" min");
     }
 
+    handler->print("</dd></dl>");
+
+    handler->print("<dl><dt>Free Memory</dt><dd>");
+    handler->println(freeMemory());
     handler->print("</dd></dl>");
 
     handler->print("<dl><dt>Date/Time (UTC)</dt><dd>");
