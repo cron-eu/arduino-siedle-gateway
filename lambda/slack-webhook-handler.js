@@ -1,6 +1,18 @@
 const https = require('https');
 const util = require('util');
 
+const cmdMapping = {
+  '58dd10d0': 'cron IT Doorbell Ringing :mega:',
+  '408d15d0': 'cron IT Siedle Initiate Audio Stream Request',
+  '460d15d0': 'cron IT Open Door Request',
+};
+
+const cmdToIconMapping = {
+  '58dd10d0': ':bell:',
+  '408d15d0': ':sound:',
+  '460d15d0': ':white_check_mark:',
+};
+
 exports.handler = (event, context) => {
 
   function decimalToRadix(d, radix, padding) {
@@ -26,18 +38,21 @@ exports.handler = (event, context) => {
     return;
   }
 
+  const cmdHex = decimalToRadix(event.cmd, 16,8);
+  const icon = cmdToIconMapping[cmdHex];
+
   // noinspection JSUnresolvedVariable
   const timestamp = new Date(event.ts * 1000);
   const message = {
     channel: slackChannel,
     username: 'siedle-bot',
-    icon_emoji: ':bell:',
+    icon_emoji: icon || ':question:',
     blocks: [
       {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `Received command \`${decimalToRadix(event.cmd, 16,8)}\` @ ${timestamp.toLocaleString()}`,
+          text: `Received command \`${cmdHex}\` @ ${timestamp.toLocaleString()}`,
         }
       },
       {
@@ -49,6 +64,18 @@ exports.handler = (event, context) => {
       },
     ],
   };
+
+  const cmdDescription = cmdMapping[cmdHex];
+  if (cmdDescription) {
+    message.blocks.unshift({
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: `${icon ? icon + ' ' : ''}*${cmdDescription}*`,
+      }
+    });
+  }
+
 
   const r = https.request(slackWebHook, {method: 'POST'}, res => {
     res.setEncoding('utf8');
