@@ -48,7 +48,7 @@ const char broker[]      = SECRET_BROKER;
 const char ssid[] = SECRET_SSID;    // network SSID (name)
 const char pass[] = SECRET_PASS;    // network password (use for WPA, or use as key for WEP)
 
-void statusLEDLoop() {
+inline void statusLEDLoop() {
     static unsigned long lastMillis = 0;
     static int led = LOW;
     auto elapsed = millis() - lastMillis;
@@ -73,7 +73,7 @@ void statusLEDLoop() {
 }
 
 // This loop synchronized the internal RTC with the time got from an NTP server, using the WiFi Library
-void ntpLoop() {
+inline void ntpLoop() {
     static unsigned long lastMillis = 0;
     static bool initialized = false;
 
@@ -90,7 +90,7 @@ void ntpLoop() {
     }
 }
 
-void siedleClientLoop() {
+inline void siedleClientLoop() {
     if (siedleClient.available()) {
         siedleRxLog.push({ rtc.getEpoch(), siedleClient.read() });
     }
