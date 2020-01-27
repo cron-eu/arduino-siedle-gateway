@@ -171,7 +171,7 @@ void connectMQTT() {
     Serial.println();
 
     // subscribe to a topic
-    mqttClient.subscribe("arduinodoorbell/incoming");
+//    mqttClient.subscribe("arduinodoorbell/incoming");
 }
 
 unsigned long getTime() {
@@ -179,22 +179,22 @@ unsigned long getTime() {
     return WiFi.getTime();
 }
 
-void onMessageReceived(int messageSize) {
-    // we received a message, print out the topic and contents
-    Serial.print("Received a message with topic '");
-    Serial.print(mqttClient.messageTopic());
-    Serial.print("', length ");
-    Serial.print(messageSize);
-    Serial.println(" bytes:");
-
-    // use the Stream interface to print the contents
-    while (mqttClient.available()) {
-        Serial.print((char)mqttClient.read());
-    }
-    Serial.println();
-
-    Serial.println();
-}
+//void onMessageReceived(int messageSize) {
+//    // we received a message, print out the topic and contents
+//    Serial.print("Received a message with topic '");
+//    Serial.print(mqttClient.messageTopic());
+//    Serial.print("', length ");
+//    Serial.print(messageSize);
+//    Serial.println(" bytes:");
+//
+//    // use the Stream interface to print the contents
+//    while (mqttClient.available()) {
+//        Serial.print((char)mqttClient.read());
+//    }
+//    Serial.println();
+//
+//    Serial.println();
+//}
 
 inline void setupMQTT() {
     ECCX08.begin();
@@ -216,7 +216,7 @@ inline void setupMQTT() {
 
     // Set the message callback, this function is
     // called when the MQTTClient receives a message
-    mqttClient.onMessage(onMessageReceived);
+//    mqttClient.onMessage(onMessageReceived);
 
     if (!mqttClient.connected()) {
         // MQTT client is disconnected, connect
@@ -264,13 +264,12 @@ void __unused setup() {
     WiFi.lowPowerMode();
 
     Scheduler.startLoop(webServerLoop);
+    Scheduler.startLoop(ntpLoop);
+    Scheduler.startLoop(siedleClientLoop);
 
 #ifdef USE_MQTT
     setupMQTT();
 #endif
-
-    Scheduler.startLoop(siedleClientLoop);
-    Scheduler.startLoop(ntpLoop);
 }
 
 int mqttSentCount = 0;
