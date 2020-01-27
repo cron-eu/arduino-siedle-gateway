@@ -8,7 +8,7 @@ Firmware related documentation, how to build and configure the Hardware for oper
 
 #### Development Setup
 
-Instructions how to setup the whole project (install platformio, CLion related stuff) can be found [here](../README.md).
+Instructions how to setup the whole project (install platformio, CLion related stuff) can be found [here](../doc/Setup.md).
 
 Device Setup and Configuration
 ----
