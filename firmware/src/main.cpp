@@ -1,6 +1,5 @@
 #include <Arduino.h>
 
-#include <Scheduler.h>
 #include <WiFiNINA.h>
 
 #define USE_MQTT
@@ -49,48 +48,68 @@ const char broker[]      = SECRET_BROKER;
 const char ssid[] = SECRET_SSID;    // network SSID (name)
 const char pass[] = SECRET_PASS;    // network password (use for WPA, or use as key for WEP)
 
-void statusLEDLoop() {
-    if (status == WL_CONNECTED) {
-        digitalWrite(LED_BUILTIN, HIGH);
-        delay(150);
-        digitalWrite(LED_BUILTIN, LOW);
-        delay(3000);
-        return;
+unsigned long bootEpoch = 0;
+
+/**
+ * Determine the boot time of the system
+ *
+ * @return number of seconds since the system has booted up
+ */
+unsigned long getUptime() {
+    if (bootEpoch > 0) { return rtc.getEpoch() - bootEpoch; }
+    // else, NTP not initialized
+    return millis() / 1000;
+}
+
+inline void statusLEDLoop() {
+    static unsigned long lastMillis = 0;
+    static int led = LOW;
+    auto elapsed = millis() - lastMillis;
+    unsigned long threshold;
+
+    switch (status) {
+        case WL_CONNECTED:
+            threshold = led == LOW ? 3000 : 150;
+            break;
+        case WL_NO_MODULE:
+            threshold = 100;
+            break;
+        default:
+            threshold = 250;
     }
 
-    if (status == WL_NO_MODULE) {
-        digitalWrite(LED_BUILTIN, HIGH);
-        delay(100);
-        digitalWrite(LED_BUILTIN, LOW);
-        delay(100);
-        return;
+    if (elapsed >= threshold) {
+        led = !led;
+        digitalWrite(LED_BUILTIN, led);
+        lastMillis = millis();
     }
-
-    digitalWrite(LED_BUILTIN, HIGH);
-    delay(250);
-    digitalWrite(LED_BUILTIN, LOW);
-    delay(250);
 }
 
 // This loop synchronized the internal RTC with the time got from an NTP server, using the WiFi Library
-void ntpLoop() {
-    auto epoch = WiFi.getTime();
-    if (epoch == 0) {
-        delay(3000); // retry in 3 seconds
-        return;
+inline void ntpLoop() {
+    static unsigned long lastMillis = 0;
+    static bool initialized = false;
+
+    // if we're in the initializing phase, re-try every 3 seconds. Else use a longer sync interval
+    unsigned long interval = !initialized ? 3000 : 5 * 60 * 1000;
+
+    if (millis() - lastMillis >= interval) {
+        auto epoch = WiFi.getTime();
+        if (epoch != 0) {
+            initialized = true;
+            rtc.setEpoch(epoch);
+            if (bootEpoch == 0) {
+                bootEpoch = epoch;
+            }
+        }
+        lastMillis = millis();
     }
-
-    rtc.setEpoch(epoch);
-
-    // next sync in 5 minutes
-    delay(5 * 60 * 1000);
 }
 
-void siedleClientLoop() {
+inline void siedleClientLoop() {
     if (siedleClient.available()) {
         siedleRxLog.push({ rtc.getEpoch(), siedleClient.read() });
     }
-    yield();
 }
 
 void printDebug(Print *handler) {
@@ -98,6 +117,22 @@ void printDebug(Print *handler) {
     time_t time;
 
     handler->print("<h3>Device Status</h3>");
+
+    handler->print("<dl><dt>Uptime:</dt><dd>");
+
+    auto uptime = getUptime();
+    if (uptime > 24 * 3600) {
+        handler->print((float)uptime / (24 * 3600), 1);
+        handler->print("day(s)");
+    } else if (uptime > 3600) {
+        handler->print((float)uptime / 3600, 1);
+        handler->print("hour(s)");
+    } else {
+        handler->print((float)uptime / 60, 0);
+        handler->print("minute(s)");
+    }
+
+    handler->print("</dd></dl>");
 
     handler->print("<dl><dt>Date/Time (UTC)</dt><dd>");
     time = rtc.getEpoch();
@@ -132,11 +167,6 @@ void printDebug(Print *handler) {
     handler->print("</table>");
 }
 
-void webServerLoop() {
-    webServer.loop();
-    yield();
-}
-
 void printWifiStatus() {
     // print the SSID of the network you're attached to:
     Serial.print("SSID: ");
@@ -155,25 +185,6 @@ void printWifiStatus() {
 }
 
 #ifdef USE_MQTT
-void connectMQTT() {
-    Serial.print("Connecting to MQTT broker: ");
-    Serial.print(broker);
-    Serial.print(" ");
-
-    while (!mqttClient.connect(broker, 8883)) {
-        // failed, retry
-        Serial.print(".");
-        delay(5000);
-    }
-    Serial.println();
-
-    Serial.println("connected!");
-    Serial.println();
-
-    // subscribe to a topic
-//    mqttClient.subscribe("arduinodoorbell/incoming");
-}
-
 unsigned long getTime() {
     // get the current time from the WiFi module
     return WiFi.getTime();
@@ -218,16 +229,11 @@ inline void setupMQTT() {
     // called when the MQTTClient receives a message
 //    mqttClient.onMessage(onMessageReceived);
 
-    if (!mqttClient.connected()) {
-        // MQTT client is disconnected, connect
-        connectMQTT();
-    }
 }
 #endif
 
 void __unused setup() {
     webServer.printDebug = printDebug;
-    Scheduler.startLoop(statusLEDLoop);
     rtc.begin();
     Serial.begin(115200);
     pinMode(LED_BUILTIN, OUTPUT);
@@ -263,54 +269,58 @@ void __unused setup() {
     webServer.begin();
     WiFi.lowPowerMode();
 
-    Scheduler.startLoop(webServerLoop);
-    Scheduler.startLoop(ntpLoop);
-    Scheduler.startLoop(siedleClientLoop);
-
 #ifdef USE_MQTT
     setupMQTT();
 #endif
 }
 
-int mqttSentCount = 0;
+#ifdef USE_MQTT
+void inline mqttLoop() {
+    static unsigned long reconnectMillis = 0;
+    static int mqttSentCount = 0;
 
-unsigned long reconnectMillis = 0;
-
-void __unused loop() {
+    unsigned long elapsed = millis() - reconnectMillis;
 
     if (!mqttClient.connected()) {
-        auto elapsed = millis() - reconnectMillis;
-        if (elapsed > 30000) {
+        if (elapsed > 10000) {
+            auto connected = mqttClient.connect(broker, 8883);
             reconnectMillis = millis();
-            mqttClient.connect(broker, 8883);
-            yield();
-            return;
+            if (connected) {
+                // subscribe to a topic
+//                mqttClient.subscribe("arduinodoorbell/incoming");
+            }
         }
+    } else {
+        // poll for new MQTT messages and send keep alives
+        mqttClient.poll();
+        // check if we have some messages to send
+        auto toSendCount = siedleClient.rxCount - mqttSentCount;
+
+        if (toSendCount > 0) {
+            auto entry = siedleRxLog.last();
+            char buf[32];
+            sprintf(buf, "{\"ts\":%lu,\"cmd\":%lu}", entry.timestamp, entry.cmd);
+
+            mqttClient.beginMessage("siedle/received");
+            mqttClient.print(buf);
+            mqttClient.endMessage();
+
+            mqttSentCount++;
+        }
+
+        // reset the reconnect timer
+        reconnectMillis = millis();
     }
 
+}
+#endif
+
+void __unused loop() {
+    statusLEDLoop();
+    ntpLoop();
+    webServer.loop();
+    siedleClientLoop();
 #ifdef USE_MQTT
-    // poll for new MQTT messages and send keep alives
-    mqttClient.poll();
-
-    // check if we have some messages to send
-    auto toSendCount = siedleClient.rxCount - mqttSentCount;
-
-    yield();
-
-    if (toSendCount > 0) {
-        auto entry = siedleRxLog.last();
-        char buf[32];
-        sprintf(buf, "{\"ts\":%lu,\"cmd\":%lu}", entry.timestamp, entry.cmd);
-
-        mqttClient.beginMessage("siedle/received");
-        mqttClient.print(buf);
-        mqttClient.endMessage();
-
-        mqttSentCount++;
-    }
-
-    yield();
-#else
-    delay(1000);
+    mqttLoop();
 #endif
 }
