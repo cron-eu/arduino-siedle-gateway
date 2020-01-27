@@ -48,6 +48,19 @@ const char broker[]      = SECRET_BROKER;
 const char ssid[] = SECRET_SSID;    // network SSID (name)
 const char pass[] = SECRET_PASS;    // network password (use for WPA, or use as key for WEP)
 
+unsigned long bootEpoch = 0;
+
+/**
+ * Determine the boot time of the system
+ *
+ * @return number of seconds since the system has booted up
+ */
+unsigned long getUptime() {
+    if (bootEpoch > 0) { return rtc.getEpoch() - bootEpoch; }
+    // else, NTP not initialized
+    return millis() / 1000;
+}
+
 inline void statusLEDLoop() {
     static unsigned long lastMillis = 0;
     static int led = LOW;
@@ -85,6 +98,9 @@ inline void ntpLoop() {
         if (epoch != 0) {
             initialized = true;
             rtc.setEpoch(epoch);
+            if (bootEpoch == 0) {
+                bootEpoch = epoch;
+            }
         }
         lastMillis = millis();
     }
@@ -101,6 +117,22 @@ void printDebug(Print *handler) {
     time_t time;
 
     handler->print("<h3>Device Status</h3>");
+
+    handler->print("<dl><dt>Uptime:</dt><dd>");
+
+    auto uptime = getUptime();
+    if (uptime > 24 * 3600) {
+        handler->print((float)uptime / (24 * 3600), 1);
+        handler->print("day(s)");
+    } else if (uptime > 3600) {
+        handler->print((float)uptime / 3600, 1);
+        handler->print("hour(s)");
+    } else {
+        handler->print((float)uptime / 60, 0);
+        handler->print("minute(s)");
+    }
+
+    handler->print("</dd></dl>");
 
     handler->print("<dl><dt>Date/Time (UTC)</dt><dd>");
     time = rtc.getEpoch();
