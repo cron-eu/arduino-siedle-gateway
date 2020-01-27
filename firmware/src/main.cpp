@@ -1,6 +1,5 @@
 #include <Arduino.h>
 
-#include <Scheduler.h>
 #include <WiFiNINA.h>
 
 #define USE_MQTT
@@ -50,47 +49,51 @@ const char ssid[] = SECRET_SSID;    // network SSID (name)
 const char pass[] = SECRET_PASS;    // network password (use for WPA, or use as key for WEP)
 
 void statusLEDLoop() {
-    if (status == WL_CONNECTED) {
-        digitalWrite(LED_BUILTIN, HIGH);
-        delay(150);
-        digitalWrite(LED_BUILTIN, LOW);
-        delay(3000);
-        return;
+    static unsigned long lastMillis = 0;
+    static int led = LOW;
+    auto elapsed = millis() - lastMillis;
+    unsigned long threshold;
+
+    switch (status) {
+        case WL_CONNECTED:
+            threshold = led == LOW ? 3000 : 150;
+            break;
+        case WL_NO_MODULE:
+            threshold = 100;
+            break;
+        default:
+            threshold = 250;
     }
 
-    if (status == WL_NO_MODULE) {
-        digitalWrite(LED_BUILTIN, HIGH);
-        delay(100);
-        digitalWrite(LED_BUILTIN, LOW);
-        delay(100);
-        return;
+    if (elapsed >= threshold) {
+        led = !led;
+        digitalWrite(LED_BUILTIN, led);
+        lastMillis = millis();
     }
-
-    digitalWrite(LED_BUILTIN, HIGH);
-    delay(250);
-    digitalWrite(LED_BUILTIN, LOW);
-    delay(250);
 }
 
 // This loop synchronized the internal RTC with the time got from an NTP server, using the WiFi Library
 void ntpLoop() {
-    auto epoch = WiFi.getTime();
-    if (epoch == 0) {
-        delay(3000); // retry in 3 seconds
-        return;
+    static unsigned long lastMillis = 0;
+    static bool initialized = false;
+
+    // if we're in the initializing phase, re-try every 3 seconds. Else use a longer sync interval
+    unsigned long interval = !initialized ? 3000 : 5 * 60 * 1000;
+
+    if (millis() - lastMillis >= interval) {
+        auto epoch = WiFi.getTime();
+        if (epoch != 0) {
+            initialized = true;
+            rtc.setEpoch(epoch);
+        }
+        lastMillis = millis();
     }
-
-    rtc.setEpoch(epoch);
-
-    // next sync in 5 minutes
-    delay(5 * 60 * 1000);
 }
 
 void siedleClientLoop() {
     if (siedleClient.available()) {
         siedleRxLog.push({ rtc.getEpoch(), siedleClient.read() });
     }
-    yield();
 }
 
 void printDebug(Print *handler) {
@@ -130,11 +133,6 @@ void printDebug(Print *handler) {
     }
 
     handler->print("</table>");
-}
-
-void webServerLoop() {
-    webServer.loop();
-    yield();
 }
 
 void printWifiStatus() {
@@ -227,7 +225,6 @@ inline void setupMQTT() {
 
 void __unused setup() {
     webServer.printDebug = printDebug;
-    Scheduler.startLoop(statusLEDLoop);
     rtc.begin();
     Serial.begin(115200);
     pinMode(LED_BUILTIN, OUTPUT);
@@ -263,10 +260,6 @@ void __unused setup() {
     webServer.begin();
     WiFi.lowPowerMode();
 
-    Scheduler.startLoop(webServerLoop);
-    Scheduler.startLoop(ntpLoop);
-    Scheduler.startLoop(siedleClientLoop);
-
 #ifdef USE_MQTT
     setupMQTT();
 #endif
@@ -277,7 +270,12 @@ int mqttSentCount = 0;
 unsigned long reconnectMillis = 0;
 
 void __unused loop() {
+    statusLEDLoop();
+    ntpLoop();
+    webServer.loop();
+    siedleClientLoop();
 
+#ifdef USE_MQTT
     if (!mqttClient.connected()) {
         auto elapsed = millis() - reconnectMillis;
         if (elapsed > 30000) {
@@ -288,14 +286,11 @@ void __unused loop() {
         }
     }
 
-#ifdef USE_MQTT
     // poll for new MQTT messages and send keep alives
     mqttClient.poll();
 
     // check if we have some messages to send
     auto toSendCount = siedleClient.rxCount - mqttSentCount;
-
-    yield();
 
     if (toSendCount > 0) {
         auto entry = siedleRxLog.last();
@@ -308,9 +303,5 @@ void __unused loop() {
 
         mqttSentCount++;
     }
-
-    yield();
-#else
-    delay(1000);
 #endif
 }
