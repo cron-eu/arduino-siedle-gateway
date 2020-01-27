@@ -38,6 +38,7 @@ SiedleClient::SiedleClient(uint8_t inputPin, uint8_t outputPin) {
 }
 
 bool SiedleClient::begin() {
+    digitalWrite(outputPin, LOW);
     if (currentInstance) { return false; }
     currentInstance = this;
     attachInterrupt(digitalPinToInterrupt(inputPin), _rxISR, FALLING);
@@ -104,28 +105,37 @@ float SiedleClient::getBusvoltage() {
 }
 
 bool SiedleClient::sendCmd(siedle_cmd_t tx_cmd) {
-    auto last_micros = micros();
+    // disable the rx irq while we are transmitting data
+    detachInterrupt(digitalPinToInterrupt(inputPin));
+    bool retVal = true;
 
     state = transmitting;
+
     for (int i=31; i >= 0; i--) {
         auto bit = bitRead(tx_cmd, i);
         digitalWrite(outputPin, !bit);
-        while (micros() - last_micros < BIT_DURATION) { }
-        last_micros += BIT_DURATION;
+        delayMicroseconds(BIT_DURATION - 12);
 
         // Check if the bus master holds the bus voltage below a specific threshold
         if (bit == HIGH) {
             auto voltage = getBusvoltage();
             if (voltage >= ADC_CARRIED_HIGH_THRESHOLD_VOLTAGE) {
                 // if not, bail out with an error
-                digitalWrite(outputPin, HIGH);
-                state = idle;
-                return false;
+                retVal = false; // return with error
+                goto bailout;
             }
         }
     }
 
+    txCount++;
+
+    bailout:
     digitalWrite(outputPin, LOW);
+    pinMode(inputPin, INPUT);
+    delayMicroseconds(100);
+    attachInterrupt(digitalPinToInterrupt(inputPin), _rxISR, FALLING);
+
     state = idle;
-    return true;
+
+    return retVal;
 }

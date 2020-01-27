@@ -28,6 +28,8 @@ int status = WL_IDLE_STATUS;
 WebServer webServer(80);
 SiedleClient siedleClient(SIEDLE_A_IN, SIEDLE_TX_PIN);
 CircularBuffer<SiedleLogEntry, LOG_SIZE> siedleRxLog;
+CircularBuffer<siedle_cmd_t, 4> siedleTxQueue;
+
 RTCZero rtc;
 
 #ifdef USE_MQTT
@@ -104,6 +106,12 @@ inline void siedleClientLoop() {
     if (siedleClient.available()) {
         siedleRxLog.push({ rtc.getEpoch(), siedleClient.read() });
     }
+    if (!siedleTxQueue.isEmpty()) {
+        if (siedleClient.state == idle) {
+            auto cmd = siedleTxQueue.shift();
+            siedleClient.sendCmd(cmd);
+        }
+    }
 }
 
 void printDebug(Print *handler) {
@@ -147,6 +155,12 @@ void printDebug(Print *handler) {
     handler->print("</dd></dl>");
 #endif
 
+    handler->print("<dl><dt>Rx/Tx Count</dt><dd>");
+    handler->print(siedleClient.rxCount);
+    handler->print(" / ");
+    handler->print(siedleClient.txCount);
+    handler->print("</dd></dl>");
+
     auto size = min(siedleRxLog.capacity, siedleClient.rxCount);
     handler->print("<h3>Received Data</h3><table><tr><th>Timestamp</th><th>Command</th></tr>");
     for (unsigned int i = 0; i < size; i++) {
@@ -188,22 +202,22 @@ unsigned long getTime() {
     return WiFi.getTime();
 }
 
-//void onMessageReceived(int messageSize) {
-//    // we received a message, print out the topic and contents
-//    Serial.print("Received a message with topic '");
-//    Serial.print(mqttClient.messageTopic());
-//    Serial.print("', length ");
-//    Serial.print(messageSize);
-//    Serial.println(" bytes:");
-//
-//    // use the Stream interface to print the contents
-//    while (mqttClient.available()) {
-//        Serial.print((char)mqttClient.read());
-//    }
-//    Serial.println();
-//
-//    Serial.println();
-//}
+void onMessageReceived(int messageSize) {
+
+    char payload[16];
+    char *payload_p = payload;
+
+    int rxlen = 0;
+    while (mqttClient.available()) {
+        char c = mqttClient.read();
+        if (rxlen++ < (sizeof(payload)-1)) {
+            *payload_p++ = c;
+        }
+    }
+    *payload_p = 0; // terminate the string with the 0 byte
+    uint32_t cmd = String(payload).toInt();
+    siedleTxQueue.push(cmd);
+}
 
 inline void setupMQTT() {
     ECCX08.begin();
@@ -225,7 +239,7 @@ inline void setupMQTT() {
 
     // Set the message callback, this function is
     // called when the MQTTClient receives a message
-//    mqttClient.onMessage(onMessageReceived);
+    mqttClient.onMessage(onMessageReceived);
 
 }
 #endif
@@ -285,7 +299,7 @@ void inline mqttLoop() {
             reconnectMillis = millis();
             if (connected) {
                 // subscribe to a topic
-//                mqttClient.subscribe("arduinodoorbell/incoming");
+                mqttClient.subscribe("siedle/send");
             }
         }
     } else {
