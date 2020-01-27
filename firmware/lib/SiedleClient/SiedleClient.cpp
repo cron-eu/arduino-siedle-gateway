@@ -110,7 +110,7 @@ bool SiedleClient::sendCmd(siedle_cmd_t tx_cmd) {
     for (int i=31; i >= 0; i--) {
         auto bit = bitRead(tx_cmd, i);
         digitalWrite(outputPin, !bit);
-        while (micros() - last_micros < BIT_DURATION) { yield(); }
+        while (micros() - last_micros < BIT_DURATION) { }
         last_micros += BIT_DURATION;
 
         // Check if the bus master holds the bus voltage below a specific threshold
