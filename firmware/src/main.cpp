@@ -153,25 +153,6 @@ void printWifiStatus() {
 }
 
 #ifdef USE_MQTT
-void connectMQTT() {
-    Serial.print("Connecting to MQTT broker: ");
-    Serial.print(broker);
-    Serial.print(" ");
-
-    while (!mqttClient.connect(broker, 8883)) {
-        // failed, retry
-        Serial.print(".");
-        delay(5000);
-    }
-    Serial.println();
-
-    Serial.println("connected!");
-    Serial.println();
-
-    // subscribe to a topic
-//    mqttClient.subscribe("arduinodoorbell/incoming");
-}
-
 unsigned long getTime() {
     // get the current time from the WiFi module
     return WiFi.getTime();
@@ -216,10 +197,6 @@ inline void setupMQTT() {
     // called when the MQTTClient receives a message
 //    mqttClient.onMessage(onMessageReceived);
 
-    if (!mqttClient.connected()) {
-        // MQTT client is disconnected, connect
-        connectMQTT();
-    }
 }
 #endif
 
@@ -265,43 +242,53 @@ void __unused setup() {
 #endif
 }
 
-int mqttSentCount = 0;
+#ifdef USE_MQTT
+void inline mqttLoop() {
+    static unsigned long reconnectMillis = 0;
+    static int mqttSentCount = 0;
 
-unsigned long reconnectMillis = 0;
+    unsigned long elapsed = millis() - reconnectMillis;
+
+    if (!mqttClient.connected()) {
+        if (elapsed > 10000) {
+            auto connected = mqttClient.connect(broker, 8883);
+            reconnectMillis = millis();
+            if (connected) {
+                // subscribe to a topic
+//                mqttClient.subscribe("arduinodoorbell/incoming");
+            }
+        }
+    } else {
+        // poll for new MQTT messages and send keep alives
+        mqttClient.poll();
+        // check if we have some messages to send
+        auto toSendCount = siedleClient.rxCount - mqttSentCount;
+
+        if (toSendCount > 0) {
+            auto entry = siedleRxLog.last();
+            char buf[32];
+            sprintf(buf, "{\"ts\":%lu,\"cmd\":%lu}", entry.timestamp, entry.cmd);
+
+            mqttClient.beginMessage("siedle/received");
+            mqttClient.print(buf);
+            mqttClient.endMessage();
+
+            mqttSentCount++;
+        }
+
+        // reset the reconnect timer
+        reconnectMillis = millis();
+    }
+
+}
+#endif
 
 void __unused loop() {
     statusLEDLoop();
     ntpLoop();
     webServer.loop();
     siedleClientLoop();
-
 #ifdef USE_MQTT
-    if (!mqttClient.connected()) {
-        auto elapsed = millis() - reconnectMillis;
-        if (elapsed > 30000) {
-            reconnectMillis = millis();
-            mqttClient.connect(broker, 8883);
-            yield();
-            return;
-        }
-    }
-
-    // poll for new MQTT messages and send keep alives
-    mqttClient.poll();
-
-    // check if we have some messages to send
-    auto toSendCount = siedleClient.rxCount - mqttSentCount;
-
-    if (toSendCount > 0) {
-        auto entry = siedleRxLog.last();
-        char buf[32];
-        sprintf(buf, "{\"ts\":%lu,\"cmd\":%lu}", entry.timestamp, entry.cmd);
-
-        mqttClient.beginMessage("siedle/received");
-        mqttClient.print(buf);
-        mqttClient.endMessage();
-
-        mqttSentCount++;
-    }
+    mqttLoop();
 #endif
 }
