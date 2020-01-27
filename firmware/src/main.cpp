@@ -156,9 +156,9 @@ void printWifiStatus() {
 
 #ifdef USE_MQTT
 void connectMQTT() {
-    Serial.print("Attempting to MQTT broker: ");
+    Serial.print("Connecting to MQTT broker: ");
     Serial.print(broker);
-    Serial.println(" ");
+    Serial.print(" ");
 
     while (!mqttClient.connect(broker, 8883)) {
         // failed, retry
@@ -167,7 +167,7 @@ void connectMQTT() {
     }
     Serial.println();
 
-    Serial.println("You're connected to the MQTT broker");
+    Serial.println("connected!");
     Serial.println();
 
     // subscribe to a topic
@@ -281,8 +281,9 @@ void __unused loop() {
     if (!mqttClient.connected()) {
         auto elapsed = millis() - reconnectMillis;
         if (elapsed > 30000) {
-            mqttClient.connect(broker, 8883);
             reconnectMillis = millis();
+            mqttClient.connect(broker, 8883);
+            yield();
             return;
         }
     }
