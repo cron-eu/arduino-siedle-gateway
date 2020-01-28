@@ -114,16 +114,18 @@ bool SiedleClient::sendCmd(siedle_cmd_t tx_cmd) {
     for (int i=31; i >= 0; i--) {
         auto bit = bitRead(tx_cmd, i);
         digitalWrite(outputPin, !bit);
-        delayMicroseconds(BIT_DURATION - 12);
 
         // Check if the bus master holds the bus voltage below a specific threshold
-        if (bit == HIGH) {
+        if (i == 31) {
+            delayMicroseconds(BIT_DURATION - 52);
             auto voltage = getBusvoltage();
             if (voltage >= ADC_CARRIED_HIGH_THRESHOLD_VOLTAGE) {
                 // if not, bail out with an error
                 retVal = false; // return with error
                 goto bailout;
             }
+        } else {
+            delayMicroseconds(BIT_DURATION - 8);
         }
     }
 
