@@ -4,11 +4,13 @@
 
 #include <Arduino.h>
 #include "SiedleClient.h"
+#include "Timer5.h"
 #include "avdweb_AnalogReadFast.h"
 
 #define R2_VAL 10000.0
 #define R3_VAL 1100.0
 #define BIT_DURATION 2000
+#define HALF_BIT_DURATION 1000
 
 // Bus Voltage = ADC Raw Value * ADC_FACTOR; the ADC Raw Value being the raw value
 // as returned by analogRead()
@@ -19,7 +21,9 @@
 
 // Maximum bus voltage while transmitting a logical "H".
 // If the voltage is greater than this threshold, we assume that there was an error.
-#define ADC_CARRIED_HIGH_THRESHOLD_VOLTAGE ( 12.0 )
+#define ADC_CARRIER_HIGH_THRESHOLD_VOLTAGE ( 12.0 )
+
+// #define DEBUG_SAMPLING
 
 static SiedleClient *currentInstance = NULL;
 
@@ -27,6 +31,12 @@ static SiedleClient *currentInstance = NULL;
 static void _rxISR() {
     if (currentInstance) {
         currentInstance->rxISR();
+    }
+}
+
+static void _timerISR() {
+    if (currentInstance) {
+        currentInstance->bitTimerISR();
     }
 }
 
@@ -42,6 +52,8 @@ bool SiedleClient::begin() {
     if (currentInstance) { return false; }
     currentInstance = this;
     attachInterrupt(digitalPinToInterrupt(inputPin), _rxISR, FALLING);
+    Timer5::onFire(_timerISR);
+    Timer5::configure(BIT_DURATION);
     return true;
 }
 
@@ -49,11 +61,76 @@ void __unused SiedleClient::end() {
     detachInterrupt(digitalPinToInterrupt(inputPin));
 }
 
-void SiedleClient::rxISR() {
-    unsigned long const sample_interval = BIT_DURATION;
-    int i;
-    uint32_t cmnd = 0x0;
+void SiedleClient::bitTimerISR() {
 
+    bool done = false;
+
+    switch (state) {
+        case idle: break;
+
+        case receiving:
+            if (bitNumber >= 0) {
+                if (bitNumber == 30) {
+                    Timer5::changeSampleRate(BIT_DURATION);
+                }
+#ifdef DEBUG_SAMPLING
+                digitalWrite(1, HIGH);
+                delayMicroseconds(10);
+                digitalWrite(1, LOW);
+#endif
+                bitWrite(cmd_rx_buf, bitNumber--, readBit());
+            }
+
+            if (bitNumber == -1) {
+                // we just read the last bit, we're done
+                done = true;
+                if (cmd_rx_buf != 0) {
+                    cmd = cmd_rx_buf;
+                    rxCount++;
+                    _available = true;
+                }
+            }
+
+            break;
+
+        case transmitting:
+            if (bitNumber >= 0) {
+                auto bit = bitRead(cmd_tx_buf, bitNumber--);
+                digitalWrite(outputPin, !bit);
+            } else {
+                digitalWrite(outputPin, LOW);
+
+                // wait until the bus master raises the voltage above a given threshold
+                // we timeout after 3 periods
+                if (bitNumber-- < -3) {
+                    // timeout
+                    done = true;
+                } else {
+                    auto voltage = getBusvoltage();
+                    if (voltage >= ADC_CARRIER_HIGH_THRESHOLD_VOLTAGE) {
+                        txCount++;
+                        done = true;
+                    }
+                }
+            }
+
+            break;
+    }
+
+    if (done) {
+
+#ifdef DEBUG_SAMPLING
+        pinMode(1, INPUT);
+#endif
+        state = idle;
+        pinMode(inputPin, INPUT);
+        Timer5::disable();
+        delayMicroseconds(100);
+        attachInterrupt(digitalPinToInterrupt(inputPin), _rxISR, FALLING);
+    }
+}
+
+void SiedleClient::rxISR() {
     if (state == transmitting) { return; }
 
     // we detach the interrupt here because we want to do a analogRead() later on
@@ -62,32 +139,21 @@ void SiedleClient::rxISR() {
     detachInterrupt(digitalPinToInterrupt(inputPin));
 
     // wait for the FALLING slope
-    i = 0;
+    int i = 0;
     while (readBit() == HIGH) {
-        if (i>10) { goto bailout; }
+        if (i++ >= 4) { goto bailout; }
         delayMicroseconds(50);
     }
 
-    delayMicroseconds(sample_interval * 1.5);
-
-    // we do already got the first bit, this being a logical 0
-    // read in the remaining 31 bits now
+    cmd_rx_buf = 0;
     state = receiving;
-    for (i = 30; i >= 0; i--) {
-        bitWrite(cmnd, i, readBit());
-        delayMicroseconds(sample_interval - 10);
-    }
 
-    if (cmnd == 0) {
-        state = idle;
-        goto bailout;
-    }
-
-    cmd = cmnd;
-    rxCount++;
-
-    _available = true;
-    state = idle;
+    // we know that the first bit is a logical 0, read the remaining bits using the ISR
+    bitNumber = 30;
+    // this will also reset and start the timer
+    Timer5::changeSampleRate(BIT_DURATION + HALF_BIT_DURATION);
+    Timer5::enable();
+    return;
 
     bailout:
     pinMode(inputPin, INPUT);
@@ -104,40 +170,20 @@ float SiedleClient::getBusvoltage() {
     return (float)a * (float)ADC_FACTOR;
 }
 
-bool SiedleClient::sendCmd(siedle_cmd_t tx_cmd) {
+void SiedleClient::sendCmd(siedle_cmd_t tx_cmd) {
     // disable the rx irq while we are transmitting data
     detachInterrupt(digitalPinToInterrupt(inputPin));
-    bool retVal = true;
 
+    cmd_tx_buf = tx_cmd;
     state = transmitting;
 
-    for (int i=31; i >= 0; i--) {
-        auto bit = bitRead(tx_cmd, i);
-        digitalWrite(outputPin, !bit);
+    bitNumber = 31;
 
-        // Check if the bus master holds the bus voltage below a specific threshold
-        if (i == 31) {
-            delayMicroseconds(BIT_DURATION - 52);
-            auto voltage = getBusvoltage();
-            if (voltage >= ADC_CARRIED_HIGH_THRESHOLD_VOLTAGE) {
-                // if not, bail out with an error
-                retVal = false; // return with error
-                goto bailout;
-            }
-        } else {
-            delayMicroseconds(BIT_DURATION - 8);
-        }
-    }
+    // Output the first bit (#31). Remaining bits will be transmitted using the ISR
+    auto bit = bitRead(cmd_tx_buf, bitNumber--);
+    digitalWrite(outputPin, !bit);
 
-    txCount++;
-
-    bailout:
-    digitalWrite(outputPin, LOW);
-    pinMode(inputPin, INPUT);
-    delayMicroseconds(100);
-    attachInterrupt(digitalPinToInterrupt(inputPin), _rxISR, FALLING);
-
-    state = idle;
-
-    return retVal;
+    // we did already transmit the first bit, transmit the remaining bits using the ISR
+    Timer5::changeSampleRate(BIT_DURATION);
+    Timer5::enable();
 }

@@ -39,10 +39,12 @@ public:
     unsigned int txCount = 0;
 
     // Send a command. Returns false if there was an error while trying to send, e.g. the bus master did not respond on time.
-    bool sendCmd(siedle_cmd_t cmd);
+    void sendCmd(siedle_cmd_t cmd);
     SiedleClientState state = idle;
     float getBusvoltage();
     void rxISR();
+    void bitTimerISR();
+
     bool available() {
         return _available;
     }
@@ -57,7 +59,12 @@ private:
     uint8_t outputPin;
     // Last received command
     volatile siedle_cmd_t cmd;
+    // Used as a temporary buffer from the rx isr
+    volatile siedle_cmd_t cmd_rx_buf;
+    // Used as a temporary buffer from the tx isr
+    volatile siedle_cmd_t cmd_tx_buf;
     volatile bool _available = false;
+    volatile int bitNumber = -1;
 };
 
 #endif //FIRMWARE_SIEDLECLIENT_H
