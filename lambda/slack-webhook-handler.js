@@ -82,15 +82,56 @@ exports.handler = (event, context) => {
   const cmdDescription = cmdMapping[cmdHex];
   if (cmdDescription) {
 
+    let here = '';
+    if (cmdHex === '58dd10d0') {
+      here = '@here ';
+    }
+
     // replace the first block
     message.blocks.shift();
     message.blocks.unshift({
       type: "section",
       text: {
         type: "mrkdwn",
-        text: `*${cmdDescription}*${icon ? ' ' + icon : ''}`,
+        text: `${here}*${cmdDescription}*${icon ? ' ' + icon : ''}`,
       }
     });
+
+
+    if (cmdHex === '00000000') {
+      message.blocks.push({
+        type: 'actions',
+        elements: [
+          {
+            type: 'button',
+            text: {
+              type: 'plain_text',
+              text: 'Debug Action',
+              emoji: true,
+            },
+            value: "debug_" + cmdHex,
+          }
+        ]
+      });
+    }
+
+    if (cmdHex === '58dd10d0') {
+      message.blocks.push({
+        type: 'actions',
+        elements: [
+          {
+            type: 'button',
+            text: {
+              type: 'plain_text',
+              text: 'Unlock the door!',
+              emoji: true,
+            },
+            value: "unlock_" + cmdHex,
+          }
+        ]
+      });
+    }
+
   }
 
 
