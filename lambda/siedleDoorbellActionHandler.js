@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const AWS = require('aws-sdk')
+const querystring = require('querystring');
 
 const verifySlackSignature = (event) => {
   const timestamp = event.headers['X-Slack-Request-Timestamp'];
@@ -17,9 +18,6 @@ const verifySlackSignature = (event) => {
   const hmac = crypto.createHmac('sha256', process.env['SLACK_SIGNING_SECRET']);
   const signature = event.headers['X-Slack-Signature'];
   const calculatedSignature = hmac.update(rawString).digest('hex');
-
-  console.log(`signature: "${signature}"`);
-  console.log(`calculatedSignature: "${calculatedSignature}"`);
 
   return `v0=${calculatedSignature}` === signature;
 };
@@ -39,15 +37,18 @@ const sendSiedleCommand = async (command) => {
     });
   });
 
-  const data = await publish$;
-
-  console.log("Message sent.");
-  console.log(data);
+  await publish$;
 }
 
-exports.handler = async (event) => {
+// This will decode the payload JSON encoded data from the www-urlencoded body..
+// @see https://blog.summercat.com/using-aws-lambda-and-api-gateway-as-html-form-endpoint.html
+const getSlackPayloadFromRequest = (event) => {
+  const body = new Buffer.from(event.body, 'base64').toString();
+  const params = querystring.parse(body);
+  return JSON.parse(params['payload']);
+};
 
-  console.log(event);
+exports.handler = async (event) => {
 
   if (!verifySlackSignature(event)) {
     return {
@@ -55,6 +56,10 @@ exports.handler = async (event) => {
       body: JSON.stringify("invalid signature"),
     }
   }
+
+  const payload = getSlackPayloadFromRequest(event);
+
+  console.log(`Door unlock request from user ${payload.user.name}.`);
 
   await sendSiedleCommand(1175262672);
 
