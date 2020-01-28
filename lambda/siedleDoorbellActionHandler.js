@@ -1,6 +1,13 @@
 const crypto = require('crypto');
 const AWS = require('aws-sdk')
 const querystring = require('querystring');
+const timeout = ms => new Promise(res => setTimeout(res, ms));
+
+const siedleCommands = {
+  unlock: 1175262672, // 0x460D15D0
+  ring:   1490882768, // 0x58DD10D0
+  audio:  1082987984, // 0x408D15D0
+};
 
 const verifySlackSignature = (event) => {
   const timestamp = event.headers['X-Slack-Request-Timestamp'];
@@ -61,7 +68,15 @@ exports.handler = async (event) => {
 
   console.log(`Door unlock request from user ${payload.user.name}.`);
 
-  await sendSiedleCommand(1175262672);
+//   await sendSiedleCommand(siedleCommands.ring);
+//   await timeout(1000);
+
+//   await sendSiedleCommand(siedleCommands.audio);
+//   await timeout(1000);
+
+  await sendSiedleCommand(siedleCommands.unlock);
+
+  console.log(`Done!`);
 
   return {
     statusCode: 200,
