@@ -2,15 +2,21 @@ const https = require('https');
 const util = require('util');
 
 const cmdMapping = {
+  '00000000': 'Debug Command',
   '58dd10d0': 'cron IT Doorbell Ringing :mega:',
   '408d15d0': 'cron IT Siedle Initiate Audio Stream Request',
   '460d15d0': 'cron IT Open Door Request',
+  '50b115d0': 'cron IT Light ON Request',
+  '560115d0': 'cron IT Light ON Request',
 };
 
 const cmdToIconMapping = {
+  '00000000': ':rocket:',
   '58dd10d0': ':bell:',
   '408d15d0': ':sound:',
   '460d15d0': ':white_check_mark:',
+  '50b115d0': ':bulb:',
+  '560115d0': ':bulb:',
 };
 
 exports.handler = (event, context) => {
@@ -46,14 +52,22 @@ exports.handler = (event, context) => {
   const message = {
     channel: slackChannel,
     username: 'siedle-bot',
-    icon_emoji: icon || ':question:',
     blocks: [
       {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `Received command \`${cmdHex}\` @ ${timestamp.toLocaleString()}`,
+          text: `Received command \`${cmdHex}\``,
         }
+      },
+      {
+        type: 'context',
+        elements: [
+          {
+            type: 'mrkdwn',
+            text: `*Received:* ${timestamp.toLocaleString()}`,
+          }
+        ]
       },
       // {
       //   type: "section",
@@ -67,11 +81,14 @@ exports.handler = (event, context) => {
 
   const cmdDescription = cmdMapping[cmdHex];
   if (cmdDescription) {
+
+    // replace the first block
+    message.blocks.shift();
     message.blocks.unshift({
       type: "section",
       text: {
         type: "mrkdwn",
-        text: `${icon ? icon + ' ' : ''}*${cmdDescription}*`,
+        text: `*${cmdDescription}*${icon ? ' ' + icon : ''}`,
       }
     });
   }
