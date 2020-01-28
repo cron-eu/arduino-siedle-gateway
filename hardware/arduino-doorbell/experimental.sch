@@ -10469,7 +10469,7 @@ In this library the device names are the same as the pin names of the symbols, t
 <pinref part="R6" gate="G$1" pin="2"/>
 </segment>
 </net>
-<net name="A0" class="0">
+<net name="A1" class="0">
 <segment>
 <pinref part="R3" gate="G$1" pin="2"/>
 <pinref part="R2" gate="G$1" pin="1"/>
