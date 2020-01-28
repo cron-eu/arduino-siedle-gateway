@@ -215,7 +215,7 @@ void onMessageReceived(int messageSize) {
         }
     }
     *payload_p = 0; // terminate the string with the 0 byte
-    uint32_t cmd = String(payload).toInt();
+    uint32_t cmd = atol(payload);
     siedleTxQueue.push(cmd);
 }
 
