@@ -31,10 +31,20 @@ typedef struct {
     siedle_cmd_t cmd;
 } SiedleLogEntry;
 
+enum Direction {
+    rx = 0,
+    tx,
+};
+
+typedef struct {
+    SiedleLogEntry log;
+    Direction direction;
+} SiedleRxTxLogEntry;
+
 int status = WL_IDLE_STATUS;
 WebServer webServer(80);
 SiedleClient siedleClient(SIEDLE_A_IN, SIEDLE_TX_PIN);
-CircularBuffer<SiedleLogEntry, LOG_SIZE> siedleRxLog;
+CircularBuffer<SiedleRxTxLogEntry, LOG_SIZE> siedleRxTxLog;
 
 CircularBuffer<siedle_cmd_t, SIEDLE_TX_QUEUE_LEN> siedleTxQueue;
 CircularBuffer<SiedleLogEntry, MQTT_TX_QUEUE_LEN> mqttTxQueue;
@@ -129,18 +139,17 @@ inline void siedleClientLoop() {
 
     if (siedleClient.available()) {
         SiedleLogEntry entry = { rtc.getEpoch(), siedleClient.read() };
-        siedleRxLog.push(entry);
         mqttTxQueue.push(entry);
+        siedleRxTxLog.push({ entry, rx });
     }
 
     // introduce some padding between the send requests
     if (!siedleTxQueue.isEmpty()) {
         auto now = millis();
-        if (now - lastTxMillis > BUS_MAX_SEND_RATE_MS) {
-            if (siedleClient.state == idle) {
-                auto cmd = siedleTxQueue.shift();
-                siedleClient.sendCmd(cmd);
-            }
+        if (now - lastTxMillis > BUS_MAX_SEND_RATE_MS && siedleClient.state == idle) {
+            auto cmd = siedleTxQueue.shift();
+            siedleClient.sendCmd(cmd);
+            siedleRxTxLog.push({ { rtc.getEpoch(), cmd }, tx });
             lastTxMillis = now;
         }
     }
@@ -193,16 +202,16 @@ void printDebug(Print *handler) {
     handler->print(siedleClient.txCount);
     handler->print("</dd></dl>");
 
-    auto size = min(siedleRxLog.capacity, siedleClient.rxCount);
-    handler->print("<h3>Received Data</h3><table><tr><th>Timestamp</th><th>Command</th></tr>");
-    for (unsigned int i = 0; i < size; i++) {
-        SiedleLogEntry entry = siedleRxLog[i];
-        time = entry.timestamp;
+    handler->print("<h3>Data</h3><table><tr><th>Timestamp</th><th>Direction</th><th>Command</th></tr>");
+    for (unsigned int i = 0; i < siedleRxTxLog.size(); i++) {
+        auto entry = siedleRxTxLog[i];
+        time = entry.log.timestamp;
         char line[100];
 
-        sprintf(line, "<tr><td>%s</th><td><pre>%08lx</pre></td></tr>",
+        sprintf(line, "<tr><td>%s</th><td>%s</td><td><pre>%08lx</pre></td></tr>",
                 ctime(&time),
-                entry.cmd
+                entry.direction == rx ? "<" : ">",
+                entry.log.cmd
         );
 
         handler->print(line);
