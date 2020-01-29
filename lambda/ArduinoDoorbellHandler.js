@@ -1,23 +1,25 @@
 const https = require('https');
 const util = require('util');
+const siedle = require('./siedle');
 
-const cmdMapping = {
-  '00000000': 'Debug Command',
-  '58dd10d0': 'cron IT Doorbell Ringing :mega:',
-  '408d15d0': 'cron IT Siedle Initiate Audio Stream Request',
-  '460d15d0': 'cron IT Open Door Request',
-  '50b115d0': 'cron IT Light ON Request',
-  '560115d0': 'cron IT Light ON Request',
+const codeToTitle = {
+  debug: 'Debug Command',
+  bell_eg: 'Doorbell Ringing (EG) :mega:',
+  bell_og: 'Doorbell Ringing (OG) :mega:',
+  bell_whohoo: 'Doorbell whohoo (OG)',
+  on_hook: 'Handheld on hook :sound:',
+  off_hook: 'Handheld off hook :sound:',
+  unlock_og: 'cron IT Unlock Door (OG) :unlock:',
+  unlock_eg: 'cron IT Unlock Door (EG) :unlock:',
+  light_on: 'Light ON :bulb:',
+  light_on_2: 'Light ON :bulb:',
 };
 
-const cmdToIconMapping = {
-  '00000000': ':rocket:',
-  '58dd10d0': ':bell:',
-  '408d15d0': ':sound:',
-  '460d15d0': ':white_check_mark:',
-  '50b115d0': ':bulb:',
-  '560115d0': ':bulb:',
-};
+const cmdToCode = {};
+
+for (let code of Object.keys(siedle.commands)) {
+  cmdToCode[siedle.commands[code]] = code;
+}
 
 exports.handler = (event, context) => {
 
@@ -44,11 +46,11 @@ exports.handler = (event, context) => {
     return;
   }
 
-  const cmdHex = decimalToRadix(event.cmd, 16,8);
-  const icon = cmdToIconMapping[cmdHex];
-
+  const cmd = +event.cmd;
+  const cmdHex = decimalToRadix(cmd, 16,8);
   // noinspection JSUnresolvedVariable
   const timestamp = new Date(event.ts * 1000);
+
   const message = {
     channel: slackChannel,
     username: 'siedle-bot',
@@ -79,11 +81,13 @@ exports.handler = (event, context) => {
     ],
   };
 
-  const cmdDescription = cmdMapping[cmdHex];
-  if (cmdDescription) {
+  const cmdCode = cmdToCode[cmd];
+  const cmdTitle = cmdCode ? codeToTitle[cmdCode] : undefined;
+
+  if (cmdTitle) {
 
     let here = '';
-    if (cmdHex === '58dd10d0') {
+    if (cmdCode === 'bell_eg' || cmdCode === "bell_og") {
       here = '@here ';
     }
 
@@ -93,12 +97,12 @@ exports.handler = (event, context) => {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: `${here}*${cmdDescription}*${icon ? ' ' + icon : ''}`,
+        text: `${here}*${cmdTitle}* (\`${cmdHex}\`)`,
       }
     });
 
 
-    if (cmdHex === '00000000') {
+    if (cmdCode === 'debug') {
       message.blocks.push({
         type: 'actions',
         elements: [
@@ -115,7 +119,7 @@ exports.handler = (event, context) => {
       });
     }
 
-    if (cmdHex === '58dd10d0') {
+    if (cmdCode === 'bell_eg' || cmdCode === 'bell_og') {
       message.blocks.push({
         type: 'actions',
         elements: [
@@ -126,14 +130,12 @@ exports.handler = (event, context) => {
               text: 'Unlock the door!',
               emoji: true,
             },
-            value: "unlock_" + cmdHex,
+            value: cmdCode === 'bell_eg' ? 'unlock_eg' : 'unlock_og',
           }
         ]
       });
     }
-
   }
-
 
   const r = https.request(slackWebHook, {method: 'POST'}, res => {
     res.setEncoding('utf8');

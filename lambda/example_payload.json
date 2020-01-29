@@ -1,0 +1,86 @@
+{
+	"type": "block_actions",
+	"team": {
+		"id": "T025925T4",
+		"domain": "cron"
+	},
+	"user": {
+		"id": "U027Z2AHD",
+		"username": "remus",
+		"name": "remus",
+		"team_id": "T025925T4"
+	},
+	"api_app_id": "AST7VEB99",
+	"token": "n58rq78cJ4f80HANrSdYbGtE",
+	"container": {
+		"type": "message",
+		"message_ts": "1580228930.050600",
+		"channel_id": "CSSJZSB8A",
+		"is_ephemeral": false
+	},
+	"trigger_id": "928015072278.2179073922.78787b7ba2f77938ac5247f610acb72f",
+	"channel": {
+		"id": "CSSJZSB8A",
+		"name": "debug"
+	},
+	"message": {
+		"type": "message",
+		"subtype": "bot_message",
+		"text": "This content can't be displayed.",
+		"ts": "1580228930.050600",
+		"bot_id": "BT78NL4LV",
+		"blocks": [
+			{
+				"type": "section",
+				"block_id": "vEJg",
+				"text": {
+					"type": "mrkdwn",
+					"text": "*cron IT Doorbell Ringing :mega:* :bell:",
+					"verbatim": false
+				}
+			},
+			{
+				"type": "context",
+				"block_id": "9Fn",
+				"elements": [
+					{
+						"type": "mrkdwn",
+						"text": "*Received:* 28.1.2020, 17:28:46",
+						"verbatim": false
+					}
+				]
+			},
+			{
+				"type": "actions",
+				"block_id": "=HM",
+				"elements": [
+					{
+						"type": "button",
+						"action_id": "oNKr",
+						"text": {
+							"type": "plain_text",
+							"text": "Unlock the door!",
+							"emoji": true
+						},
+						"value": "unlock_58dd10d0"
+					}
+				]
+			}
+		]
+	},
+	"response_url": "https:\\/\\/hooks.slack.com\\/actions\\/T025925T4\\/914336736931\\/H69FcKWFWHq4top8Ggdp8eEs",
+	"actions": [
+		{
+			"action_id": "oNKr",
+			"block_id": "=HM",
+			"text": {
+				"type": "plain_text",
+				"text": "Unlock the door!",
+				"emoji": true
+			},
+			"value": "unlock_58dd10d0",
+			"type": "button",
+			"action_ts": "1580235256.789542"
+		}
+	]
+}

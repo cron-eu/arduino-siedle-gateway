@@ -1,13 +1,8 @@
 const crypto = require('crypto');
 const AWS = require('aws-sdk')
 const querystring = require('querystring');
-const timeout = ms => new Promise(res => setTimeout(res, ms));
-
-const siedleCommands = {
-  unlock: 1175262672, // 0x460D15D0
-  ring:   1490882768, // 0x58DD10D0
-  audio:  1082987984, // 0x408D15D0
-};
+// const timeout = ms => new Promise(res => setTimeout(res, ms));
+const siedle = require('./siedle');
 
 const verifySlackSignature = (event) => {
   const timestamp = event.headers['X-Slack-Request-Timestamp'];
@@ -52,7 +47,11 @@ const sendSiedleCommand = async (command) => {
 const getSlackPayloadFromRequest = (event) => {
   const body = new Buffer.from(event.body, 'base64').toString();
   const params = querystring.parse(body);
-  return JSON.parse(params['payload']);
+  /**
+   * @type {string}
+   */
+  const payload = params['payload'];
+  return JSON.parse(payload);
 };
 
 exports.handler = async (event) => {
@@ -60,23 +59,24 @@ exports.handler = async (event) => {
   if (!verifySlackSignature(event)) {
     return {
       statusCode: 400,
-      body: JSON.stringify("invalid signature"),
+      body: JSON.stringify({ error: "Invalid signature." }),
     }
   }
 
   const payload = getSlackPayloadFromRequest(event);
 
-  console.log(`Door unlock request from user ${payload.user.name}.`);
+  const action = payload.actions[0].value;
 
-//   await sendSiedleCommand(siedleCommands.ring);
-//   await timeout(1000);
-
-//   await sendSiedleCommand(siedleCommands.audio);
-//   await timeout(1000);
-
-  await sendSiedleCommand(siedleCommands.unlock);
-
-  console.log(`Done!`);
+  const cmd = siedle.commands[action];
+  if (cmd) {
+    console.log(`Siedle cmd ${action} from user ${payload.user.name}.`);
+    await sendSiedleCommand(siedle.commands.unlock_og);
+  } else {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({error: `Could not find the associated command for action "${action}".`}),
+    }
+  }
 
   return {
     statusCode: 200,
