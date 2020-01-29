@@ -338,7 +338,7 @@ void inline mqttLoop() {
         // poll for new MQTT messages and send keep alives
         mqttClient.poll();
         // check if we have some messages to send
-        if (mqttTxQueue.available() && millis() - lastTxMillis >= MQTT_MAX_SEND_RATE_MS) {
+        if (mqttTxQueue.size() && millis() - lastTxMillis >= MQTT_MAX_SEND_RATE_MS) {
             // we want to limit the outgoing rate to avoid issues with the power management
             auto entry = mqttTxQueue.shift();
             char buf[32];
