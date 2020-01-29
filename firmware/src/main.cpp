@@ -225,8 +225,8 @@ void printWifiStatus() {
 
 #ifdef USE_MQTT
 unsigned long getTime() {
-    // get the current time from the WiFi module
-    return WiFi.getTime();
+    // get the current time from our RTC module
+    return rtc.getEpoch();
 }
 
 void onMessageReceived(int messageSize) {
