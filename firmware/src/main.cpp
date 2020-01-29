@@ -64,9 +64,16 @@ unsigned long getUptime() {
 }
 
 inline void statusLEDLoop() {
+    // early return to avoid doing to leave the main loop responsive
+    static unsigned long rateMillis = 0;
+    if (millis() - rateMillis < 50) {
+        return;
+    } else {
+        rateMillis = millis();
+    }
+
     static unsigned long lastMillis = 0;
     static int led = LOW;
-    auto elapsed = millis() - lastMillis;
     unsigned long threshold;
 
     switch (status) {
@@ -77,10 +84,16 @@ inline void statusLEDLoop() {
             threshold = 100;
             break;
         default:
-            threshold = 250;
+            threshold = 500;
     }
 
-    if (elapsed >= threshold) {
+    #ifdef USE_MQTT
+    if (!mqttClient.connected()) {
+        threshold = 250;
+    }
+    #endif
+
+    if (millis() - lastMillis >= threshold) {
         led = !led;
         digitalWrite(LED_BUILTIN, led);
         lastMillis = millis();
