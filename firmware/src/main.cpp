@@ -9,6 +9,8 @@
 #include <ArduinoECCX08.h>
 #include <ArduinoMqttClient.h>
 #include <aws_iot_secrets.h>
+// max MQTT send rate
+#define MQTT_MAX_SEND_RATE_MS 600
 #endif
 
 #include <wifi_client_secrets.h>
@@ -19,6 +21,10 @@
 #include <time.h>
 #include <MemoryUtils.h>
 
+// max siedle bus send rate
+#define BUS_MAX_SEND_RATE_MS 800
+#define SIEDLE_TX_QUEUE_LEN 16
+
 typedef struct {
     unsigned long timestamp;
     siedle_cmd_t cmd;
@@ -28,7 +34,7 @@ int status = WL_IDLE_STATUS;
 WebServer webServer(80);
 SiedleClient siedleClient(SIEDLE_A_IN, SIEDLE_TX_PIN);
 CircularBuffer<SiedleLogEntry, LOG_SIZE> siedleRxLog;
-CircularBuffer<siedle_cmd_t, 4> siedleTxQueue;
+CircularBuffer<siedle_cmd_t, SIEDLE_TX_QUEUE_LEN> siedleTxQueue;
 
 RTCZero rtc;
 
@@ -103,13 +109,21 @@ inline void ntpLoop() {
 }
 
 inline void siedleClientLoop() {
+    static unsigned long lastTxMillis = 0;
+
     if (siedleClient.available()) {
         siedleRxLog.push({ rtc.getEpoch(), siedleClient.read() });
     }
+
+    // introduce some padding between the send requests
     if (!siedleTxQueue.isEmpty()) {
-        if (siedleClient.state == idle) {
-            auto cmd = siedleTxQueue.shift();
-            siedleClient.sendCmd(cmd);
+        auto now = millis();
+        if (now - lastTxMillis > BUS_MAX_SEND_RATE_MS) {
+            if (siedleClient.state == idle) {
+                auto cmd = siedleTxQueue.shift();
+                siedleClient.sendCmd(cmd);
+            }
+            lastTxMillis = now;
         }
     }
 }
@@ -292,6 +306,7 @@ void inline mqttLoop() {
     static int mqttSentCount = 0;
 
     unsigned long elapsed = millis() - reconnectMillis;
+    static unsigned long lastTxMillis = 0;
 
     if (!mqttClient.connected()) {
         if (elapsed > 10000) {
@@ -309,15 +324,20 @@ void inline mqttLoop() {
         auto toSendCount = siedleClient.rxCount - mqttSentCount;
 
         if (toSendCount > 0) {
-            auto entry = siedleRxLog.last();
-            char buf[32];
-            sprintf(buf, "{\"ts\":%lu,\"cmd\":%lu}", entry.timestamp, entry.cmd);
+            // we want to limit the outgoing rate to avoid issues with the power management
+            auto now = millis();
+            if (now - lastTxMillis >= MQTT_MAX_SEND_RATE_MS) {
+                lastTxMillis = now;
+                auto entry = siedleRxLog.last();
+                char buf[32];
+                sprintf(buf, "{\"ts\":%lu,\"cmd\":%lu}", entry.timestamp, entry.cmd);
 
-            mqttClient.beginMessage("siedle/received");
-            mqttClient.print(buf);
-            mqttClient.endMessage();
+                mqttClient.beginMessage("siedle/received");
+                mqttClient.print(buf);
+                mqttClient.endMessage();
 
-            mqttSentCount++;
+                mqttSentCount++;
+            }
         }
 
         // reset the reconnect timer
