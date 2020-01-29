@@ -23,7 +23,8 @@
 
 // max siedle bus send rate
 #define BUS_MAX_SEND_RATE_MS 800
-#define SIEDLE_TX_QUEUE_LEN 16
+#define SIEDLE_TX_QUEUE_LEN 32
+#define MQTT_TX_QUEUE_LEN 32
 
 typedef struct {
     unsigned long timestamp;
@@ -34,7 +35,9 @@ int status = WL_IDLE_STATUS;
 WebServer webServer(80);
 SiedleClient siedleClient(SIEDLE_A_IN, SIEDLE_TX_PIN);
 CircularBuffer<SiedleLogEntry, LOG_SIZE> siedleRxLog;
+
 CircularBuffer<siedle_cmd_t, SIEDLE_TX_QUEUE_LEN> siedleTxQueue;
+CircularBuffer<SiedleLogEntry, MQTT_TX_QUEUE_LEN> mqttTxQueue;
 
 RTCZero rtc;
 
@@ -125,7 +128,9 @@ inline void siedleClientLoop() {
     static unsigned long lastTxMillis = 0;
 
     if (siedleClient.available()) {
-        siedleRxLog.push({ rtc.getEpoch(), siedleClient.read() });
+        SiedleLogEntry entry = { rtc.getEpoch(), siedleClient.read() };
+        siedleRxLog.push(entry);
+        mqttTxQueue.push(entry);
     }
 
     // introduce some padding between the send requests
@@ -316,10 +321,9 @@ void __unused setup() {
 #ifdef USE_MQTT
 void inline mqttLoop() {
     static unsigned long reconnectMillis = 0;
-    static int mqttSentCount = 0;
+    static unsigned long lastTxMillis = 0;
 
     unsigned long elapsed = millis() - reconnectMillis;
-    static unsigned long lastTxMillis = 0;
 
     if (!mqttClient.connected()) {
         if (elapsed > 10000) {
@@ -334,23 +338,16 @@ void inline mqttLoop() {
         // poll for new MQTT messages and send keep alives
         mqttClient.poll();
         // check if we have some messages to send
-        auto toSendCount = siedleClient.rxCount - mqttSentCount;
-
-        if (toSendCount > 0) {
+        if (mqttTxQueue.available() && millis() - lastTxMillis >= MQTT_MAX_SEND_RATE_MS) {
             // we want to limit the outgoing rate to avoid issues with the power management
-            auto now = millis();
-            if (now - lastTxMillis >= MQTT_MAX_SEND_RATE_MS) {
-                lastTxMillis = now;
-                auto entry = siedleRxLog.last();
-                char buf[32];
-                sprintf(buf, "{\"ts\":%lu,\"cmd\":%lu}", entry.timestamp, entry.cmd);
+            auto entry = mqttTxQueue.shift();
+            char buf[32];
+            sprintf(buf, "{\"ts\":%lu,\"cmd\":%lu}", entry.timestamp, entry.cmd);
 
-                mqttClient.beginMessage("siedle/received");
-                mqttClient.print(buf);
-                mqttClient.endMessage();
-
-                mqttSentCount++;
-            }
+            mqttClient.beginMessage("siedle/received");
+            mqttClient.print(buf);
+            mqttClient.endMessage();
+            lastTxMillis = millis();
         }
 
         // reset the reconnect timer
