@@ -8,6 +8,9 @@
 #define FIRMWARE_HARDWARE_H
 
 #define SIEDLE_A_IN A1
+#ifdef DEVICE_ARDUINO_MKR_1010
 #define SIEDLE_TX_PIN 0
-
+#else
+#define SIEDLE_TX_PIN 2
+#endif
 #endif //FIRMWARE_HARDWARE_H

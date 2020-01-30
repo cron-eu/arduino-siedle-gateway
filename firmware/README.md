@@ -59,6 +59,13 @@ In a nutshell:
 * Use the Name "ArduinoDoorbell" for the "Common Name", all other fields can be left blank
 * Copy the generated CSR text including "-----BEGIN CERTIFICATE REQUEST-----" and "-----END CERTIFICATE REQUEST-----" and save it locally.
 
+#### Existing Devices
+
+* Arduino MKR WIFI 1010
+  * Common Name: "ArduinoDoorbell"
+* Arduino nano 33
+  * Common Name: "ArduinoDoorbellNano"
+
 "Every Day" Actions
 ----
 
