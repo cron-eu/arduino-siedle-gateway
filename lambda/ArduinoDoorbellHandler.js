@@ -37,12 +37,11 @@ const sendToSlack = (event, context, debug) => {
           type: "mrkdwn",
           text: debug ?
             `*${decoded.signalTitle}* [${decoded.srcTitle} => ${decoded.dstTitle}]` :
-            `*${decoded.signalTitle}* [${decoded.srcTitle}]`,
+            `@here *${decoded.signalTitle}* [${decoded.srcTitle}]`,
         }
       },
     ],
   };
-
 
   if (debug) {
     message.blocks.push({
