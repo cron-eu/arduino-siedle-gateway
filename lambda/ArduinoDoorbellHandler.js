@@ -62,6 +62,12 @@ exports.handler = (event, context) => {
     );
   }
 
+  if (!debug && decoded.dst !== 372) {
+    // "372" being "cron IT"
+    console.log(`Not sending cmd ${cmdHex} to Slack because dst=${decoded.dst} not 23`);
+    return;
+  }
+
   // If the signal is "ringing", then render the button to open the door
   if (decoded.signal === 2 || decoded.signal === 12) {
 

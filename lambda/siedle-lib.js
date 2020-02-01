@@ -11,7 +11,7 @@ const siedle = require('./siedle');
  */
 const getChunk = (cmd, offset, length) => {
   const mask = ( (1 << length)) - 1; // e.g. 0b111 for length == 3
-  return String((cmd >>> (32 - ( (offset - 1) + length))) & mask );
+  return (cmd >>> (32 - ( (offset - 1) + length))) & mask;
 }
 
 module.exports = {
@@ -21,14 +21,14 @@ module.exports = {
     const src = getChunk(+cmd, 22, 5);
     const dst = getChunk(+cmd, 10, 5);
 
-    const signalTitle = siedle.signals[signal] || `Signal "${signal}"`;
-    const srcTitle = siedle.ids[src] || `ID "${src}"`;
-    const dstTitle = siedle.ids[dst] || `ID "${dst}"`;
+    const signalTitle = siedle.signals[String(signal)] || `Signal "${signal}"`;
+    const srcTitle = siedle.ids[String(src)] || `ID "${src}"`;
+    const dstTitle = siedle.ids[String(dst)] || `ID "${dst}"`;
 
     return {
-      signal: +signal,
-      src: +getChunk(+cmd, 22, 9),
-      dst: +getChunk(+cmd, 10, 9),
+      signal: signal,
+      src: getChunk(+cmd, 22, 9),
+      dst: getChunk(+cmd, 10, 9),
       signalTitle: signalTitle,
       srcTitle: srcTitle,
       dstTitle: dstTitle,
