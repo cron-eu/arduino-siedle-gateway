@@ -2,29 +2,23 @@ const https = require('https');
 const util = require('util');
 const siedle = require('./siedle-lib');
 
-exports.handler = (event, context) => {
 
-  function decimalToRadix(d, radix, padding) {
-    let s = Number(d).toString(radix);
+function decimalToRadix(d, radix, padding) {
+  let s = Number(d).toString(radix);
 
-    while (s.length < padding) {
-      s = '0' + s;
-    }
-
-    return s;
+  while (s.length < padding) {
+    s = '0' + s;
   }
 
-  const slackWebHook = process.env.SLACK_WEB_HOOK;
-  const slackChannel = process.env.SLACK_CHANNEL;
-  const debug = process.env.DEBUG;
+  return s;
+}
+
+
+const sendToSlack = (event, context, debug) => {
+  const slackWebHook = debug ? process.env.SLACK_WEB_HOOK_DEBUG : process.env.SLACK_WEB_HOOK;
 
   if (!slackWebHook) {
     context.fail("SLACK_WEB_HOOK environment var not defined");
-    return;
-  }
-
-  if (!slackChannel) {
-    context.fail("SLACK_CHANNEL environment var not defined");
     return;
   }
 
@@ -35,14 +29,15 @@ exports.handler = (event, context) => {
   const decoded = siedle.parseCmd(cmd);
 
   const message = {
-    channel: slackChannel,
     username: 'siedle-bot',
     blocks: [
       {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*${decoded.signalTitle}* [${decoded.srcTitle} => ${decoded.dstTitle}]`,
+          text: debug ?
+            `*${decoded.signalTitle}* [${decoded.srcTitle} => ${decoded.dstTitle}]` :
+            `*${decoded.signalTitle}* [${decoded.srcTitle}]`,
         }
       },
     ],
@@ -99,4 +94,9 @@ exports.handler = (event, context) => {
 
   r.write(util.format('%j', message));
   r.end();
+};
+
+exports.handler = (event, context) => {
+  sendToSlack(event, context,true);
+  sendToSlack(event, context,false);
 };
