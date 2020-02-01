@@ -1,25 +1,6 @@
 const https = require('https');
 const util = require('util');
-const siedle = require('./siedle');
-
-const codeToTitle = {
-  debug: 'Debug Command',
-  bell_eg: 'Doorbell Ringing (EG) :mega:',
-  bell_og: 'Doorbell Ringing (OG) :mega:',
-  bell_whohoo: 'Doorbell whohoo (OG)',
-  on_hook: 'Handheld on hook :sound:',
-  off_hook: 'Handheld off hook :sound:',
-  unlock_og: 'cron IT Unlock Door (OG) :unlock:',
-  unlock_eg: 'cron IT Unlock Door (EG) :unlock:',
-  light_on: 'Light ON :bulb:',
-  light_on_2: 'Light ON :bulb:',
-};
-
-const cmdToCode = {};
-
-for (let code of Object.keys(siedle.commands)) {
-  cmdToCode[siedle.commands[code]] = code;
-}
+const siedle = require('./siedle-lib');
 
 exports.handler = (event, context) => {
 
@@ -35,6 +16,7 @@ exports.handler = (event, context) => {
 
   const slackWebHook = process.env.SLACK_WEB_HOOK;
   const slackChannel = process.env.SLACK_CHANNEL;
+  const debug = process.env.DEBUG;
 
   if (!slackWebHook) {
     context.fail("SLACK_WEB_HOOK environment var not defined");
@@ -50,6 +32,7 @@ exports.handler = (event, context) => {
   const cmdHex = decimalToRadix(cmd, 16,8);
   // noinspection JSUnresolvedVariable
   const timestamp = new Date(event.ts * 1000);
+  const decoded = siedle.parseCmd(cmd);
 
   const message = {
     channel: slackChannel,
@@ -59,82 +42,43 @@ exports.handler = (event, context) => {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `Received command \`${cmdHex}\``,
+          text: `*${decoded.signalTitle}* [${decoded.srcTitle} => ${decoded.dstTitle}]`,
         }
       },
-      {
+    ],
+  };
+
+
+  if (debug) {
+    message.blocks.push({
         type: 'context',
         elements: [
           {
             type: 'mrkdwn',
-            text: `*Received:* ${timestamp.toLocaleString()}`,
+            text: `\`${cmdHex}\` @${timestamp.toLocaleString()}`,
           }
         ]
       },
-      // {
-      //   type: "section",
-      //   text: {
-      //     type: "mrkdwn",
-      //     text: `> ${decimalToRadix(event.cmd, 2,32)}`,
-      //   }
-      // },
-    ],
-  };
+    );
+  }
 
-  const cmdCode = cmdToCode[cmd];
-  const cmdTitle = cmdCode ? codeToTitle[cmdCode] : undefined;
+  // If the signal is "ringing", then render the button to open the door
+  if (decoded.signal === 2 || decoded.signal === 12) {
 
-  if (cmdTitle) {
-
-    let here = '';
-    if (cmdCode === 'bell_eg' || cmdCode === "bell_og") {
-      here = '@here ';
-    }
-
-    // replace the first block
-    message.blocks.shift();
-    message.blocks.unshift({
-      type: "section",
-      text: {
-        type: "mrkdwn",
-        text: `${here}*${cmdTitle}* (\`${cmdHex}\`)`,
-      }
+    message.blocks.push({
+      type: 'actions',
+      elements: [
+        {
+          type: 'button',
+          text: {
+            type: 'plain_text',
+            text: 'Unlock :unlock:',
+            emoji: true,
+          },
+          value: siedle.getCmd(3, decoded.dst, decoded.src),
+        }
+      ]
     });
-
-
-    if (cmdCode === 'debug') {
-      message.blocks.push({
-        type: 'actions',
-        elements: [
-          {
-            type: 'button',
-            text: {
-              type: 'plain_text',
-              text: 'Debug Action',
-              emoji: true,
-            },
-            value: "debug_" + cmdHex,
-          }
-        ]
-      });
-    }
-
-    if (cmdCode === 'bell_eg' || cmdCode === 'bell_og') {
-      message.blocks.push({
-        type: 'actions',
-        elements: [
-          {
-            type: 'button',
-            text: {
-              type: 'plain_text',
-              text: 'Unlock the door!',
-              emoji: true,
-            },
-            value: cmdCode === 'bell_eg' ? 'unlock_eg' : 'unlock_og',
-          }
-        ]
-      });
-    }
   }
 
   const r = https.request(slackWebHook, {method: 'POST'}, res => {

@@ -1,14 +1,24 @@
 {
-	"commands": {
-		"debug": 0,
-		"light_on": 1353782736,
-		"light_on_2": 1442911696,
-		"bell_eg": 1155339024,
-		"bell_og": 1490882768,
-		"bell_whohoo": 1486688464,
-		"unlock_og": 1175262672,
-		"unlock_eg": 1177621968,
-		"off_hook": 1082987984,
-		"on_hook": 1351423440
+	"signals": {
+		"0": ":sound: (off hook)",
+		"2": ":bell: (EG)",
+		"3": ":unlock:",
+		"8": ":sound: (on hook)",
+		"11": ":bulb:",
+		"12": ":bell: (OG)"
+	},
+	"ids": {
+		"2": "Roche Bobois (EG)",
+		"3": "5.OG",
+		"6": "5.OG",
+		"7": "Woohoo",
+		"10": "Luisenklinik",
+		"12": "EG",
+		"13": "6. OG",
+		"16": "TG",
+		"17": "(JU Briefkästen)",
+		"23": "cron IT",
+		"24": "Kanzlei Maier (4. OG)",
+		"26": "1.OG"
 	}
 }

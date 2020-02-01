@@ -2,7 +2,6 @@ const crypto = require('crypto');
 const AWS = require('aws-sdk')
 const querystring = require('querystring');
 // const timeout = ms => new Promise(res => setTimeout(res, ms));
-const siedle = require('./siedle');
 
 const verifySlackSignature = (event) => {
   const timestamp = event.headers['X-Slack-Request-Timestamp'];
@@ -65,18 +64,10 @@ exports.handler = async (event) => {
 
   const payload = getSlackPayloadFromRequest(event);
 
-  const action = payload.actions[0].value;
+  const cmd = payload.actions[0].value;
 
-  const cmd = siedle.commands[action];
-  if (cmd) {
-    console.log(`Siedle cmd ${action} from user ${payload.user.name}.`);
-    await sendSiedleCommand(siedle.commands.unlock_og);
-  } else {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({error: `Could not find the associated command for action "${action}".`}),
-    }
-  }
+  console.log(`Siedle cmd ${cmd} from user ${payload.user.name}.`);
+  await sendSiedleCommand(cmd);
 
   return {
     statusCode: 200,
