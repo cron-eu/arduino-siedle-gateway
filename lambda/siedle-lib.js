@@ -7,7 +7,7 @@ const siedle = require('./siedle');
  * @param offset bit offset (counting from the msb, starting by 1)
  * @param length length in bits
  *
- * @return string, e.g. "13"
+ * @return number
  */
 const getChunk = (cmd, offset, length) => {
   const mask = ( (1 << length)) - 1; // e.g. 0b111 for length == 3
