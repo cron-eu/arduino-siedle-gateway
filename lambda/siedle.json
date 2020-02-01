@@ -1,11 +1,11 @@
 {
 	"signals": {
 		"0": ":sound: (off hook)",
-		"2": ":bell: (EG)",
+		"2": ":bell:",
 		"3": ":unlock:",
 		"8": ":sound: (on hook)",
 		"11": ":bulb:",
-		"12": ":bell: (OG)"
+		"12": ":bell:"
 	},
 	"ids": {
 		"2": "Roche Bobois (EG)",
