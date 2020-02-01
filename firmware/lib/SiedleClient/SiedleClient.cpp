@@ -9,8 +9,14 @@
 
 #define R2_VAL 10000.0
 #define R3_VAL 1100.0
-#define BIT_DURATION 2000
-#define HALF_BIT_DURATION 1000
+
+// Note: actually we should use 2000 to get a timer period of 2000us.
+// For some unknown reason we have to use this value instead, else the sampling
+// rate will be 2028us
+#define BIT_DURATION 1972
+
+#define DEBUG_SAMPLING
+#define SIEDLE_TX_DEBUG_PIN 4
 
 // Bus Voltage = ADC Raw Value * ADC_FACTOR; the ADC Raw Value being the raw value
 // as returned by analogRead()
@@ -22,8 +28,6 @@
 // Maximum bus voltage while transmitting a logical "H".
 // If the voltage is greater than this threshold, we assume that there was an error.
 #define ADC_CARRIER_HIGH_THRESHOLD_VOLTAGE ( 12.0 )
-
-// #define DEBUG_SAMPLING
 
 static SiedleClient *currentInstance = NULL;
 
@@ -72,13 +76,13 @@ void SiedleClient::bitTimerISR() {
 
         case receiving:
             if (bitNumber >= 0) {
-                if (bitNumber == 30) {
+                if (bitNumber == 31) {
                     Timer5::changeSampleRate(BIT_DURATION);
                 }
 #ifdef DEBUG_SAMPLING
-                digitalWrite(1, HIGH);
+                digitalWrite(SIEDLE_TX_DEBUG_PIN, HIGH);
                 delayMicroseconds(10);
-                digitalWrite(1, LOW);
+                digitalWrite(SIEDLE_TX_DEBUG_PIN, LOW);
 #endif
                 bitWrite(cmd_rx_buf, bitNumber--, readBit());
             }
@@ -123,7 +127,7 @@ void SiedleClient::bitTimerISR() {
     if (done) {
 
 #ifdef DEBUG_SAMPLING
-        pinMode(1, INPUT);
+        pinMode(SIEDLE_TX_DEBUG_PIN, INPUT);
 #endif
         state = idle;
         pinMode(inputPin, INPUT);
@@ -152,9 +156,9 @@ void SiedleClient::rxISR() {
     state = receiving;
 
     // we know that the first bit is a logical 0, read the remaining bits using the ISR
-    bitNumber = 30;
+    bitNumber = 31;
     // this will also reset and start the timer
-    Timer5::changeSampleRate(BIT_DURATION + HALF_BIT_DURATION);
+    Timer5::changeSampleRate(BIT_DURATION / 4);
     Timer5::enable();
     return;
 
