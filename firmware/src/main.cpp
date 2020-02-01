@@ -64,6 +64,7 @@ const char ssid[] = SECRET_SSID;    // network SSID (name)
 const char pass[] = SECRET_PASS;    // network password (use for WPA, or use as key for WEP)
 
 unsigned long bootEpoch = 0;
+unsigned int mqttReconnects = 0;
 
 /**
  * Determine the boot time of the system
@@ -193,6 +194,9 @@ void printDebug(Print *handler) {
 #ifdef USE_MQTT
     handler->print("<dl><dt>AWS MQTT Link</dt><dd>");
     handler->println(mqttClient.connected() ? "OK" : "Not Connected");
+    handler->print("(");
+    handler->print(mqttReconnects);
+    handler->println(")");
     handler->print("</dd></dl>");
 #endif
 
@@ -337,6 +341,7 @@ void inline mqttLoop() {
     if (!mqttClient.connected()) {
         if (elapsed > 10000) {
             auto connected = mqttClient.connect(broker, 8883);
+            mqttReconnects++;
             reconnectMillis = millis();
             if (connected) {
                 // subscribe to a topic
