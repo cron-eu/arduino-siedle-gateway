@@ -9,8 +9,7 @@
 // comment out to disable the MQTT functionality (does not make much sense, useful for debugging)
 #define USE_MQTT
 
-// Siedle Log size (used for internal buffering in cases where the MQTT server is not reachable) and also for
-// the Web UI
-#define LOG_SIZE 32
+// Siedle Log size (shown in the Web UI)
+#define LOG_SIZE 64
 
 #endif //FIRMWARE_SETTINGS_H
