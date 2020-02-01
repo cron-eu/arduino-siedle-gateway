@@ -104,11 +104,15 @@ exports.handler = async (event) => {
           await sendSiedleCommand(1178637776);
           break;
         default:
-          console.log(`Unknown parameter ${text}`);
-          return {
-            statusCode: 200,
-            body: `Parameter "${text}" invalid. Use \`/siedle EG | OG | TG\``,
+          const cmd = +params.text;
+          if (!cmd) {
+            console.log(`Unknown parameter ${text}`);
+            return {
+              statusCode: 200,
+              body: `Parameter "${text}" invalid. Use \`/siedle EG | OG | TG\``,
+            }
           }
+          await sendSiedleCommand(cmd);
       }
     }
 
