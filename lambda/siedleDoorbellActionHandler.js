@@ -50,8 +50,18 @@ const getSlackPayloadFromRequest = (event) => {
    * @type {string}
    */
   const payload = params['payload'];
-  return JSON.parse(payload);
+
+  if (payload) {
+    return JSON.parse(payload);
+  } else {
+    return null;
+  }
 };
+
+const getParamsFromRequest = (event) => {
+  const body = new Buffer.from(event.body, 'base64').toString();
+  return querystring.parse(body);
+}
 
 exports.handler = async (event) => {
 
@@ -64,13 +74,49 @@ exports.handler = async (event) => {
 
   const payload = getSlackPayloadFromRequest(event);
 
-  const cmd = payload.actions[0].value;
+  if (payload) {
+    const cmd = payload.actions[0].value;
 
-  console.log(`Siedle cmd ${cmd} from user ${payload.user.name}.`);
-  await sendSiedleCommand(cmd);
+    console.log(`Siedle cmd ${cmd} from user ${payload.user.name}.`);
+    await sendSiedleCommand(cmd);
 
-  return {
-    statusCode: 200,
-    body: JSON.stringify('OK'),
-  };
+    return {
+      statusCode: 200,
+      body: JSON.stringify('OK'),
+    };
+  } else {
+    const params = getParamsFromRequest(event);
+
+    const text = params.text.trim().toUpperCase();
+
+    if (params.command === '/siedle') {
+      switch (text) {
+        case "UNLOCK":
+          await sendSiedleCommand(1177621968);
+          break;
+        case "EG":
+          await sendSiedleCommand(1177621968);
+          break;
+        case "OG":
+          await sendSiedleCommand(1175262672);
+          break;
+        case "TG":
+          await sendSiedleCommand(1178637776);
+          break;
+        default:
+          console.log(`Unknown parameter ${text}`);
+          return {
+            statusCode: 200,
+            body: `Parameter "${text}" invalid. Use \`/siedle EG | OG | TG\``,
+          }
+      }
+    }
+
+    return {
+      statusCode: 200,
+      body: `Unlock ${text} :thumbsup:`,
+    };
+
+  }
+
 };
