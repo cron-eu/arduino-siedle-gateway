@@ -248,8 +248,8 @@ void onMessageReceived(int messageSize) {
     char payload[16];
     char *payload_p = payload;
 
-    int rxlen = 0;
-    while (mqttClient.available()) {
+    unsigned int rxlen = 0;
+    while (mqttClient.available() && messageSize--) {
         char c = mqttClient.read();
         if (rxlen++ < (sizeof(payload)-1)) {
             *payload_p++ = c;
