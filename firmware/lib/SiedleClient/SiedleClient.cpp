@@ -40,11 +40,13 @@ static void _timerISR() {
     }
 }
 
-SiedleClient::SiedleClient(uint8_t inputPin, uint8_t outputPin) {
+SiedleClient::SiedleClient(uint8_t inputPin, uint8_t outputPin, uint8_t outputCarrierPin) {
     pinMode(inputPin, INPUT);
     pinMode(outputPin, OUTPUT);
+    pinMode(outputCarrierPin, OUTPUT);
     this->inputPin = inputPin;
     this->outputPin = outputPin;
+    this->outputCarrierPin = outputCarrierPin;
 }
 
 bool SiedleClient::begin() {
@@ -99,6 +101,7 @@ void SiedleClient::bitTimerISR() {
                 digitalWrite(outputPin, !bit);
             } else {
                 digitalWrite(outputPin, LOW);
+                digitalWrite(outputCarrierPin, LOW);
 
                 // wait until the bus master raises the voltage above a given threshold
                 // we timeout after 3 periods
@@ -181,6 +184,7 @@ void SiedleClient::sendCmd(siedle_cmd_t tx_cmd) {
 
     // Output the first bit (#31). Remaining bits will be transmitted using the ISR
     auto bit = bitRead(cmd_tx_buf, bitNumber--);
+    digitalWrite(outputCarrierPin, HIGH);
     digitalWrite(outputPin, !bit);
 
     // we did already transmit the first bit, transmit the remaining bits using the ISR

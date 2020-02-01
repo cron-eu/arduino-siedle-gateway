@@ -27,7 +27,7 @@ public:
      * @param inputPin analog input pin
      * @param outputPin digital out pin (*negated*)
      */
-    SiedleClient(uint8_t inputPin, uint8_t outputPin);
+    SiedleClient(uint8_t inputPin, uint8_t outputPin, uint8_t outputCarrierPin);
     /**
      * Attach the ISR and start receiving data.
      *
@@ -57,6 +57,7 @@ private:
     int readBit();
     uint8_t inputPin;
     uint8_t outputPin;
+    uint8_t outputCarrierPin;
     // Last received command
     volatile siedle_cmd_t cmd;
     // Used as a temporary buffer from the rx isr

@@ -13,4 +13,6 @@
 #else
 #define SIEDLE_TX_PIN 2
 #endif
+#define SIEDLE_TX_CARRIER_PIN 3
+
 #endif //FIRMWARE_HARDWARE_H

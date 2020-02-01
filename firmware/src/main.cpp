@@ -43,7 +43,7 @@ typedef struct {
 
 int status = WL_IDLE_STATUS;
 WebServer webServer(80);
-SiedleClient siedleClient(SIEDLE_A_IN, SIEDLE_TX_PIN);
+SiedleClient siedleClient(SIEDLE_A_IN, SIEDLE_TX_PIN, SIEDLE_TX_CARRIER_PIN);
 CircularBuffer<SiedleRxTxLogEntry, LOG_SIZE> siedleRxTxLog;
 
 CircularBuffer<siedle_cmd_t, SIEDLE_TX_QUEUE_LEN> siedleTxQueue;
