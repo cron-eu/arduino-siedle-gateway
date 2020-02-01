@@ -341,26 +341,26 @@ void inline mqttLoop() {
             if (connected) {
                 // subscribe to a topic
                 mqttClient.subscribe("siedle/send");
+            } else {
+                // early return, retry after reconnectMillis
+                return;
             }
         }
-    } else {
-        // poll for new MQTT messages and send keep alives
-        mqttClient.poll();
-        // check if we have some messages to send
-        if (mqttTxQueue.size() && millis() - lastTxMillis >= MQTT_MAX_SEND_RATE_MS) {
-            // we want to limit the outgoing rate to avoid issues with the power management
-            auto entry = mqttTxQueue.shift();
-            char buf[32];
-            sprintf(buf, "{\"ts\":%lu,\"cmd\":%lu}", entry.timestamp, entry.cmd);
+    }
 
-            mqttClient.beginMessage("siedle/received");
-            mqttClient.print(buf);
-            mqttClient.endMessage();
-            lastTxMillis = millis();
-        }
+    // poll for new MQTT messages and send keep alives
+    mqttClient.poll();
+    // check if we have some messages to send
+    if (mqttTxQueue.size() && millis() - lastTxMillis >= MQTT_MAX_SEND_RATE_MS) {
+        // we want to limit the outgoing rate to avoid issues with the power management
+        auto entry = mqttTxQueue.shift();
+        char buf[32];
+        sprintf(buf, "{\"ts\":%lu,\"cmd\":%lu}", entry.timestamp, entry.cmd);
 
-        // reset the reconnect timer
-        reconnectMillis = millis();
+        mqttClient.beginMessage("siedle/received");
+        mqttClient.print(buf);
+        mqttClient.endMessage();
+        lastTxMillis = millis();
     }
 
 }
