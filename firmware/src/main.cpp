@@ -114,10 +114,46 @@ inline void statusLEDLoop() {
     }
 }
 
+void printWifiStatus() {
+    // print the SSID of the network you're attached to:
+    Serial.print("SSID: ");
+    Serial.println(WiFi.SSID());
+
+    // print your board's IP address:
+    IPAddress ip = WiFi.localIP();
+
+    // print the received signal strength:
+    long rssi = WiFi.RSSI();
+    Serial.print("signal strength (RSSI):");
+    Serial.print(rssi);
+    Serial.println(" dBm");
+    Serial.print("My IP address: ");
+    Serial.println(ip);
+}
+
+inline void wifiConnectLoop() {
+    static unsigned long reconnectMillis = 0;
+    static unsigned long connectionCheckMillis = 0;
+    if (millis() - connectionCheckMillis > 1000) { // check connection status every second
+        connectionCheckMillis = millis();
+        status = WiFi.status();
+        if (status != WL_CONNECTED && millis() - reconnectMillis > 5000) { // reconnect every 5 seconds
+            reconnectMillis = millis();
+            status = WiFi.begin(ssid, pass);
+            if (status == WL_CONNECTED) {
+                printWifiStatus();
+            }
+        }
+    }
+}
+
 // This loop synchronized the internal RTC with the time got from an NTP server, using the WiFi Library
 inline void ntpLoop() {
     static unsigned long lastMillis = 0;
     static bool initialized = false;
+
+    // bail out if we do not have internet connectivity
+    if (status != WL_CONNECTED) { return; }
 
     // if we're in the initializing phase, re-try every 3 seconds. Else use a longer sync interval
     unsigned long interval = !initialized ? 3000 : 5 * 60 * 1000;
@@ -224,23 +260,6 @@ void printDebug(Print *handler) {
     handler->print("</table>");
 }
 
-void printWifiStatus() {
-    // print the SSID of the network you're attached to:
-    Serial.print("SSID: ");
-    Serial.println(WiFi.SSID());
-
-    // print your board's IP address:
-    IPAddress ip = WiFi.localIP();
-
-    // print the received signal strength:
-    long rssi = WiFi.RSSI();
-    Serial.print("signal strength (RSSI):");
-    Serial.print(rssi);
-    Serial.println(" dBm");
-    Serial.print("My IP address: ");
-    Serial.println(ip);
-}
-
 #ifdef USE_MQTT
 unsigned long getTime() {
     // get the current time from our RTC module
@@ -310,19 +329,6 @@ void __unused setup() {
         Serial.println("Please upgrade the firmware");
     }
 
-    // attempt to connect to Wifi network:
-    while (status != WL_CONNECTED) {
-        Serial.print("Attempting to connect to Network named: ");
-        Serial.println(ssid);                   // print the network name (SSID);
-
-        // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
-        status = WiFi.begin(ssid, pass);
-        if (status == WL_CONNECTED) break;
-        // wait 10 seconds for connection:
-        delay(10000);
-    }
-
-    printWifiStatus();
     webServer.begin();
     WiFi.lowPowerMode();
 
@@ -337,6 +343,9 @@ void inline mqttLoop() {
     static unsigned long lastTxMillis = 0;
 
     unsigned long elapsed = millis() - reconnectMillis;
+
+    // bail out if we do not have internet connectivity
+    if (status != WL_CONNECTED) { return; }
 
     if (!mqttClient.connected()) {
         if (elapsed > 10000) {
@@ -373,6 +382,7 @@ void inline mqttLoop() {
 
 void __unused loop() {
     statusLEDLoop();
+    wifiConnectLoop();
     ntpLoop();
     webServer.loop();
     siedleClientLoop();
