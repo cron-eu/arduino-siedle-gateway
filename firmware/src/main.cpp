@@ -65,6 +65,7 @@ const char pass[] = SECRET_PASS;    // network password (use for WPA, or use as 
 
 unsigned long bootEpoch = 0;
 unsigned int mqttReconnects = 0;
+unsigned int wifiReconnects = 0;
 
 /**
  * Determine the boot time of the system
@@ -141,6 +142,7 @@ inline void wifiConnectLoop() {
             reconnectMillis = millis();
             status = WiFi.begin(ssid, pass);
             if (status == WL_CONNECTED) {
+                wifiReconnects++;
                 printWifiStatus();
             }
         }
@@ -211,6 +213,21 @@ void printDebug(Print *handler) {
         handler->print((float)uptime / 60, 0);
         handler->print(" min");
     }
+    handler->print("</dd></dl>");
+
+
+    handler->print("<dl><dt>WiFi</dt><dd>");
+
+    handler->print("SSID: ");
+    handler->print(WiFi.SSID());
+    // print the received signal strength:
+    long rssi = WiFi.RSSI();
+    handler->print(", RSSI:");
+    handler->print(rssi);
+    handler->println(" dBm");
+    handler->print("(");
+    handler->print(wifiReconnects);
+    handler->println(")");
 
     handler->print("</dd></dl>");
 
