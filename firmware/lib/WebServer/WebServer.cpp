@@ -41,6 +41,12 @@ void WebServer::loop() {
 //                        client.print(get_battery_voltage());
 //                        client.print("</dd>");
 
+                        client.print("<dl>");
+                        client.print("<dt>WiFiNINA Firmware Version</dt>");
+                        client.print("<dd>");
+                        client.print(WiFi.firmwareVersion());
+                        client.print("</dd>");
+
                         if (printDebug != NULL) {
                             printDebug(&client);
                         }
