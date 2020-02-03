@@ -20,6 +20,7 @@
 #include <RTCZero.h>
 #include <time.h>
 #include <MemoryUtils.h>
+#include <Adafruit_SleepyDog.h>
 
 // max siedle bus send rate
 #define BUS_MAX_SEND_RATE_MS 800
@@ -326,6 +327,7 @@ inline void setupMQTT() {
 #endif
 
 void __unused setup() {
+    Watchdog.enable(WDT_TIMEOUT_MS);
     webServer.printDebug = printDebug;
     rtc.begin();
     Serial.begin(115200);
@@ -352,6 +354,14 @@ void __unused setup() {
 #ifdef USE_MQTT
     setupMQTT();
 #endif
+}
+
+void inline wdtLoop() {
+    static unsigned long lastMillis = 0;
+    if (millis() - lastMillis > 500) {
+        lastMillis = millis();
+        Watchdog.reset();
+    }
 }
 
 #ifdef USE_MQTT
@@ -398,6 +408,7 @@ void inline mqttLoop() {
 #endif
 
 void __unused loop() {
+    wdtLoop();
     statusLEDLoop();
     wifiConnectLoop();
     ntpLoop();
