@@ -28,3 +28,4 @@ void SiedleServiceClass::loop() {
         }
     }
 }
+SiedleServiceClass SiedleService;

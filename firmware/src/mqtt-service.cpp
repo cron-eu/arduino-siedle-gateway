@@ -108,3 +108,5 @@ void MQTTServiceClass::loop() {
 bool MQTTServiceClass::isConnected() {
     return mqttClient.connected();
 }
+
+MQTTServiceClass MQTTService;

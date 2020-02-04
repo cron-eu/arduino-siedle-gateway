@@ -49,3 +49,5 @@ void WiFiManagerClass::printWifiStatus() {
     Serial.print("My IP address: ");
     Serial.println(ip);
 }
+
+WiFiManagerClass WiFiManager;
