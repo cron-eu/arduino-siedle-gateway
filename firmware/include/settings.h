@@ -15,4 +15,7 @@
 // Watchdog timer expire value (in ms)
 #define WDT_TIMEOUT_MS 8000
 
+#define MQTT_TX_QUEUE_LEN 32
+#define SIEDLE_TX_QUEUE_LEN 32
+
 #endif //FIRMWARE_SETTINGS_H
