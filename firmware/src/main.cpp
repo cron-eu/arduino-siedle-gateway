@@ -16,6 +16,12 @@
 #endif
 
 WebServer webServer(80);
+CircularBuffer<SiedleRxTxLogEntry, LOG_SIZE> siedleRxTxLog;
+MQTTServiceClass MQTTService;
+SiedleServiceClass SiedleService;
+LEDClass LED;
+RTCSyncClass RTCSync;
+WiFiManagerClass WiFiManager;
 
 /**
  * Determine the boot time of the system
