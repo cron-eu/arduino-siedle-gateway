@@ -3,15 +3,8 @@
 //
 
 #include "mqtt-service.h"
-
 #include <Arduino.h>
-#include <WiFiNINA.h>
-#include <CircularBuffer.h>
 
-#include <ArduinoBearSSL.h>
-#include <ArduinoECCX08.h>
-
-#include <ArduinoMqttClient.h>
 #include "siedle-service.h"
 #include "rtc.h"
 
@@ -19,10 +12,6 @@
 
 // max MQTT send rate
 #define MQTT_MAX_SEND_RATE_MS 600
-
-WiFiClient    wifiClient;            // Used for the TCP socket connection
-BearSSLClient sslClient(wifiClient); // Used for SSL/TLS connection, integrates with ECC508
-MqttClient    mqttClient(sslClient);
 
 const char* certificate  = SECRET_CERTIFICATE;
 const char broker[]      = SECRET_BROKER;
@@ -32,7 +21,7 @@ unsigned long getTime() {
     return RTCSync.getEpoch();
 }
 
-void onMessageReceived(int messageSize) {
+void MQTTServiceClass::onMessageReceived(int messageSize) {
 
     char payload[16];
     char *payload_p = payload;
@@ -48,6 +37,10 @@ void onMessageReceived(int messageSize) {
     uint32_t cmd = atol(payload);
 
     SiedleService.transmitAsync(cmd);
+}
+
+void _onMessageReceivedWrapper(int count) {
+    MQTTService.onMessageReceived(count);
 }
 
 void MQTTServiceClass::begin() {
@@ -74,7 +67,7 @@ void MQTTServiceClass::begin() {
 
     // Set the message callback, this function is
     // called when the MQTTClient receives a message
-    mqttClient.onMessage(onMessageReceived);
+    mqttClient.onMessage(_onMessageReceivedWrapper);
 }
 
 void MQTTServiceClass::loop() {

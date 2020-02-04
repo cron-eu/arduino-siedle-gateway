@@ -21,6 +21,7 @@
 
 class SiedleServiceClass {
 public:
+    SiedleServiceClass() : siedleTxQueue(), siedleClient(SIEDLE_A_IN, SIEDLE_TX_PIN, SIEDLE_TX_CARRIER_PIN) { }
     void begin();
     void loop();
 

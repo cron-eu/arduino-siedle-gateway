@@ -11,6 +11,7 @@
 
 class RTCSyncClass {
 public:
+    RTCSyncClass() : rtc() { }
     void begin() {
         lastMillis = 0;
         initialized = false;
