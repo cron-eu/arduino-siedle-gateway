@@ -16,6 +16,7 @@ public:
         lastMillis = 0;
         initialized = false;
         bootEpoch = 0;
+        rtc.begin();
     }
 
     void loop() {
