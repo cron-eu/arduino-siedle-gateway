@@ -13,7 +13,7 @@ public:
     WebServer(uint16_t);
 
     void begin();
-    void (*printDebug)(Print *handler) = NULL;
+    void (*rootPageHandler)(Print *handler) = NULL;
 
     void loop();
 

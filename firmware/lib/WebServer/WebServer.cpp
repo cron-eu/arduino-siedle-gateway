@@ -47,8 +47,8 @@ void WebServer::loop() {
                         client.print(WiFi.firmwareVersion());
                         client.print("</dd>");
 
-                        if (printDebug != NULL) {
-                            printDebug(&client);
+                        if (rootPageHandler != NULL) {
+                            rootPageHandler(&client);
                         }
 
                         // The HTTP response ends with another blank line:
