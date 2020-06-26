@@ -1,7 +1,7 @@
 Arduino Doorbell
 ====
 
-[![CircleCI](https://circleci.com/gh/remuslazar/ArduinoDoorbell.svg?style=svg&circle-token=3810e09b10dd3b8ab5f572e5c6ab38703eb1c757)](https://circleci.com/gh/remuslazar/ArduinoDoorbell)
+[![CircleCI](https://circleci.com/gh/cron-eu/arduino-siedle-gateway.svg?style=svg)](https://circleci.com/gh/cron-eu/arduino-siedle-gateway)
 
 Abstract
 ----
