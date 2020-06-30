@@ -32,10 +32,12 @@ void WiFiManagerClass::loop() {
             }
         }
 
+        #ifdef ARDUINO_ARCH_SAMD
         if (!connected && millis() - reconnectMillis > 5000) { // reconnect every 5 seconds
             reconnectMillis = millis();
             connect();
         }
+        #endif
     }
     #ifdef MDNS_HOSTNAME
     MDNS.update();
@@ -43,7 +45,9 @@ void WiFiManagerClass::loop() {
 }
 
 void WiFiManagerClass::begin() {
+    #ifdef ARDUINO_ARCH_SAMD
     reconnectMillis = 0;
+    #endif
     connectionCheckMillis = 0;
     wifiReconnects = 0;
 #ifdef ARDUINO_ARCH_SAMD
