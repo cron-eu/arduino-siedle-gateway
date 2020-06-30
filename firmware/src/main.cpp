@@ -3,7 +3,10 @@
 
 #include <WebServer.h>
 #include <time.h>
+
+#ifdef ARDUINO_ARCH_SAMD
 #include <Adafruit_SleepyDog.h>
+#endif
 
 #include "siedle-log.h"
 #include "led.h"
@@ -31,11 +34,15 @@ void __unused setup() {
     MQTTService.begin();
 #endif
 
+#ifdef ARDUINO_ARCH_SAMD
     Watchdog.enable(WDT_TIMEOUT_MS);
+#endif
+
     webServer.rootPageHandler = webUIHTMLHandler;
     webServer.begin();
 }
 
+#ifdef ARDUINO_ARCH_SAMD
 void inline wdtLoop() {
     static unsigned long lastMillis = 0;
     if (millis() - lastMillis > 500) {
@@ -43,6 +50,7 @@ void inline wdtLoop() {
         Watchdog.reset();
     }
 }
+#endif
 
 void __unused loop() {
     LED.loop();
@@ -53,5 +61,8 @@ void __unused loop() {
     MQTTService.loop();
 #endif
     webServer.loop();
+
+    #ifdef ARDUINO_ARCH_SAMD
     wdtLoop();
+#endif
 }
