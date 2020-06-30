@@ -95,7 +95,7 @@ void MQTTServiceClass::loop() {
         // we want to limit the outgoing rate to avoid issues with the power management
         auto entry = mqttTxQueue.shift();
         char buf[32];
-        sprintf(buf, "{\"ts\":%lu,\"cmd\":%lu}", entry.timestamp, entry.cmd);
+        sprintf(buf, "{\"ts\":%lu,\"cmd\":%u}", entry.timestamp, entry.cmd);
 
         mqttClient.beginMessage("siedle/received");
         mqttClient.print(buf);
