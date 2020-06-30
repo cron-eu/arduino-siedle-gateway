@@ -23,13 +23,20 @@ WebServer webServer(80);
 
 void __unused setup() {
     Debug.begin();
+
     Debug.println("Booting..");
 
     LED.begin();
-    RTCSync.begin();
     SiedleService.begin();
+
+    #ifdef ARDUINO_ARCH_SAMD
+    RTCSync.begin();
+    WiFiManager.begin();
+    #else
     WiFiManager.begin();
     RTCSync.begin();
+    #endif
+
 #ifdef USE_MQTT
     MQTTService.begin();
 #endif
