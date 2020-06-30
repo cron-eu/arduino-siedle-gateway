@@ -35,19 +35,19 @@ void WiFiManagerClass::begin() {
 
 void WiFiManagerClass::printWifiStatus() {
     // print the SSID of the network you're attached to:
-    Serial.print("SSID: ");
-    Serial.println(WiFi.SSID());
+    Debug.print("SSID: ");
+    Debug.println(WiFi.SSID());
 
     // print your board's IP address:
     IPAddress ip = WiFi.localIP();
 
     // print the received signal strength:
     long rssi = WiFi.RSSI();
-    Serial.print("signal strength (RSSI):");
-    Serial.print(rssi);
-    Serial.println(" dBm");
-    Serial.print("My IP address: ");
-    Serial.println(ip);
+    Debug.print("signal strength (RSSI):");
+    Debug.print(rssi);
+    Debug.println(" dBm");
+    Debug.print("My IP address: ");
+    Debug.println(ip);
 }
 
 WiFiManagerClass WiFiManager;

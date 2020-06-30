@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <serial-debug.h>
 
 #include <WebServer.h>
 #include <time.h>
@@ -18,8 +19,8 @@
 WebServer webServer(80);
 
 void __unused setup() {
-    Serial.begin(115200);
-    Serial.println("Booting..");
+    Debug.begin();
+    Debug.println("Booting..");
 
     LED.begin();
     RTCSync.begin();

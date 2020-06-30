@@ -4,6 +4,7 @@
 
 #ifndef FIRMWARE_WIFI_MANAGER_H
 #define FIRMWARE_WIFI_MANAGER_H
+#include <serial-debug.h>
 
 class WiFiManagerClass {
 public:
