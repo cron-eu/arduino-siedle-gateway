@@ -16,6 +16,8 @@ private:
     unsigned long reconnectMillis;
     unsigned long connectionCheckMillis;
     static void printWifiStatus();
+    void connect();
+    bool connected = false;
 };
 
 extern WiFiManagerClass WiFiManager;

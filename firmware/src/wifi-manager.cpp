@@ -9,26 +9,37 @@
 #include <WiFiNINA.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
+#ifdef MDNS_HOSTNAME
+#include <ESP8266mDNS.h>
+#endif
 #endif
 
 #include <wifi_client_secrets.h>
 
-const char ssid[] = SECRET_SSID;    // network SSID (name)
-const char pass[] = SECRET_PASS;    // network password (use for WPA, or use as key for WEP)
-
 void WiFiManagerClass::loop() {
-    if (millis() - connectionCheckMillis > 1000) { // check connection status every second
+    if (millis() - connectionCheckMillis > 250) { // check connection status periodically
         connectionCheckMillis = millis();
+
         auto status = WiFi.status();
-        if (status != WL_CONNECTED && millis() - reconnectMillis > 5000) { // reconnect every 5 seconds
-            reconnectMillis = millis();
-            status = WiFi.begin(ssid, pass);
-            if (status == WL_CONNECTED) {
-                wifiReconnects++;
+        if ( (status == WL_CONNECTED) != connected) {
+            connected = (status == WL_CONNECTED);
+            if (connected) {
                 printWifiStatus();
+                #ifdef MDNS_HOSTNAME
+                Debug.println(String(F("mDNS service started for hostname: ")) + F(MDNS_HOSTNAME));
+                MDNS.begin(F(MDNS_HOSTNAME));
+                #endif
             }
         }
+
+        if (!connected && millis() - reconnectMillis > 5000) { // reconnect every 5 seconds
+            reconnectMillis = millis();
+            connect();
+        }
     }
+    #ifdef MDNS_HOSTNAME
+    MDNS.update();
+    #endif
 }
 
 void WiFiManagerClass::begin() {
@@ -38,23 +49,23 @@ void WiFiManagerClass::begin() {
 #ifdef ARDUINO_ARCH_SAMD
     WiFi.lowPowerMode();
 #endif
+    connect();
+}
+
+void WiFiManagerClass::connect() {
+    String ssid = F(SECRET_SSID);
+    String pass = F(SECRET_PASS);
+    Debug.print(String(F("Connecting to WiFi Network '")) + ssid + "' .. ");
+    WiFi.begin(ssid, pass); // this will run async
 }
 
 void WiFiManagerClass::printWifiStatus() {
     // print the SSID of the network you're attached to:
-    Debug.print("SSID: ");
-    Debug.println(WiFi.SSID());
+    Debug.println(F("done!"));
 
-    // print your board's IP address:
-    IPAddress ip = WiFi.localIP();
-
-    // print the received signal strength:
-    long rssi = WiFi.RSSI();
-    Debug.print("signal strength (RSSI):");
-    Debug.print(rssi);
-    Debug.println(" dBm");
-    Debug.print("My IP address: ");
-    Debug.println(ip);
+    // print ip and rssi of the current link
+    Debug.println(String(F("Local IP: ")) + WiFi.localIP().toString()
+                + F(", signal strength (RSSI): ") + WiFi.RSSI() + F(" dBm."));
 }
 
 WiFiManagerClass WiFiManager;
