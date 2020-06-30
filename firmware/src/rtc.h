@@ -61,7 +61,9 @@ public:
             auto epoch = ntp.getEpochTime();
             #endif
             if (epoch > 10000) {
-                Debug.println(String(F("Got NTP time: ")) + epoch);
+                if (!initialized) {
+                    Debug.println(String(F("Got NTP time: ")) + epoch);
+                }
                 initialized = true;
                 #ifdef ARDUINO_ARCH_SAMD
                 rtc.setEpoch(epoch);
