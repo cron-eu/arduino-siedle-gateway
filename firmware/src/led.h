@@ -17,12 +17,21 @@
 
 #include "mqtt-service.h"
 
+#ifdef ARDUINO_ARCH_SAMD
+#define SIEDLE_LED_ON HIGH
+#define SIEDLE_LED_OFF LOW
+
+#elif defined(ESP8266)
+#define SIEDLE_LED_ON LOW
+#define SIEDLE_LED_OFF HIGH
+#endif
+
 class LEDClass {
 public:
     void begin() {
         rateMillis = 0;
         lastMillis = 0;
-        led = LOW;
+        led = SIEDLE_LED_OFF;
         pinMode(LED_BUILTIN, OUTPUT);
     }
 
@@ -39,7 +48,7 @@ public:
 
         switch (status) {
             case WL_CONNECTED:
-                threshold = led == LOW ? 3000 : 150;
+                threshold = led == SIEDLE_LED_OFF ? 3000 : 150;
                 break;
             default:
                 threshold = 500;
