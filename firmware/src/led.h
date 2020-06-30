@@ -54,7 +54,7 @@ public:
                 threshold = 500;
         }
 
-        if (MQTTService.isConnected()) {
+        if (!MQTTService.isConnected()) {
             threshold = 250;
         }
 
