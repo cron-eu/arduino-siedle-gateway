@@ -16,18 +16,12 @@
 #include <ArduinoMqttClient.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
-#include <WiFiUdp.h>
 #include <PubSubClient.h>
 #endif
 
-
 class MQTTServiceClass {
 public:
-#ifdef ARDUINO_ARCH_SAMD
-    MQTTServiceClass() : mqttTxQueue(), wifiClient(), sslClient(wifiClient), mqttClient(sslClient) { }
-#elif defined(ESP8266)
-    MQTTServiceClass() : mqttTxQueue(), mqttClient(sslClient) { }
-#endif
+    MQTTServiceClass();
     void begin();
     void loop();
     unsigned int mqttReconnects;
@@ -58,6 +52,8 @@ private:
     WiFiClientSecure sslClient;
     PubSubClient mqttClient;
     #endif
+
+    void loadSSLConfiguration();
 };
 
 extern MQTTServiceClass MQTTService;

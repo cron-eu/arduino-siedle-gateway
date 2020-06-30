@@ -14,15 +14,14 @@
 // max MQTT send rate
 #define MQTT_MAX_SEND_RATE_MS 600
 
-const char* certificate  = SECRET_CERTIFICATE;
-const char broker[]      = SECRET_BROKER;
-
 unsigned long getTime() {
     // get the current time from our RTC module
     return RTCSync.getEpoch();
 }
 
 #ifdef ARDUINO_ARCH_SAMD
+const char broker[]      = SECRET_BROKER;
+const char* certificate  = SECRET_CERTIFICATE;
 void MQTTServiceClass::onMessageReceived(int messageSize) {
 
     char payload[16];
@@ -45,6 +44,12 @@ void MQTTServiceClass::onMessageReceived(int messageSize) {
 void _onMessageReceivedWrapper(int count) {
     MQTTService.onMessageReceived(count);
 }
+
+#ifdef ARDUINO_ARCH_SAMD
+MQTTServiceClass::MQTTServiceClass() : mqttTxQueue(), wifiClient(), sslClient(wifiClient), mqttClient(sslClient) { }
+#elif defined(ESP8266)
+MQTTServiceClass::MQTTServiceClass() : mqttTxQueue(), sslClient(), mqttClient(SECRET_BROKER, 8883, sslClient) { }
+#endif
 
 void MQTTServiceClass::begin() {
     mqttReconnects = 0;
@@ -69,26 +74,11 @@ void MQTTServiceClass::begin() {
     //
     // mqttClient.setId("clientId");
 
-    #elif defined(ESP8266)
-    SPIFFS.begin();
-
-    File cert = SPIFFS.open(MQTT_CERT_FILE, "r");
-    File private_key = SPIFFS.open(MQTT_PRIV_FILE, "r");
-    File ca = SPIFFS.open(MQTT_CA_FILE, "r");
-
-    if (!cert || !private_key || !ca) {
-        Debug.println("ERROR: load MQTT credentials failed.");
-        return;
-    }
-
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
     }
-
-    sslClient.setBufferSizes(512, 512);
-    sslClient.loadCertificate(cert);
-    sslClient.loadPrivateKey(private_key);
-    sslClient.loadCACert(ca);
+    #elif defined(ESP8266)
+    loadSSLConfiguration();
     #endif
 
     // Set the message callback, this function is
@@ -97,7 +87,8 @@ void MQTTServiceClass::begin() {
     mqttClient.onMessage(_onMessageReceivedWrapper);
     #elif defined(ESP8266)
     mqttClient.setCallback([this](char *topic, uint8_t *payload, unsigned int length) {
-        char *cmdString = static_cast<char *>(malloc(length + 1));
+        char *cmdString = (char*)malloc(length + 1);
+        memcpy(cmdString, payload, length);
         cmdString[length] = 0; // null termination
         uint32_t cmd = atol(cmdString);
         free (cmdString);
@@ -106,22 +97,63 @@ void MQTTServiceClass::begin() {
     #endif
 }
 
+#ifdef ESP8266
+void MQTTServiceClass::loadSSLConfiguration() {
+    SPIFFS.begin();
+
+    File cert = SPIFFS.open(F(MQTT_CERT_FILE), "r");
+    File private_key = SPIFFS.open(F(MQTT_PRIV_FILE), "r");
+    File ca = SPIFFS.open(F(MQTT_CA_FILE), "r");
+
+    if (!cert || !private_key || !ca) {
+        Debug.println(F("ERROR: load MQTT credentials failed."));
+        return;
+    }
+
+    sslClient.setBufferSizes(512, 512);
+
+    if (!sslClient.loadCertificate(cert)) {
+        Debug.println(F("MQTT error: could not load the certificate"));
+    }
+    if (!sslClient.loadPrivateKey(private_key)) {
+        Debug.println(F("MQTT error: could not load the private key"));
+
+    }
+    if (!sslClient.loadCACert(ca)) {
+        Debug.println(F("MQTT error: could not load the CA cert"));
+    }
+
+    SPIFFS.end();
+}
+#endif
+
 void MQTTServiceClass::loop() {
     unsigned long elapsed = millis() - reconnectMillis;
 
     if (!mqttClient.connected()) {
-        if (elapsed > 10000) {
+        if (elapsed > 10000 && RTCSync.initialized) { // we need a valid time to establish a SSL connection
             #ifdef ARDUINO_ARCH_SAMD
             auto connected = mqttClient.connect(broker, 8883);
             #elif defined(ESP8266)
-            auto connected = mqttClient.connect(broker);
+            auto time = RTCSync.getEpoch();
+            sslClient.setX509Time(time);
+            auto name = String(F(MQTT_DEVICE_NAME));
+            Debug.print(String(F("MQTT: connecting as ")) + name + F(" .. "));
+            auto connected = mqttClient.connect(name.c_str());
             #endif
             mqttReconnects++;
             reconnectMillis = millis();
             if (connected) {
+                Debug.println(String(F("ok!")));
                 // subscribe to a topic
-                mqttClient.subscribe("siedle/send");
+                mqttClient.subscribe(String(F("siedle/send")).c_str());
             } else {
+                Debug.println(String(F("failed!")));
+                #ifdef ESP8266
+                char buf[256];
+                sslClient.getLastSSLError(buf, sizeof(buf));
+                Debug.println(String(F("Last SSL error: ")) + buf);
+                #endif
                 // early return, retry after reconnectMillis
                 return;
             }
