@@ -11,6 +11,6 @@ const char SECRET_CERTIFICATE[] = R"(
 // we store all certificates locally for this target
 #define MQTT_CA_FILE "/ca.der"
 #define MQTT_PRIV_FILE "/private.der"
-#define MQTT_CERT_FILE "/private.der"
-#define MQTT_DEVICE_NAME "esp"
+#define MQTT_CERT_FILE "/cert.der"
+#define MQTT_DEVICE_NAME "MyDeviceName"
 #endif
