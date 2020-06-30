@@ -3,8 +3,14 @@
 //
 
 #include <Arduino.h>
+
+#ifdef ARDUINO_ARCH_SAMD
 #include <WiFiNINA.h>
 #include <MqttClient.h>
+#elif defined(ESP8266)
+#include <ESP8266WiFi.h>
+#endif
+
 
 #ifndef FIRMWARE_LED_H
 #define FIRMWARE_LED_H
@@ -34,9 +40,6 @@ public:
         switch (status) {
             case WL_CONNECTED:
                 threshold = led == LOW ? 3000 : 150;
-                break;
-            case WL_NO_MODULE:
-                threshold = 100;
                 break;
             default:
                 threshold = 500;

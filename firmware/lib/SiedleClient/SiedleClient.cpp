@@ -5,7 +5,10 @@
 #include <Arduino.h>
 #include "SiedleClient.h"
 #include "Timer5.h"
+
+#ifdef ARDUINO_ARCH_SAMD
 #include "avdweb_AnalogReadFast.h"
+#endif
 
 #define R2_VAL 10000.0
 #define R3_VAL 1100.0
@@ -173,7 +176,11 @@ inline int SiedleClient::readBit() {
 }
 
 float SiedleClient::getBusvoltage() {
+    #ifdef ARDUINO_ARCH_SAMD
     auto a = analogReadFast(inputPin);
+    #elif defined(ESP8266)
+    auto a = analogRead(inputPin);
+    #endif
     return (float)a * (float)ADC_FACTOR;
 }
 

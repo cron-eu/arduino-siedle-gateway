@@ -9,6 +9,7 @@
 #include "rtc.h"
 
 #include <aws_iot_secrets.h>
+#include <serial-debug.h>
 
 // max MQTT send rate
 #define MQTT_MAX_SEND_RATE_MS 600
@@ -21,6 +22,7 @@ unsigned long getTime() {
     return RTCSync.getEpoch();
 }
 
+#ifdef ARDUINO_ARCH_SAMD
 void MQTTServiceClass::onMessageReceived(int messageSize) {
 
     char payload[16];
@@ -38,6 +40,7 @@ void MQTTServiceClass::onMessageReceived(int messageSize) {
 
     SiedleService.transmitAsync(cmd);
 }
+#endif
 
 void _onMessageReceivedWrapper(int count) {
     MQTTService.onMessageReceived(count);
@@ -48,6 +51,7 @@ void MQTTServiceClass::begin() {
     reconnectMillis = 0;
     lastTxMillis = 0;
 
+    #ifdef ARDUINO_ARCH_SAMD
     ECCX08.begin();
 
     // Set a callback to get the current time
@@ -65,9 +69,41 @@ void MQTTServiceClass::begin() {
     //
     // mqttClient.setId("clientId");
 
+    #elif defined(ESP8266)
+    SPIFFS.begin();
+
+    File cert = SPIFFS.open(MQTT_CERT_FILE, "r");
+    File private_key = SPIFFS.open(MQTT_PRIV_FILE, "r");
+    File ca = SPIFFS.open(MQTT_CA_FILE, "r");
+
+    if (!cert || !private_key || !ca) {
+        Debug.println("ERROR: load MQTT credentials failed.");
+        return;
+    }
+
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+    }
+
+    sslClient.setBufferSizes(512, 512);
+    sslClient.loadCertificate(cert);
+    sslClient.loadPrivateKey(private_key);
+    sslClient.loadCACert(ca);
+    #endif
+
     // Set the message callback, this function is
     // called when the MQTTClient receives a message
+    #ifdef ARDUINO_ARCH_SAMD
     mqttClient.onMessage(_onMessageReceivedWrapper);
+    #elif defined(ESP8266)
+    mqttClient.setCallback([this](char *topic, uint8_t *payload, unsigned int length) {
+        char *cmdString = static_cast<char *>(malloc(length + 1));
+        cmdString[length] = 0; // null termination
+        uint32_t cmd = atol(cmdString);
+        free (cmdString);
+        SiedleService.transmitAsync(cmd);
+    });
+    #endif
 }
 
 void MQTTServiceClass::loop() {
@@ -75,7 +111,11 @@ void MQTTServiceClass::loop() {
 
     if (!mqttClient.connected()) {
         if (elapsed > 10000) {
+            #ifdef ARDUINO_ARCH_SAMD
             auto connected = mqttClient.connect(broker, 8883);
+            #elif defined(ESP8266)
+            auto connected = mqttClient.connect(broker);
+            #endif
             mqttReconnects++;
             reconnectMillis = millis();
             if (connected) {
@@ -89,7 +129,11 @@ void MQTTServiceClass::loop() {
     }
 
     // poll for new MQTT messages and send keep alives
+    #ifdef ARDUINO_ARCH_SAMD
     mqttClient.poll();
+    #elif defined(ESP8266)
+    mqttClient.loop();
+    #endif
     // check if we have some messages to send
     if (mqttTxQueue.size() && millis() - lastTxMillis >= MQTT_MAX_SEND_RATE_MS) {
         // we want to limit the outgoing rate to avoid issues with the power management
@@ -97,10 +141,14 @@ void MQTTServiceClass::loop() {
         char buf[32];
         sprintf(buf, "{\"ts\":%lu,\"cmd\":%u}", entry.timestamp, entry.cmd);
 
+        #ifdef ARDUINO_ARCH_SAMD
         mqttClient.beginMessage("siedle/received");
         mqttClient.print(buf);
         mqttClient.endMessage();
         lastTxMillis = millis();
+        #elif defined(ESP8266)
+        mqttClient.publish(String(F("siedle/received")).c_str(), buf);
+        #endif
     }
 
 }

@@ -5,7 +5,12 @@
 #include "wifi-manager.h"
 
 #include <Arduino.h>
+#ifdef ARDUINO_ARCH_SAMD
 #include <WiFiNINA.h>
+#elif defined(ESP8266)
+#include <ESP8266WiFi.h>
+#endif
+
 #include <wifi_client_secrets.h>
 
 const char ssid[] = SECRET_SSID;    // network SSID (name)
@@ -30,7 +35,9 @@ void WiFiManagerClass::begin() {
     reconnectMillis = 0;
     connectionCheckMillis = 0;
     wifiReconnects = 0;
+#ifdef ARDUINO_ARCH_SAMD
     WiFi.lowPowerMode();
+#endif
 }
 
 void WiFiManagerClass::printWifiStatus() {
