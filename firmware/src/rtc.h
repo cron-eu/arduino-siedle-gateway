@@ -7,6 +7,7 @@
 
 #include <Arduino.h>
 #include <serial-debug.h>
+#include <settings.h>
 
 #ifdef ARDUINO_ARCH_SAMD
 #include <WiFiNINA.h>
@@ -22,7 +23,7 @@ public:
     #ifdef ARDUINO_ARCH_SAMD
     RTCSyncClass() : rtc() { }
     #elif defined(ESP8266)
-    RTCSyncClass() : ntp(ntpUDP) { }
+    RTCSyncClass() : ntp(ntpUDP, NTP_SERVER) { }
     #endif
     void begin() {
         lastMillis = 0;
