@@ -1,5 +1,5 @@
 .pio
 CMakeListsPrivate.txt
 *secrets.h
-/cmake-build-mkrwifi1010/
+/cmake-build-*
 /.idea/workspace.xml
