@@ -11,6 +11,10 @@
 #include <aws_iot_secrets.h>
 #include <serial-debug.h>
 
+#if defined(ARDUINO_ARCH_ESP32)
+#include <SPIFFS.h>
+#endif
+
 // max MQTT send rate
 #define MQTT_MAX_SEND_RATE_MS 600
 
@@ -47,7 +51,7 @@ void _onMessageReceivedWrapper(int count) {
 
 #ifdef ARDUINO_ARCH_SAMD
 MQTTServiceClass::MQTTServiceClass() : mqttTxQueue(), wifiClient(), sslClient(wifiClient), mqttClient(sslClient) { }
-#elif defined(ARDUINO_ARCH_ESP8266)
+#elif defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
 MQTTServiceClass::MQTTServiceClass() : mqttTxQueue(), sslClient(), mqttClient(SECRET_BROKER, 8883, sslClient) { }
 #endif
 
@@ -77,7 +81,7 @@ void MQTTServiceClass::begin() {
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
     }
-    #elif defined(ARDUINO_ARCH_ESP8266)
+    #elif defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
     loadSSLConfiguration();
     #endif
 
@@ -85,7 +89,7 @@ void MQTTServiceClass::begin() {
     // called when the MQTTClient receives a message
     #ifdef ARDUINO_ARCH_SAMD
     mqttClient.onMessage(_onMessageReceivedWrapper);
-    #elif defined(ARDUINO_ARCH_ESP8266)
+    #elif defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
     mqttClient.setCallback([this](char *topic, uint8_t *payload, unsigned int length) {
         char *cmdString = (char*)malloc(length + 1);
         memcpy(cmdString, payload, length);
@@ -97,7 +101,7 @@ void MQTTServiceClass::begin() {
     #endif
 }
 
-#ifdef ARDUINO_ARCH_ESP8266
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
 void MQTTServiceClass::loadSSLConfiguration() {
     SPIFFS.begin();
 
@@ -110,8 +114,12 @@ void MQTTServiceClass::loadSSLConfiguration() {
         return;
     }
 
+    #ifdef ESP8266
     sslClient.setBufferSizes(512, 512);
+    #endif
 
+    #ifdef ESP8266
+    // TODO!!
     if (!sslClient.loadCertificate(cert)) {
         Debug.println(F("MQTT error: could not load the certificate"));
     }
@@ -122,6 +130,7 @@ void MQTTServiceClass::loadSSLConfiguration() {
     if (!sslClient.loadCACert(ca)) {
         Debug.println(F("MQTT error: could not load the CA cert"));
     }
+    #endif
 
     SPIFFS.end();
 }
@@ -134,9 +143,11 @@ void MQTTServiceClass::loop() {
         if (elapsed > 10000 && RTCSync.initialized) { // we need a valid time to establish a SSL connection
             #ifdef ARDUINO_ARCH_SAMD
             auto connected = mqttClient.connect(broker, 8883);
-            #elif defined(ARDUINO_ARCH_ESP8266)
+            #elif defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
             auto time = RTCSync.getEpoch();
+            #ifdef ESP8266
             sslClient.setX509Time(time);
+            #endif
             auto name = String(F(MQTT_DEVICE_NAME));
             Debug.print(String(F("MQTT: connecting as ")) + name + F(" .. "));
             auto connected = mqttClient.connect(name.c_str());
@@ -149,9 +160,11 @@ void MQTTServiceClass::loop() {
                 mqttClient.subscribe(String(F("siedle/send")).c_str());
             } else {
                 Debug.println(String(F("failed!")));
-                #ifdef ARDUINO_ARCH_ESP8266
+                #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
                 char buf[256];
+                #ifdef ESP8266
                 sslClient.getLastSSLError(buf, sizeof(buf));
+                #endif
                 Debug.println(String(F("Last SSL error: ")) + buf);
                 #endif
                 // early return, retry after reconnectMillis
@@ -163,7 +176,7 @@ void MQTTServiceClass::loop() {
     // poll for new MQTT messages and send keep alives
     #ifdef ARDUINO_ARCH_SAMD
     mqttClient.poll();
-    #elif defined(ARDUINO_ARCH_ESP8266)
+    #elif defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
     mqttClient.loop();
     #endif
     // check if we have some messages to send
@@ -178,7 +191,7 @@ void MQTTServiceClass::loop() {
         mqttClient.print(buf);
         mqttClient.endMessage();
         lastTxMillis = millis();
-        #elif defined(ARDUINO_ARCH_ESP8266)
+        #elif defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
         mqttClient.publish(String(F("siedle/received")).c_str(), buf);
         #endif
     }

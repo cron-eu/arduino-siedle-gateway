@@ -22,6 +22,12 @@
 #define SIEDLE_A_IN A0
 #define SIEDLE_TX_PIN D5
 #define SIEDLE_TX_CARRIER_PIN D6
+
+#elif defined(ARDUINO_LOLIN32)
+#define SIEDLE_A_IN A0
+// TODO: check if this configuration is valid!
+#define SIEDLE_TX_PIN 5
+#define SIEDLE_TX_CARRIER_PIN 6
 #endif
 
 #endif //FIRMWARE_HARDWARE_H

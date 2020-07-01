@@ -178,7 +178,7 @@ inline int SiedleClient::readBit() {
 float SiedleClient::getBusvoltage() {
     #ifdef ARDUINO_ARCH_SAMD
     auto a = analogReadFast(inputPin);
-    #elif defined(ARDUINO_ARCH_ESP8266)
+    #elif defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
     auto a = analogRead(inputPin);
     #endif
     return (float)a * (float)ADC_FACTOR;

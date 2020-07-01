@@ -10,7 +10,7 @@ const char SECRET_CERTIFICATE[] = R"(
 -----END CERTIFICATE-----
 )";
 
-#ifdef ESP8266
+#if defined(ESP8266) || defined(ESP32)
 // we store all certificates locally for this target
 #define MQTT_CA_FILE "/ca.der"
 #define MQTT_PRIV_FILE "/private.der"

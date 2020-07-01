@@ -16,13 +16,17 @@
 #include <NTPClient.h>
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
+#elif defined(ARDUINO_ARCH_ESP32)
+#include <NTPClient.h>
+#include <WiFi.h>
+#include <WiFiUdp.h>
 #endif
 
 class RTCSyncClass {
 public:
     #ifdef ARDUINO_ARCH_SAMD
     RTCSyncClass() : rtc() { }
-    #elif defined(ARDUINO_ARCH_ESP8266)
+    #elif defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
     RTCSyncClass() : ntp(ntpUDP, NTP_SERVER) { }
     #endif
     void begin() {
@@ -31,13 +35,13 @@ public:
         bootEpoch = 0;
         #ifdef ARDUINO_ARCH_SAMD
         rtc.begin();
-        #elif defined(ARDUINO_ARCH_ESP8266)
+        #elif defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
         ntp.begin();
         #endif
     }
 
     void loop() {
-        #ifdef ARDUINO_ARCH_ESP8266
+        #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
         // because the NTP library has some issues, we do use NTP only once to initialize the time
         // we need the time only to perform SSL requests, must not be really accurate.
         if (initialized) { return; }
@@ -56,7 +60,7 @@ public:
 
             #ifdef ARDUINO_ARCH_SAMD
             auto epoch = WiFi.getTime();
-            #elif defined(ARDUINO_ARCH_ESP8266)
+            #elif defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
             if (!initialized) {
                 Debug.print(F("NTP force update triggered .. "));
                 auto success = ntp.forceUpdate();
@@ -73,7 +77,7 @@ public:
                 initialized = true;
                 #ifdef ARDUINO_ARCH_SAMD
                 rtc.setEpoch(epoch);
-                #elif defined(ARDUINO_ARCH_ESP8266)
+                #elif defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
                 ntp.end();
                 #endif
                 if (bootEpoch == 0) {
@@ -88,7 +92,7 @@ public:
     unsigned long getEpoch() {
         #ifdef ARDUINO_ARCH_SAMD
         return rtc.getEpoch();
-        #elif defined(ARDUINO_ARCH_ESP8266)
+        #elif defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
         return ntp.getEpochTime();
         #endif
     }
@@ -97,7 +101,7 @@ public:
 private:
     #ifdef ARDUINO_ARCH_SAMD
     RTCZero rtc;
-    #elif defined(ARDUINO_ARCH_ESP8266)
+    #elif defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
     WiFiUDP ntpUDP;
     NTPClient ntp;
     #endif

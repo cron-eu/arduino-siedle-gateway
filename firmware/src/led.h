@@ -9,6 +9,8 @@
 #include <MqttClient.h>
 #elif defined(ARDUINO_ARCH_ESP8266)
 #include <ESP8266WiFi.h>
+#elif defined(ARDUINO_ARCH_ESP32)
+#include <WiFi.h>
 #endif
 
 
@@ -21,7 +23,7 @@
 #define SIEDLE_LED_ON HIGH
 #define SIEDLE_LED_OFF LOW
 
-#elif defined(ARDUINO_ARCH_ESP8266)
+#elif defined(ARDUINO_ARCH_ESP8266) || defined(ESP32)
 #define SIEDLE_LED_ON LOW
 #define SIEDLE_LED_OFF HIGH
 #endif

@@ -17,6 +17,10 @@
 #elif defined(ARDUINO_ARCH_ESP8266)
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
+#elif defined(ARDUINO_ARCH_ESP32)
+#include <WiFi.h>
+#include <WiFiClientSecure.h>
+#include <PubSubClient.h>
 #endif
 
 class MQTTServiceClass {
@@ -48,7 +52,7 @@ private:
     WiFiClient    wifiClient;            // Used for the TCP socket connection
     BearSSLClient sslClient; // Used for SSL/TLS connection, integrates with ECC508
     MqttClient    mqttClient;
-    #elif defined(ARDUINO_ARCH_ESP8266)
+    #elif defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
     WiFiClientSecure sslClient;
     PubSubClient mqttClient;
     #endif
