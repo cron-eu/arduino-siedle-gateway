@@ -37,6 +37,12 @@ public:
     }
 
     void loop() {
+        #ifdef ESP8266
+        // because the NTP library has some issues, we do use NTP only once to initialize the time
+        // we need the time only to perform SSL requests, must not be really accurate.
+        if (initialized) { return; }
+        #endif
+
         // if we're in the initializing phase, re-try every 3 seconds. Else use a longer sync interval
         unsigned long interval = !initialized ? 8000 : 5 * 60 * 1000;
 
@@ -67,6 +73,8 @@ public:
                 initialized = true;
                 #ifdef ARDUINO_ARCH_SAMD
                 rtc.setEpoch(epoch);
+                #elif defined(ESP8266)
+                ntp.end();
                 #endif
                 if (bootEpoch == 0) {
                     bootEpoch = epoch;
