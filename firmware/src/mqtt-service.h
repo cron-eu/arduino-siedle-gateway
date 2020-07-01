@@ -17,6 +17,7 @@
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
+#include <AsyncMqttClient.h>
 #endif
 
 class MQTTServiceClass {
@@ -50,7 +51,7 @@ private:
     MqttClient    mqttClient;
     #elif defined(ESP8266)
     WiFiClientSecure sslClient;
-    PubSubClient mqttClient;
+    AsyncMqttClient mqttClient;
     #endif
 
     void loadSSLConfiguration();

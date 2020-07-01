@@ -86,6 +86,7 @@ void MQTTServiceClass::begin() {
     #ifdef ARDUINO_ARCH_SAMD
     mqttClient.onMessage(_onMessageReceivedWrapper);
     #elif defined(ESP8266)
+    mqttClient.
     mqttClient.setCallback([this](char *topic, uint8_t *payload, unsigned int length) {
         char *cmdString = (char*)malloc(length + 1);
         memcpy(cmdString, payload, length);
