@@ -8,7 +8,7 @@
 #include <Arduino.h>
 #ifdef ARDUINO_ARCH_SAMD
 #include <WiFiNINA.h>
-#elif defined(ESP8266)
+#elif defined(ARDUINO_ARCH_ESP8266)
 #include <ESP8266WiFi.h>
 #endif
 class WebServer {

@@ -7,7 +7,7 @@
 #ifdef ARDUINO_ARCH_SAMD
 #include <WiFiNINA.h>
 #include <MqttClient.h>
-#elif defined(ESP8266)
+#elif defined(ARDUINO_ARCH_ESP8266)
 #include <ESP8266WiFi.h>
 #endif
 
@@ -21,7 +21,7 @@
 #define SIEDLE_LED_ON HIGH
 #define SIEDLE_LED_OFF LOW
 
-#elif defined(ESP8266)
+#elif defined(ARDUINO_ARCH_ESP8266)
 #define SIEDLE_LED_ON LOW
 #define SIEDLE_LED_OFF HIGH
 #endif

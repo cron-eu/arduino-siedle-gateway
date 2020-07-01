@@ -14,7 +14,7 @@
 #include <ArduinoBearSSL.h>
 #include <ArduinoECCX08.h>
 #include <ArduinoMqttClient.h>
-#elif defined(ESP8266)
+#elif defined(ARDUINO_ARCH_ESP8266)
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 #endif
@@ -48,7 +48,7 @@ private:
     WiFiClient    wifiClient;            // Used for the TCP socket connection
     BearSSLClient sslClient; // Used for SSL/TLS connection, integrates with ECC508
     MqttClient    mqttClient;
-    #elif defined(ESP8266)
+    #elif defined(ARDUINO_ARCH_ESP8266)
     WiFiClientSecure sslClient;
     PubSubClient mqttClient;
     #endif

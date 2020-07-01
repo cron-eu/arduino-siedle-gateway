@@ -7,7 +7,7 @@
 #include <Arduino.h>
 #ifdef ARDUINO_ARCH_SAMD
 #include <WiFiNINA.h>
-#elif defined(ESP8266)
+#elif defined(ARDUINO_ARCH_ESP8266)
 #include <ESP8266WiFi.h>
 #ifdef MDNS_HOSTNAME
 #include <ESP8266mDNS.h>
@@ -62,7 +62,7 @@ void WiFiManagerClass::connect() {
     Debug.print(String(F("Connecting to WiFi Network '")) + ssid + "' .. ");
     #ifdef ARDUINO_ARCH_SAMD
     WiFi.begin(SECRET_SSID, SECRET_PASS);
-    #elif defined(ESP8266)
+    #elif defined(ARDUINO_ARCH_ESP8266)
     WiFi.begin(ssid, pass); // this will run async
 
     #endif
@@ -74,7 +74,7 @@ void WiFiManagerClass::printWifiStatus() {
 
     #ifdef ARDUINO_ARCH_SAMD
     auto localIP = WiFi.localIP();
-    #elif defined(ESP8266)
+    #elif defined(ARDUINO_ARCH_ESP8266)
     auto localIP = WiFi.localIP().toString();
     #endif
 

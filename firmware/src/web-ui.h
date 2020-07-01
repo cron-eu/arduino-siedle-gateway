@@ -61,7 +61,7 @@ void webUIHTMLHandler(Print *handler) {
     handler->print("<dl><dt>Free Memory</dt><dd>");
     #ifdef ARDUINO_ARCH_SAMD
     handler->println(freeMemory());
-    #elif defined(ESP8266)
+    #elif defined(ARDUINO_ARCH_ESP8266)
     handler->println(ESP.getFreeHeap());
     #endif
     handler->print("</dd></dl>");

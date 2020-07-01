@@ -12,7 +12,7 @@ void __unused TC5_Handler (void) {
     _handler();
     TC5->COUNT16.INTFLAG.bit.MC0 = 1; //Writing a 1 to INTFLAG.bit.MC0 clears the interrupt so that it will run again
 }
-#elif defined(ESP8266)
+#elif defined(ARDUINO_ARCH_ESP8266)
 void ICACHE_RAM_ATTR onTimerISR(){
     _handler();
 }
@@ -52,7 +52,7 @@ void Timer5::configure(int sampleRate) {
     TC5->COUNT16.INTENSET.bit.MC0 = 1;
     while (isSyncing()); //wait until TC5 is done syncing
 
-    #elif defined(ESP8266)
+    #elif defined(ARDUINO_ARCH_ESP8266)
     timer1_attachInterrupt(onTimerISR);
 
     enable();
@@ -67,7 +67,7 @@ void Timer5::onFire(void (*callback)(void)) {
 void Timer5::changeSampleRate(int sampleRate) {
     #ifdef ARDUINO_ARCH_SAMD
     TC5->COUNT16.CC[0].reg = (uint16_t) ( (SystemCoreClock / 16000000) * sampleRate - 1);
-    #elif defined(ESP8266)
+    #elif defined(ARDUINO_ARCH_ESP8266)
     // timer speed (Hz) = Timer clock speed (Mhz) / prescaler
     // => sample rate = prescaler / Timer Clock Speed
     timer1_write((CPU_CLK_FREQ / 16000000) * sampleRate);
@@ -77,7 +77,7 @@ void Timer5::changeSampleRate(int sampleRate) {
 inline bool Timer5::isSyncing() {
     #ifdef ARDUINO_ARCH_SAMD
     return TC5->COUNT16.STATUS.reg & TC_STATUS_SYNCBUSY;
-    #elif defined(ESP8266)
+    #elif defined(ARDUINO_ARCH_ESP8266)
     return false;
     #endif
 }
@@ -89,7 +89,7 @@ void Timer5::enable() {
     TC5->COUNT16.CTRLA.reg |= TC_CTRLA_ENABLE; //set the CTRLA register
     while (isSyncing()); //wait until snyc'd
     TC5->COUNT16.INTENSET.bit.MC0 = 1;
-    #elif defined(ESP8266)
+    #elif defined(ARDUINO_ARCH_ESP8266)
     /* Dividers:
         TIM_DIV1 = 0,   //80MHz (80 ticks/us - 104857.588 us max)
         TIM_DIV16 = 1,  //5MHz (5 ticks/us - 1677721.4 us max)
@@ -108,7 +108,7 @@ void Timer5::reset() {
     TC5->COUNT16.CTRLA.reg = TC_CTRLA_SWRST;
     while (isSyncing());
     while (TC5->COUNT16.CTRLA.bit.SWRST);
-    #elif defined(ESP8266)
+    #elif defined(ARDUINO_ARCH_ESP8266)
     disable();
     enable();
     #endif
@@ -118,7 +118,7 @@ void Timer5::disable() {
     #ifdef ARDUINO_ARCH_SAMD
     TC5->COUNT16.CTRLA.reg &= ~TC_CTRLA_ENABLE;
     while (isSyncing());
-    #elif defined(ESP8266)
+    #elif defined(ARDUINO_ARCH_ESP8266)
     timer1_disable();
     #endif
 }
