@@ -7,12 +7,19 @@
 
 void (*_handler)() = NULL;
 
+#ifdef ARDUINO_ARCH_SAMD
 void __unused TC5_Handler (void) {
     _handler();
     TC5->COUNT16.INTFLAG.bit.MC0 = 1; //Writing a 1 to INTFLAG.bit.MC0 clears the interrupt so that it will run again
 }
+#elif defined(ESP8266)
+void ICACHE_RAM_ATTR onTimerISR(){
+    _handler();
+}
+#endif
 
 void Timer5::configure(int sampleRate) {
+    #ifdef ARDUINO_ARCH_SAMD
     // Enable GCLK for TCC2 and TC5 (timer counter input clock)
     GCLK->CLKCTRL.reg = (uint16_t) (GCLK_CLKCTRL_CLKEN | GCLK_CLKCTRL_GEN_GCLK0 | GCLK_CLKCTRL_ID(GCM_TC4_TC5));
     while (GCLK->STATUS.bit.SYNCBUSY);
@@ -44,6 +51,13 @@ void Timer5::configure(int sampleRate) {
     // Enable the TC5 interrupt request
     TC5->COUNT16.INTENSET.bit.MC0 = 1;
     while (isSyncing()); //wait until TC5 is done syncing
+
+    #elif defined(ESP8266)
+    timer1_attachInterrupt(onTimerISR);
+
+    enable();
+    changeSampleRate(sampleRate);
+    #endif
 }
 
 void Timer5::onFire(void (*callback)(void)) {
@@ -51,28 +65,60 @@ void Timer5::onFire(void (*callback)(void)) {
 }
 
 void Timer5::changeSampleRate(int sampleRate) {
+    #ifdef ARDUINO_ARCH_SAMD
     TC5->COUNT16.CC[0].reg = (uint16_t) ( (SystemCoreClock / 16000000) * sampleRate - 1);
+    #elif defined(ESP8266)
+    // timer speed (Hz) = Timer clock speed (Mhz) / prescaler
+    // => sample rate = prescaler / Timer Clock Speed
+    timer1_write((CPU_CLK_FREQ / 16000000) * sampleRate);
+    #endif
 }
 
 inline bool Timer5::isSyncing() {
+    #ifdef ARDUINO_ARCH_SAMD
     return TC5->COUNT16.STATUS.reg & TC_STATUS_SYNCBUSY;
+    #elif defined(ESP8266)
+    return false;
+    #endif
 }
 
 //This function enables TC5 and waits for it to be ready
 void Timer5::enable() {
+    #ifdef ARDUINO_ARCH_SAMD
     TC5->COUNT16.COUNT.reg = 0x0;
     TC5->COUNT16.CTRLA.reg |= TC_CTRLA_ENABLE; //set the CTRLA register
     while (isSyncing()); //wait until snyc'd
     TC5->COUNT16.INTENSET.bit.MC0 = 1;
+    #elif defined(ESP8266)
+    /* Dividers:
+        TIM_DIV1 = 0,   //80MHz (80 ticks/us - 104857.588 us max)
+        TIM_DIV16 = 1,  //5MHz (5 ticks/us - 1677721.4 us max)
+        TIM_DIV256 = 3  //312.5Khz (1 tick = 3.2us - 26843542.4 us max)
+       Reloads:
+        TIM_SINGLE	0 //on interrupt routine you need to write a new value to start the timer again
+        TIM_LOOP	1 //on interrupt the counter will start with the same value again
+    */
+    // set prescaler to /16
+    timer1_enable(TIM_DIV16, TIM_EDGE, TIM_LOOP);
+    #endif
 }
 // Reset TC5
 void Timer5::reset() {
+    #ifdef ARDUINO_ARCH_SAMD
     TC5->COUNT16.CTRLA.reg = TC_CTRLA_SWRST;
     while (isSyncing());
     while (TC5->COUNT16.CTRLA.bit.SWRST);
+    #elif defined(ESP8266)
+    disable();
+    enable();
+    #endif
 }
 //disable TC5
 void Timer5::disable() {
+    #ifdef ARDUINO_ARCH_SAMD
     TC5->COUNT16.CTRLA.reg &= ~TC_CTRLA_ENABLE;
     while (isSyncing());
+    #elif defined(ESP8266)
+    timer1_disable();
+    #endif
 }

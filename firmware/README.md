@@ -41,7 +41,7 @@ The communication with the AWS MQTT Broker is encrypted with an X.509 certificat
 
 Currently not implemented, WIP.
 
-### Crypto Chip, X.509 Certificate
+### Crypto Chip, X.509 Certificate (MKR Series)
 
 To use X.509 certificates for authentication it is required that the ECC608A crypto element is configured and locked.
 
@@ -59,12 +59,35 @@ In a nutshell:
 * Use the Name "ArduinoDoorbell" for the "Common Name", all other fields can be left blank
 * Copy the generated CSR text including "-----BEGIN CERTIFICATE REQUEST-----" and "-----END CERTIFICATE REQUEST-----" and save it locally.
 
+### Crypto, X.509 Certificates (ESP8266)
+
+See [Marrying ESP8266 & AWS IoT Blog Post](https://medium.com/@jgillard/marrying-esp8266-aws-iot-69f1ab219c2).
+
+In a nutshell:
+
+Go to the AWS IoT console, create a new device and create also the certificates, then:
+
+```bash
+cid=d9f9d3a15a
+openssl x509 -in ~/Downloads/${cid}-certificate.pem.crt -out data/cert.der -outform DER 
+openssl rsa -in ~/Downloads/${cid}-private.pem.key -out data/private.der -outform DER
+openssl x509 -in ~/Downloads/AmazonRootCA1.pem.txt -out data/ca.der -outform DER
+```
+
+To upload the certificates:
+
+```bash
+pio run -e esp --target uploadfs
+```
+
 #### Existing Devices
 
 * Arduino MKR WIFI 1010
   * Common Name: "ArduinoDoorbell"
 * Arduino nano 33
   * Common Name: "ArduinoDoorbellNano"
+* ESP8266 d1-mini
+  * Common Name: "ArduinoDoorbellESP"
 
 "Every Day" Actions
 ----

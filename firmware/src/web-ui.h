@@ -6,8 +6,9 @@
 #define FIRMWARE_WEB_UI_H
 
 #include <Arduino.h>
+#ifdef ARDUINO_ARCH_SAMD
 #include <MemoryUtils.h>
-
+#endif
 
 /**
  * Determine the boot time of the system
@@ -58,7 +59,11 @@ void webUIHTMLHandler(Print *handler) {
     handler->print("</dd></dl>");
 
     handler->print("<dl><dt>Free Memory</dt><dd>");
+    #ifdef ARDUINO_ARCH_SAMD
     handler->println(freeMemory());
+    #elif defined(ESP8266)
+    handler->println(ESP.getFreeHeap());
+    #endif
     handler->print("</dd></dl>");
 
     handler->print("<dl><dt>Date/Time (UTC)</dt><dd>");
@@ -91,7 +96,7 @@ void webUIHTMLHandler(Print *handler) {
         time = entry.log.timestamp;
         char line[100];
 
-        sprintf(line, "<tr><td>%s</th><td>%s</td><td><pre>%08lx</pre></td></tr>",
+        sprintf(line, "<tr><td>%s</th><td>%s</td><td><pre>%08x</pre></td></tr>",
                 ctime(&time),
                 entry.direction == rx ? "<" : ">",
                 entry.log.cmd
