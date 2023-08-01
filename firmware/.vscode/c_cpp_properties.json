@@ -87,6 +87,7 @@
                 "USE_BQ24195L_PMIC",
                 "USE_ARDUINO_MKR_PIN_LAYOUT",
                 "DEVICE_ARDUINO_MKR_1010",
+                "AUTO_VERSION=\"\"",
                 "ARDUINO=10805",
                 "F_CPU=48000000L",
                 "USBCON",
