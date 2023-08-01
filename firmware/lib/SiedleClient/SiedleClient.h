@@ -44,6 +44,7 @@ public:
     float getBusvoltage();
     void rxISR();
     void bitTimerISR();
+    int irq_count = 0;
 
     bool available() {
         return _available;

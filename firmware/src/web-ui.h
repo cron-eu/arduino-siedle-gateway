@@ -71,9 +71,9 @@ void webUIHTMLHandler(Print *handler) {
     handler->println(ctime(&time));
     handler->print("</dd></dl>");
 
-//    handler->print("<dl><dt>Bus Voltage</dt><dd>");
-//    handler->println(siedleClient.getBusvoltage());
-//    handler->print(" V</dd></dl>");
+//    handler->print("<dl><dt>Siedle Bus IRQ Count</dt><dd>");
+//    handler->println(SiedleService.siedleClient.irq_count);
+//    handler->print("</dd></dl>");
 
 #ifdef USE_MQTT
     handler->print("<dl><dt>AWS MQTT Link</dt><dd>");
