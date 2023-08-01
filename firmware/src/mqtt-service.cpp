@@ -11,6 +11,10 @@
 #include <aws_iot_secrets.h>
 #include <serial-debug.h>
 
+#ifdef ESP8266
+#include <LittleFS.h>
+#endif
+
 // max MQTT send rate
 #define MQTT_MAX_SEND_RATE_MS 600
 
@@ -99,31 +103,27 @@ void MQTTServiceClass::begin() {
 
 #ifdef ESP8266
 void MQTTServiceClass::loadSSLConfiguration() {
-    SPIFFS.begin();
+    LittleFS.begin();
 
-    File cert = SPIFFS.open(F(MQTT_CERT_FILE), "r");
-    File private_key = SPIFFS.open(F(MQTT_PRIV_FILE), "r");
-    File ca = SPIFFS.open(F(MQTT_CA_FILE), "r");
+    File cert_file = LittleFS.open(F(MQTT_CERT_FILE), "r");
+    File private_key_file = LittleFS.open(F(MQTT_PRIV_FILE), "r");
+    File ca_file = LittleFS.open(F(MQTT_CA_FILE), "r");
 
-    if (!cert || !private_key || !ca) {
+    if (!cert_file || !private_key_file || !ca_file) {
         Debug.println(F("ERROR: load MQTT credentials failed."));
         return;
     }
 
+    BearSSL::X509List cert(ca_file);
+    BearSSL::X509List client_crt(cert_file);
+    BearSSL::PrivateKey key(private_key_file);
+
     sslClient.setBufferSizes(512, 512);
 
-    if (!sslClient.loadCertificate(cert)) {
-        Debug.println(F("MQTT error: could not load the certificate"));
-    }
-    if (!sslClient.loadPrivateKey(private_key)) {
-        Debug.println(F("MQTT error: could not load the private key"));
+    sslClient.setTrustAnchors(&cert);
+    sslClient.setClientRSACert(&client_crt, &key);
 
-    }
-    if (!sslClient.loadCACert(ca)) {
-        Debug.println(F("MQTT error: could not load the CA cert"));
-    }
-
-    SPIFFS.end();
+    LittleFS.end();
 }
 #endif
 
