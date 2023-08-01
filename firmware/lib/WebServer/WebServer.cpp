@@ -15,7 +15,7 @@ void WebServer::begin() {
 //}
 
 void WebServer::loop() {
-    WiFiClient client = _server.accept();   // listen for incoming clients
+    WiFiClient client = _server.available();   // listen for incoming clients
 
     if (client) {                             // if you get a client,
         String currentLine = "";                // make a String to hold incoming data from the client
