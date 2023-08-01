@@ -96,7 +96,7 @@ void webUIHTMLHandler(Print *handler) {
         time = entry.log.timestamp;
         char line[100];
 
-        sprintf(line, "<tr><td>%s</th><td>%s</td><td><pre>%08x</pre></td></tr>",
+        sprintf(line, "<tr><td>%s</th><td>%s</td><td><pre>%08lx</pre></td></tr>",
                 ctime(&time),
                 entry.direction == rx ? "<" : ">",
                 entry.log.cmd
