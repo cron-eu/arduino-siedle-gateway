@@ -15,7 +15,7 @@
 #define LOG_SIZE 64
 
 // Watchdog timer expire value (in ms)
-#define WDT_TIMEOUT_MS 8000
+#define WDT_TIMEOUT_MS 3000
 
 #define MQTT_TX_QUEUE_LEN 32
 #define SIEDLE_TX_QUEUE_LEN 32
