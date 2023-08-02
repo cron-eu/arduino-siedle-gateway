@@ -42,6 +42,7 @@ void MQTTServiceClass::onMessageReceived(int messageSize) {
     uint32_t cmd = atol(payload);
 
     SiedleService.transmitAsync(cmd);
+    rxCount++;
 }
 #endif
 
@@ -184,6 +185,7 @@ void MQTTServiceClass::loop() {
         }
         mqttClient.print(buf);
         mqttClient.endMessage();
+        txCount++;
         lastTxMillis = millis();
         #elif defined(ESP8266)
         switch (entry.topic) {

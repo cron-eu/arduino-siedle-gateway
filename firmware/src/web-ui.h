@@ -10,6 +10,8 @@
 #include <MemoryUtils.h>
 #endif
 
+#include <RTCZero.h>
+
 /**
  * Determine the boot time of the system
  *
@@ -81,10 +83,18 @@ void webUIHTMLHandler(Print *handler) {
     handler->print("(");
     handler->print(MQTTService.mqttReconnects);
     handler->println(")");
-    handler->print("</dd></dl>");
+    handler->println("</dd>");
+
+    handler->println("<dt>MQTT Rx/Tx Count</dt>");
+    handler->print("<dd>");
+    handler->print(MQTTService.rxCount);
+    handler->print(" / ");
+    handler->print(MQTTService.txCount);
+    handler->println("</dd>");
+
 #endif
 
-    handler->print("<dl><dt>Rx/Tx Count</dt><dd>");
+    handler->print("<dl><dt>Siedle Bus Rx/Tx Count</dt><dd>");
     handler->print(SiedleService.siedleClient.rxCount);
     handler->print(" / ");
     handler->print(SiedleService.siedleClient.txCount);

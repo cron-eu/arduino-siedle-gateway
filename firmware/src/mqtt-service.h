@@ -35,6 +35,8 @@ public:
     void begin();
     void loop();
     unsigned int mqttReconnects;
+    unsigned int rxCount = 0;
+    unsigned int txCount = 0;
 
     /**
      * Queue a Siedle Log Entry for sending
