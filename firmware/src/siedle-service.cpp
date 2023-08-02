@@ -14,7 +14,7 @@ void SiedleServiceClass::begin() {
 void SiedleServiceClass::loop() {
     if (siedleClient.available()) {
         SiedleLogEntry entry = { RTCSync.getEpoch(), siedleClient.read() };
-        MQTTService.sendAsync(entry);
+        MQTTService.sendAsync(entry, received);
         siedleRxTxLog.push({ entry, rx });
     }
 
@@ -23,6 +23,7 @@ void SiedleServiceClass::loop() {
         auto now = millis();
         if (now - lastTxMillis > BUS_MAX_SEND_RATE_MS && siedleClient.state == idle) {
             auto cmd = siedleTxQueue.shift();
+            MQTTService.sendAsync({RTCSync.getEpoch(), cmd}, sent);
             siedleClient.sendCmd(cmd);
             siedleRxTxLog.push({ { RTCSync.getEpoch(), cmd }, tx });
             lastTxMillis = now;
