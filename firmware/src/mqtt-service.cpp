@@ -42,6 +42,7 @@ void MQTTServiceClass::onMessageReceived(int messageSize) {
     uint32_t cmd = atol(payload);
 
     SiedleService.transmitAsync(cmd);
+    rxCount++;
 }
 #endif
 
@@ -171,15 +172,30 @@ void MQTTServiceClass::loop() {
         // we want to limit the outgoing rate to avoid issues with the power management
         auto entry = mqttTxQueue.shift();
         char buf[32];
-        sprintf(buf, "{\"ts\":%lu,\"cmd\":%lu}", entry.timestamp, (unsigned long)entry.cmd);
+        sprintf(buf, "{\"ts\":%lu,\"cmd\":%lu}", entry.payload.timestamp, (unsigned long)entry.payload.cmd);
 
         #ifdef ARDUINO_ARCH_SAMD
-        mqttClient.beginMessage("siedle/received");
+        switch (entry.topic) {
+            case received:
+                mqttClient.beginMessage("siedle/received");
+                break;
+            case sent:
+                mqttClient.beginMessage("siedle/sent");
+                break;
+        }
         mqttClient.print(buf);
         mqttClient.endMessage();
+        txCount++;
         lastTxMillis = millis();
         #elif defined(ESP8266)
-        mqttClient.publish(String(F("siedle/received")).c_str(), buf);
+        switch (entry.topic) {
+            case received:
+                mqttClient.publish(String(F("siedle/received")).c_str(), buf);
+                break;
+            case sent:
+                mqttClient.publish(String(F("siedle/sent")).c_str(), buf);
+                break;
+        }
         #endif
     }
 

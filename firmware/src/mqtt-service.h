@@ -19,12 +19,24 @@
 #include <PubSubClient.h>
 #endif
 
+enum MQTTTopic {
+    received = 0,
+    sent = 1
+};
+
+typedef struct {
+    SiedleLogEntry payload;
+    MQTTTopic topic;
+} MQTTSendItem;
+
 class MQTTServiceClass {
 public:
     MQTTServiceClass();
     void begin();
     void loop();
     unsigned int mqttReconnects;
+    unsigned int rxCount = 0;
+    unsigned int txCount = 0;
 
     /**
      * Queue a Siedle Log Entry for sending
@@ -33,8 +45,8 @@ public:
      * circular buffer. The sending process is async.
      * @param data
      */
-    void sendAsync(SiedleLogEntry data) {
-        mqttTxQueue.push(data);
+    void sendAsync(SiedleLogEntry data, MQTTTopic topic) {
+        mqttTxQueue.push({data, topic});
     }
     bool isConnected();
     void onMessageReceived(int messageSize);
@@ -42,7 +54,7 @@ public:
 private:
     unsigned long reconnectMillis;
     unsigned long lastTxMillis;
-    CircularBuffer<SiedleLogEntry, MQTT_TX_QUEUE_LEN> mqttTxQueue;
+    CircularBuffer<MQTTSendItem, MQTT_TX_QUEUE_LEN> mqttTxQueue;
 
     #ifdef ARDUINO_ARCH_SAMD
     WiFiClient    wifiClient;            // Used for the TCP socket connection

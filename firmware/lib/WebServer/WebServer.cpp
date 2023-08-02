@@ -15,7 +15,12 @@ void WebServer::begin() {
 //}
 
 void WebServer::loop() {
+
+#ifdef ARDUINO_ARCH_SAMD
     WiFiClient client = _server.available();   // listen for incoming clients
+#elif defined(ESP8266)
+    WiFiClient client = _server.accept();   // listen for incoming clients
+#endif
 
     if (client) {                             // if you get a client,
         String currentLine = "";                // make a String to hold incoming data from the client
