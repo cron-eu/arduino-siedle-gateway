@@ -6,6 +6,8 @@
 #ifndef FIRMWARE_SETTINGS_H
 #define FIRMWARE_SETTINGS_H
 
+#define NTP_SERVER "de.pool.ntp.org"
+
 // comment out to disable the MQTT functionality (does not make much sense, useful for debugging)
 #define USE_MQTT
 

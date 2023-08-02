@@ -13,7 +13,7 @@ jobs:
       - run: "cd firmware ; platformio update"
       - run: "cp firmware/include/wifi_client_secrets_example.h firmware/include/wifi_client_secrets.h"
       - run: "cp firmware/include/aws_iot_secrets_example.h firmware/include/aws_iot_secrets.h"
-      - run: "cd firmware ; platformio run"
+      - run: "cd firmware ; platformio run -e mkrwifi1010 -e nano_33_iot -e esp"
 
       - save_cache:
           key: platformio

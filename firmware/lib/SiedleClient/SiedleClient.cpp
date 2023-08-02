@@ -5,7 +5,10 @@
 #include <Arduino.h>
 #include "SiedleClient.h"
 #include "Timer5.h"
+
+#ifdef ARDUINO_ARCH_SAMD
 #include "avdweb_AnalogReadFast.h"
+#endif
 
 #define R2_VAL 10000.0
 #define R3_VAL 1100.0
@@ -55,6 +58,7 @@ SiedleClient::SiedleClient(uint8_t inputPin, uint8_t outputPin, uint8_t outputCa
 
 bool SiedleClient::begin() {
     digitalWrite(outputPin, LOW);
+    digitalWrite(outputCarrierPin, LOW);
     if (currentInstance) { return false; }
     currentInstance = this;
     attachInterrupt(digitalPinToInterrupt(inputPin), _rxISR, FALLING);
@@ -138,6 +142,7 @@ void SiedleClient::bitTimerISR() {
 }
 
 void SiedleClient::rxISR() {
+    this->irq_count++;
     if (state == transmitting) { return; }
 
     // we detach the interrupt here because we want to do a analogRead() later on
@@ -173,7 +178,11 @@ inline int SiedleClient::readBit() {
 }
 
 float SiedleClient::getBusvoltage() {
+    #ifdef ARDUINO_ARCH_SAMD
     auto a = analogReadFast(inputPin);
+    #elif defined(ESP8266)
+    auto a = analogRead(inputPin);
+    #endif
     return (float)a * (float)ADC_FACTOR;
 }
 

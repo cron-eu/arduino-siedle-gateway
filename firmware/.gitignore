@@ -3,3 +3,4 @@ CMakeListsPrivate.txt
 *secrets.h
 /cmake-build-*
 /.idea/workspace.xml
+.DS_Store

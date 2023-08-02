@@ -8,6 +8,7 @@
 void SiedleServiceClass::begin() {
     lastTxMillis = 0;
     siedleClient = SiedleClient(SIEDLE_A_IN, SIEDLE_TX_PIN, SIEDLE_TX_CARRIER_PIN);
+    siedleClient.begin();
 }
 
 void SiedleServiceClass::loop() {

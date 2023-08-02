@@ -41,11 +41,16 @@ void WebServer::loop() {
 //                        client.print(get_battery_voltage());
 //                        client.print("</dd>");
 
+                        #ifdef ARDUINO_ARCH_SAMD
                         client.print("<dl>");
+                        client.print("<dt>Firmware Version</dt>");
+                        client.print("<dd>");
+                        client.print(AUTO_VERSION);
                         client.print("<dt>WiFiNINA Firmware Version</dt>");
                         client.print("<dd>");
                         client.print(WiFi.firmwareVersion());
                         client.print("</dd>");
+                        #endif
 
                         if (rootPageHandler != NULL) {
                             rootPageHandler(&client);
