@@ -8,9 +8,9 @@
 #include <Arduino.h>
 #ifdef ARDUINO_ARCH_SAMD
 #include <MemoryUtils.h>
+#include <RTCZero.h>
 #endif
 
-#include <RTCZero.h>
 
 /**
  * Determine the boot time of the system
