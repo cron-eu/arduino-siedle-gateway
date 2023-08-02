@@ -37,6 +37,7 @@ public:
     unsigned int mqttReconnects;
     unsigned int rxCount = 0;
     unsigned int txCount = 0;
+    unsigned int overruns = 0;
 
     /**
      * Queue a Siedle Log Entry for sending
@@ -46,7 +47,11 @@ public:
      * @param data
      */
     void sendAsync(SiedleLogEntry data, MQTTTopic topic) {
-        mqttTxQueue.push({data, topic});
+        if (mqttTxQueue.isFull()) {
+            overruns++;
+        } else {
+            mqttTxQueue.unshift({data, topic});
+        }
     }
     bool isConnected();
     void onMessageReceived(int messageSize);

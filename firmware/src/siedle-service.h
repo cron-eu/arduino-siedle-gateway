@@ -33,10 +33,15 @@ public:
      * @param data
      */
     void transmitAsync(siedle_cmd_t cmd) {
-        siedleTxQueue.push(cmd);
+        if (siedleTxQueue.isFull()) {
+            overruns++;
+        } else {
+            siedleTxQueue.unshift(cmd);
+        }
     }
 
     SiedleClient siedleClient;
+    unsigned int overruns = 0;
 
 private:
     CircularBuffer<siedle_cmd_t, SIEDLE_TX_QUEUE_LEN> siedleTxQueue;

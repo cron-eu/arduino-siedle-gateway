@@ -85,19 +85,23 @@ void webUIHTMLHandler(Print *handler) {
     handler->println(")");
     handler->println("</dd>");
 
-    handler->println("<dt>MQTT Rx/Tx Count</dt>");
+    handler->println("<dt>MQTT Rx/Tx/Overruns Count</dt>");
     handler->print("<dd>");
     handler->print(MQTTService.rxCount);
     handler->print(" / ");
     handler->print(MQTTService.txCount);
+    handler->print(" / ");
+    handler->print(MQTTService.overruns);
     handler->println("</dd>");
 
 #endif
 
-    handler->print("<dl><dt>Siedle Bus Rx/Tx Count</dt><dd>");
+    handler->print("<dl><dt>Siedle Bus Rx/Tx/Overruns Count</dt><dd>");
     handler->print(SiedleService.siedleClient.rxCount);
     handler->print(" / ");
     handler->print(SiedleService.siedleClient.txCount);
+    handler->print(" / ");
+    handler->print(SiedleService.overruns);
     handler->print("</dd></dl>");
 
     handler->print("<h3>Data</h3><table><tr><th>Timestamp</th><th>Direction</th><th>Command</th></tr>");

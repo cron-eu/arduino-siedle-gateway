@@ -22,7 +22,7 @@ void SiedleServiceClass::loop() {
     if (!siedleTxQueue.isEmpty()) {
         auto now = millis();
         if (now - lastTxMillis > BUS_MAX_SEND_RATE_MS && siedleClient.state == idle) {
-            auto cmd = siedleTxQueue.shift();
+            auto cmd = siedleTxQueue.pop();
             MQTTService.sendAsync({RTCSync.getEpoch(), cmd}, sent);
             siedleClient.sendCmd(cmd);
             siedleRxTxLog.push({ { RTCSync.getEpoch(), cmd }, tx });

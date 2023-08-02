@@ -81,12 +81,12 @@
                 ]
             },
             "defines": [
-                "PLATFORMIO=60109",
+                "PLATFORMIO=60106",
                 "ARDUINO_SAMD_NANO_33_IOT",
                 "CRYSTALLESS",
                 "__SAMD21G18A__",
                 "DEVICE_ARDUINO_NANO",
-                "AUTO_VERSION=\"v1.0.1-dirty\"",
+                "AUTO_VERSION=\"v1.1.0-dirty\"",
                 "ARDUINO=10805",
                 "F_CPU=48000000L",
                 "USBCON",
@@ -97,8 +97,8 @@
                 "ARDUINO_ARCH_SAMD",
                 ""
             ],
-            "cStandard": "gnu11",
-            "cppStandard": "gnu++11",
+            "cStandard": "c11",
+            "cppStandard": "c++11",
             "compilerPath": "/Users/remuslazar/.platformio/packages/toolchain-gccarmnoneeabi/bin/arm-none-eabi-gcc",
             "compilerArgs": [
                 "-mcpu=cortex-m0plus",
