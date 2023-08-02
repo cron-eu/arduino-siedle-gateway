@@ -33,11 +33,13 @@ public:
      * @param data
      */
     void transmitAsync(siedle_cmd_t cmd) {
+        noInterrupts();
         if (siedleTxQueue.isFull()) {
             overruns++;
         } else {
             siedleTxQueue.unshift(cmd);
         }
+        interrupts();
     }
 
     SiedleClient siedleClient;
