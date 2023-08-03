@@ -142,11 +142,11 @@ void MQTTServiceClass::loop() {
             mqttReconnects++;
             reconnectAttemptMillis = millis();
             if (connected) {
-                Debug.println(String(F("ok!")));
+                Debug.println("ok!");
                 // subscribe to a topic
-                mqttClient.subscribe(String(F("siedle/send")).c_str());
+                mqttClient.subscribe("siedle/send");
             } else {
-                Debug.println(String(F("failed!")));
+                Debug.println("failed!");
                 #ifdef ESP8266
                 char buf[256];
                 sslClient.getLastSSLError(buf, sizeof(buf));

@@ -70,7 +70,7 @@ void WiFiManagerClass::connect() {
 
 void WiFiManagerClass::printWifiStatus() {
     // print the SSID of the network you're attached to:
-    Debug.println(F("done!"));
+    Debug.println("done!");
 
     #ifdef ARDUINO_ARCH_SAMD
     auto localIP = WiFi.localIP();
