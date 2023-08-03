@@ -14,9 +14,6 @@
 // Siedle Log size (shown in the Web UI)
 #define LOG_SIZE 64
 
-// Watchdog timer expire value (in ms)
-#define WDT_TIMEOUT_MS 3000
-
 #define MQTT_TX_QUEUE_LEN 32
 #define SIEDLE_TX_QUEUE_LEN 32
 
