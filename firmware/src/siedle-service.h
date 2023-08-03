@@ -17,7 +17,7 @@
 #include "siedle-log.h"
 
 // max siedle bus send rate
-#define BUS_MAX_SEND_RATE_MS 800
+#define BUS_MAX_SEND_RATE_MS 250
 
 class SiedleServiceClass {
 public:

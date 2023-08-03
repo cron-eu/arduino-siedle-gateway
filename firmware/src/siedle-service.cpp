@@ -31,21 +31,22 @@ void SiedleServiceClass::loop() {
 
 
     noInterrupts();
-    auto doSend = !siedleTxQueue.isEmpty();
+    auto now = millis();
+    auto doSend = !siedleTxQueue.isEmpty()
+        && (now - lastTxMillis > BUS_MAX_SEND_RATE_MS)
+        && siedleClient.state == idle;
     siedle_cmd_t cmd;
+
     if (doSend) {
         cmd = siedleTxQueue.pop();
     }
     interrupts();
 
     if (doSend) {
-        auto now = millis();
-        if (now - lastTxMillis > BUS_MAX_SEND_RATE_MS && siedleClient.state == idle) {
-            MQTTService.sendAsync({RTCSync.getEpoch(), cmd}, sent);
-            siedleClient.sendCmd(cmd);
-            siedleRxTxLog.push({ { RTCSync.getEpoch(), cmd }, tx });
-            lastTxMillis = now;
-        }
+        MQTTService.sendAsync({RTCSync.getEpoch(), cmd}, sent);
+        siedleClient.sendCmd(cmd);
+        siedleRxTxLog.push({ { RTCSync.getEpoch(), cmd }, tx });
+        lastTxMillis = now;
     }
 }
 SiedleServiceClass SiedleService;
