@@ -186,13 +186,12 @@ float SiedleClient::getBusvoltage() {
     return (float)a * (float)ADC_FACTOR;
 }
 
-void SiedleClient::sendCmd(siedle_cmd_t tx_cmd) {
+void SiedleClient::sendCmdAsync(siedle_cmd_t tx_cmd) {
     // disable the rx irq while we are transmitting data
     detachInterrupt(digitalPinToInterrupt(inputPin));
 
     cmd_tx_buf = tx_cmd;
     state = transmitting;
-
     bitNumber = 31;
 
     // Output the first bit (#31). Remaining bits will be transmitted using the ISR

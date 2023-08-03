@@ -58,7 +58,7 @@ MQTTServiceClass::MQTTServiceClass() : mqttTxQueue(), sslClient(), mqttClient(SE
 
 void MQTTServiceClass::begin() {
     mqttReconnects = 0;
-    reconnectMillis = 0;
+    reconnectAttemptMillis = 0;
     lastTxMillis = 0;
 
     #ifdef ARDUINO_ARCH_SAMD
@@ -79,9 +79,6 @@ void MQTTServiceClass::begin() {
     //
     // mqttClient.setId("clientId");
 
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-    }
     #elif defined(ESP8266)
     loadSSLConfiguration();
     #endif
@@ -129,10 +126,10 @@ void MQTTServiceClass::loadSSLConfiguration() {
 #endif
 
 void MQTTServiceClass::loop() {
-    unsigned long elapsed = millis() - reconnectMillis;
+    unsigned long elapsed = millis() - reconnectAttemptMillis;
 
     if (!mqttClient.connected()) {
-        if (elapsed > 10000 && RTCSync.initialized) { // we need a valid time to establish a SSL connection
+        if (elapsed > MQTT_RECONNECT_INTERVAL_MS && RTCSync.initialized) { // we need a valid time to establish a SSL connection
             #ifdef ARDUINO_ARCH_SAMD
             auto connected = mqttClient.connect(broker, 8883);
             #elif defined(ESP8266)
@@ -143,19 +140,19 @@ void MQTTServiceClass::loop() {
             auto connected = mqttClient.connect(name.c_str());
             #endif
             mqttReconnects++;
-            reconnectMillis = millis();
+            reconnectAttemptMillis = millis();
             if (connected) {
-                Debug.println(String(F("ok!")));
+                Debug.println("ok!");
                 // subscribe to a topic
-                mqttClient.subscribe(String(F("siedle/send")).c_str());
+                mqttClient.subscribe("siedle/send");
             } else {
-                Debug.println(String(F("failed!")));
+                Debug.println("failed!");
                 #ifdef ESP8266
                 char buf[256];
                 sslClient.getLastSSLError(buf, sizeof(buf));
                 Debug.println(String(F("Last SSL error: ")) + buf);
                 #endif
-                // early return, retry after reconnectMillis
+                // early return, retry after reconnectAttemptMillis
                 return;
             }
         }
@@ -170,7 +167,7 @@ void MQTTServiceClass::loop() {
     // check if we have some messages to send
     if (mqttTxQueue.size() && millis() - lastTxMillis >= MQTT_MAX_SEND_RATE_MS) {
         // we want to limit the outgoing rate to avoid issues with the power management
-        auto entry = mqttTxQueue.shift();
+        auto entry = mqttTxQueue.pop();
         char buf[32];
         sprintf(buf, "{\"ts\":%lu,\"cmd\":%lu}", entry.payload.timestamp, (unsigned long)entry.payload.cmd);
 

@@ -17,7 +17,7 @@
 #include "siedle-log.h"
 
 // max siedle bus send rate
-#define BUS_MAX_SEND_RATE_MS 800
+#define BUS_MAX_SEND_RATE_MS 250
 
 class SiedleServiceClass {
 public:
@@ -33,10 +33,15 @@ public:
      * @param data
      */
     void transmitAsync(siedle_cmd_t cmd) {
-        siedleTxQueue.push(cmd);
+        if (siedleTxQueue.isFull()) {
+            overruns++;
+        } else {
+            siedleTxQueue.unshift(cmd);
+        }
     }
 
     SiedleClient siedleClient;
+    unsigned int overruns = 0;
 
 private:
     CircularBuffer<siedle_cmd_t, SIEDLE_TX_QUEUE_LEN> siedleTxQueue;
