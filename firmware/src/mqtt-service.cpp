@@ -26,15 +26,19 @@ unsigned long getTime() {
 #ifdef ARDUINO_ARCH_SAMD
 const char broker[]      = SECRET_BROKER;
 const char* certificate  = SECRET_CERTIFICATE;
-void MQTTServiceClass::onMessageReceived(String &topic, String &payload) {
-    uint32_t cmd = atol(payload.c_str());
+void MQTTServiceClass::onMessageReceived(char* topic, byte* payload, unsigned int length) {
+    char *cmdString = (char*)malloc(length + 1);
+    memcpy(cmdString, payload, length);
+    cmdString[length] = 0; // null termination
+    uint32_t cmd = atol(cmdString);
+    free (cmdString);
     SiedleService.transmitAsync(cmd);
     rxCount++;
 }
 #endif
 
-void _onMessageReceivedWrapper(String &topic, String &payload) {
-    MQTTService.onMessageReceived(topic, payload);
+void _onMessageReceivedWrapper(char* topic, byte* payload, unsigned int length) {
+    MQTTService.onMessageReceived(topic, payload, length);
 }
 
 #ifdef ARDUINO_ARCH_SAMD
@@ -65,17 +69,16 @@ void MQTTServiceClass::begin() {
     // a client id for you based on the millis() value if not set
     //
     // mqttClient.setId("clientId");
+    mqttClient.setServer(broker, 8883);
+    mqttClient.setCallback(_onMessageReceivedWrapper);
 
     #elif defined(ESP8266)
     loadSSLConfiguration();
     #endif
 
-    mqttClient.begin(broker, 8883, sslClient);
-
     // Set the message callback, this function is
     // called when the MQTTClient receives a message
     #ifdef ARDUINO_ARCH_SAMD
-    mqttClient.onMessage(_onMessageReceivedWrapper);
     #elif defined(ESP8266)
     mqttClient.setCallback([this](char *topic, uint8_t *payload, unsigned int length) {
         char *cmdString = (char*)malloc(length + 1);
