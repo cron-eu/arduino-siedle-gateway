@@ -13,7 +13,7 @@
 #include <WiFiNINA.h>
 #include <ArduinoBearSSL.h>
 #include <ArduinoECCX08.h>
-#include <ArduinoMqttClient.h>
+#include <MQTT.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
@@ -54,7 +54,7 @@ public:
         }
     }
     bool isConnected();
-    void onMessageReceived(int messageSize);
+    void onMessageReceived(String &topic, String &payload);
 
 private:
     unsigned long reconnectAttemptMillis;
@@ -64,7 +64,7 @@ private:
     #ifdef ARDUINO_ARCH_SAMD
     WiFiClient    wifiClient;            // Used for the TCP socket connection
     BearSSLClient sslClient; // Used for SSL/TLS connection, integrates with ECC508
-    MqttClient    mqttClient;
+    MQTTClient    mqttClient;
     #elif defined(ESP8266)
     WiFiClientSecure sslClient;
     PubSubClient mqttClient;

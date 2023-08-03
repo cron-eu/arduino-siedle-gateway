@@ -26,28 +26,15 @@ unsigned long getTime() {
 #ifdef ARDUINO_ARCH_SAMD
 const char broker[]      = SECRET_BROKER;
 const char* certificate  = SECRET_CERTIFICATE;
-void MQTTServiceClass::onMessageReceived(int messageSize) {
-
-    char payload[16];
-    char *payload_p = payload;
-
-    unsigned int rxlen = 0;
-    while (mqttClient.available() && messageSize--) {
-        char c = mqttClient.read();
-        if (rxlen++ < (sizeof(payload)-1)) {
-            *payload_p++ = c;
-        }
-    }
-    *payload_p = 0; // terminate the string with the 0 byte
-    uint32_t cmd = atol(payload);
-
+void MQTTServiceClass::onMessageReceived(String &topic, String &payload) {
+    uint32_t cmd = atol(payload.c_str());
     SiedleService.transmitAsync(cmd);
     rxCount++;
 }
 #endif
 
-void _onMessageReceivedWrapper(int count) {
-    MQTTService.onMessageReceived(count);
+void _onMessageReceivedWrapper(String &topic, String &payload) {
+    MQTTService.onMessageReceived(topic, payload);
 }
 
 #ifdef ARDUINO_ARCH_SAMD
@@ -82,6 +69,8 @@ void MQTTServiceClass::begin() {
     #elif defined(ESP8266)
     loadSSLConfiguration();
     #endif
+
+    mqttClient.begin(broker, 8883, sslClient);
 
     // Set the message callback, this function is
     // called when the MQTTClient receives a message
@@ -131,7 +120,7 @@ void MQTTServiceClass::loop() {
     if (!mqttClient.connected()) {
         if (elapsed > MQTT_RECONNECT_INTERVAL_MS && RTCSync.initialized) { // we need a valid time to establish a SSL connection
             #ifdef ARDUINO_ARCH_SAMD
-            auto connected = mqttClient.connect(broker, 8883);
+            auto connected = mqttClient.connect("arduino");
             #elif defined(ESP8266)
             auto time = RTCSync.getEpoch();
             sslClient.setX509Time(time);
@@ -160,7 +149,7 @@ void MQTTServiceClass::loop() {
 
     // poll for new MQTT messages and send keep alives
     #ifdef ARDUINO_ARCH_SAMD
-    mqttClient.poll();
+    mqttClient.loop();
     #elif defined(ESP8266)
     mqttClient.loop();
     #endif
@@ -172,16 +161,7 @@ void MQTTServiceClass::loop() {
         sprintf(buf, "{\"ts\":%lu,\"cmd\":%lu}", entry.payload.timestamp, (unsigned long)entry.payload.cmd);
 
         #ifdef ARDUINO_ARCH_SAMD
-        switch (entry.topic) {
-            case received:
-                mqttClient.beginMessage("siedle/received");
-                break;
-            case sent:
-                mqttClient.beginMessage("siedle/sent");
-                break;
-        }
-        mqttClient.print(buf);
-        mqttClient.endMessage();
+        mqttClient.publish(entry.topic == received ? "siedle/received" : "siedle/sent", buf);
         txCount++;
         lastTxMillis = millis();
         #elif defined(ESP8266)
