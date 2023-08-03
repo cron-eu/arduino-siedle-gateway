@@ -190,9 +190,9 @@ void SiedleClient::sendCmd(siedle_cmd_t tx_cmd) {
     // disable the rx irq while we are transmitting data
     detachInterrupt(digitalPinToInterrupt(inputPin));
 
+    noInterrupts();
     cmd_tx_buf = tx_cmd;
     state = transmitting;
-
     bitNumber = 31;
 
     // Output the first bit (#31). Remaining bits will be transmitted using the ISR
@@ -203,4 +203,5 @@ void SiedleClient::sendCmd(siedle_cmd_t tx_cmd) {
     // we did already transmit the first bit, transmit the remaining bits using the ISR
     Timer5::changeSampleRate(BIT_DURATION);
     Timer5::enable();
+    interrupts();
 }

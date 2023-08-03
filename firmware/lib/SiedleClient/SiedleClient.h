@@ -35,23 +35,29 @@ public:
      */
     bool begin();
     void end();
-    unsigned int rxCount = 0;
-    unsigned int txCount = 0;
+    volatile unsigned int rxCount = 0;
+    volatile unsigned int txCount = 0;
 
     // Send a command. Returns false if there was an error while trying to send, e.g. the bus master did not respond on time.
     void sendCmd(siedle_cmd_t cmd);
-    SiedleClientState state = idle;
+    volatile SiedleClientState state = idle;
     float getBusvoltage();
     void rxISR();
     void bitTimerISR();
-    int irq_count = 0;
+    volatile int irq_count = 0;
 
     bool available() {
-        return _available;
+        noInterrupts();
+        auto _available_copy = _available;
+        interrupts();
+        return _available_copy;
     }
     siedle_cmd_t read() {
+        noInterrupts();
+        auto cmd_copy = cmd;
         _available = false;
-        return cmd;
+        interrupts();
+        return cmd_copy;
     }
 
 private:
