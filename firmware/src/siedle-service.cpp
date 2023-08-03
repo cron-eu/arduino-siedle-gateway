@@ -39,12 +39,12 @@ void SiedleServiceClass::loop() {
 
     if (doSend) {
         cmd = siedleTxQueue.pop();
+        siedleClient.sendCmdAsync(cmd);
     }
     interrupts();
 
     if (doSend) {
         MQTTService.sendAsync({RTCSync.getEpoch(), cmd}, sent);
-        siedleClient.sendCmd(cmd);
         siedleRxTxLog.push({ { RTCSync.getEpoch(), cmd }, tx });
         lastTxMillis = now;
     }
