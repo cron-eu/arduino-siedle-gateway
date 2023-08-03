@@ -57,7 +57,7 @@ public:
     void onMessageReceived(int messageSize);
 
 private:
-    unsigned long reconnectMillis;
+    unsigned long reconnectAttemptMillis;
     unsigned long lastTxMillis;
     CircularBuffer<MQTTSendItem, MQTT_TX_QUEUE_LEN> mqttTxQueue;
 

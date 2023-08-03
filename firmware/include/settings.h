@@ -20,4 +20,7 @@
 #define MQTT_TX_QUEUE_LEN 32
 #define SIEDLE_TX_QUEUE_LEN 32
 
+// MQTT connect retry interval in ms
+#define MQTT_RECONNECT_INTERVAL_MS 10000
+
 #endif //FIRMWARE_SETTINGS_H
