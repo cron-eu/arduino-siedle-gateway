@@ -12,17 +12,35 @@ void SiedleServiceClass::begin() {
 }
 
 void SiedleServiceClass::loop() {
-    if (siedleClient.available()) {
-        SiedleLogEntry entry = { RTCSync.getEpoch(), siedleClient.read() };
+
+    noInterrupts();
+    auto available = siedleClient.available();
+    siedle_cmd_t read;
+    if (available) {
+        read = siedleClient.read();
+    }
+    interrupts();
+
+    if (available) {
+        SiedleLogEntry entry = { RTCSync.getEpoch(), read };
         MQTTService.sendAsync(entry, received);
         siedleRxTxLog.push({ entry, rx });
     }
 
     // introduce some padding between the send requests
-    if (!siedleTxQueue.isEmpty()) {
+
+
+    noInterrupts();
+    auto doSend = !siedleTxQueue.isEmpty();
+    siedle_cmd_t cmd;
+    if (doSend) {
+        cmd = siedleTxQueue.pop();
+    }
+    interrupts();
+
+    if (doSend) {
         auto now = millis();
         if (now - lastTxMillis > BUS_MAX_SEND_RATE_MS && siedleClient.state == idle) {
-            auto cmd = siedleTxQueue.pop();
             MQTTService.sendAsync({RTCSync.getEpoch(), cmd}, sent);
             siedleClient.sendCmd(cmd);
             siedleRxTxLog.push({ { RTCSync.getEpoch(), cmd }, tx });

@@ -47,17 +47,12 @@ public:
     volatile int irq_count = 0;
 
     bool available() {
-        noInterrupts();
-        auto _available_copy = _available;
-        interrupts();
-        return _available_copy;
+        return _available;
     }
+
     siedle_cmd_t read() {
-        noInterrupts();
-        auto cmd_copy = cmd;
         _available = false;
-        interrupts();
-        return cmd_copy;
+        return cmd;
     }
 
 private:
