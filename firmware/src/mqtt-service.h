@@ -47,13 +47,11 @@ public:
      * @param data
      */
     void sendAsync(SiedleLogEntry data, MQTTTopic topic) {
-        noInterrupts();
         if (mqttTxQueue.isFull()) {
             overruns++;
         } else {
             mqttTxQueue.unshift({data, topic});
         }
-        interrupts();
     }
     bool isConnected();
     void onMessageReceived(int messageSize);

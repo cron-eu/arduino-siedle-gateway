@@ -170,9 +170,7 @@ void MQTTServiceClass::loop() {
     // check if we have some messages to send
     if (mqttTxQueue.size() && millis() - lastTxMillis >= MQTT_MAX_SEND_RATE_MS) {
         // we want to limit the outgoing rate to avoid issues with the power management
-        noInterrupts();
         auto entry = mqttTxQueue.pop();
-        interrupts();
         char buf[32];
         sprintf(buf, "{\"ts\":%lu,\"cmd\":%lu}", entry.payload.timestamp, (unsigned long)entry.payload.cmd);
 
