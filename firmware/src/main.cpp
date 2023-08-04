@@ -6,6 +6,7 @@
 
 #ifdef ARDUINO_ARCH_SAMD
 #include <WDTZero.h>
+#include <ArduinoOTA.h>
 #endif
 
 #include "siedle-log.h"
@@ -48,6 +49,7 @@ void __unused setup() {
     webServer.begin();
 #ifdef ARDUINO_ARCH_SAMD
     Watchdog.setup(WDT_HARDCYCLE16S);
+    ArduinoOTA.begin(WiFi.localIP(), "cron", "cron", InternalStorage);
 #endif
 
 }
@@ -74,5 +76,6 @@ void __unused loop() {
 
 #ifdef ARDUINO_ARCH_SAMD
     wdtLoop();
+    ArduinoOTA.handle();
 #endif
 }
