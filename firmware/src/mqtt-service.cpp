@@ -26,6 +26,8 @@ unsigned long getTime() {
 #ifdef ARDUINO_ARCH_SAMD
 const char broker[]      = SECRET_BROKER;
 const char* certificate  = SECRET_CERTIFICATE;
+#endif
+
 void MQTTServiceClass::onMessageReceived(char* topic, byte* payload, unsigned int length) {
     char *cmdString = (char*)malloc(length + 1);
     memcpy(cmdString, payload, length);
@@ -35,7 +37,6 @@ void MQTTServiceClass::onMessageReceived(char* topic, byte* payload, unsigned in
     SiedleService.transmitAsync(cmd);
     rxCount++;
 }
-#endif
 
 void _onMessageReceivedWrapper(char* topic, byte* payload, unsigned int length) {
     MQTTService.onMessageReceived(topic, payload, length);
@@ -62,6 +63,11 @@ void MQTTServiceClass::begin() {
     // Set the ECCX08 slot to use for the private key
     // and the accompanying public certificate for it
     sslClient.setEccSlot(0, certificate);
+    mqttClient.setServer(broker, 8883);
+
+    #elif defined(ESP8266)
+    loadSSLConfiguration();
+    #endif
 
     // Optional, set the client id used for MQTT,
     // each device that is connected to the broker
@@ -69,26 +75,7 @@ void MQTTServiceClass::begin() {
     // a client id for you based on the millis() value if not set
     //
     // mqttClient.setId("clientId");
-    mqttClient.setServer(broker, 8883);
     mqttClient.setCallback(_onMessageReceivedWrapper);
-
-    #elif defined(ESP8266)
-    loadSSLConfiguration();
-    #endif
-
-    // Set the message callback, this function is
-    // called when the MQTTClient receives a message
-    #ifdef ARDUINO_ARCH_SAMD
-    #elif defined(ESP8266)
-    mqttClient.setCallback([this](char *topic, uint8_t *payload, unsigned int length) {
-        char *cmdString = (char*)malloc(length + 1);
-        memcpy(cmdString, payload, length);
-        cmdString[length] = 0; // null termination
-        uint32_t cmd = atol(cmdString);
-        free (cmdString);
-        SiedleService.transmitAsync(cmd);
-    });
-    #endif
 }
 
 #ifdef ESP8266
@@ -151,11 +138,7 @@ void MQTTServiceClass::loop() {
     }
 
     // poll for new MQTT messages and send keep alives
-    #ifdef ARDUINO_ARCH_SAMD
     mqttClient.loop();
-    #elif defined(ESP8266)
-    mqttClient.loop();
-    #endif
     // check if we have some messages to send
     if (mqttTxQueue.size() && millis() - lastTxMillis >= MQTT_MAX_SEND_RATE_MS) {
         // we want to limit the outgoing rate to avoid issues with the power management
