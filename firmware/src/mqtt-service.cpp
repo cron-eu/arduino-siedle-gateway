@@ -110,7 +110,7 @@ void MQTTServiceClass::loop() {
     if (!mqttClient.connected()) {
         if (elapsed > MQTT_RECONNECT_INTERVAL_MS && RTCSync.initialized) { // we need a valid time to establish a SSL connection
             #ifdef ARDUINO_ARCH_SAMD
-            auto connected = mqttClient.connect("arduino");
+            auto connected = mqttClient.connect(MQTT_DEVICE_NAME);
             #elif defined(ESP8266)
             auto time = RTCSync.getEpoch();
             sslClient.setX509Time(time);
