@@ -2,5 +2,6 @@
 CMakeListsPrivate.txt
 *secrets.h
 /cmake-build-*
-/.idea/workspace.xml
 .DS_Store
+/.vscode/c_cpp_properties.json
+/.vscode/lanch.json
