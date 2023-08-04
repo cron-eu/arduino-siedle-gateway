@@ -20,4 +20,8 @@
 // MQTT connect retry interval in ms
 #define MQTT_RECONNECT_INTERVAL_MS 10000
 
+// MQTT socket timeout (in seconds)
+// do not set this too high to avoid issues with the hardware watchdog!
+#define MQTT_TIMEOUT_SEC 10
+
 #endif //FIRMWARE_SETTINGS_H
