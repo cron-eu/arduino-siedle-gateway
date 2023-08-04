@@ -65,6 +65,9 @@ void MQTTServiceClass::begin() {
     sslClient.setEccSlot(0, certificate);
     mqttClient.setServer(broker, 8883);
 
+    // bail out after 10 seconds to avoid issues with the hardware watchdog
+    mqttClient.setSocketTimeout(MQTT_TIMEOUT_SEC);
+
     #elif defined(ESP8266)
     loadSSLConfiguration();
     #endif
@@ -169,3 +172,4 @@ bool MQTTServiceClass::isConnected() {
 }
 
 MQTTServiceClass MQTTService;
+ 
