@@ -15,6 +15,7 @@
 #include "rtc.h"
 #include "siedle-service.h"
 #include "web-ui.h"
+#include "ota_secrets.h"
 
 #ifdef USE_MQTT
 #include "mqtt-service.h"
@@ -24,6 +25,8 @@ WebServer webServer(80);
 #ifdef ARDUINO_ARCH_SAMD
 WDTZero Watchdog;
 #endif
+
+static bool is_ota_initialized = false;
 
 void __unused setup() {
     Debug.begin();
@@ -49,7 +52,6 @@ void __unused setup() {
     webServer.begin();
 #ifdef ARDUINO_ARCH_SAMD
     Watchdog.setup(WDT_HARDCYCLE16S);
-    ArduinoOTA.begin(WiFi.localIP(), "cron", "cron", InternalStorage);
 #endif
 
 }
@@ -74,8 +76,16 @@ void __unused loop() {
 #endif
     webServer.loop();
 
+    if (!is_ota_initialized && WiFi.status() == WL_CONNECTED) {
+        ArduinoOTA.begin(WiFi.localIP(), OTA_USERNAME, OTA_PASSWORD, InternalStorage);
+        is_ota_initialized = true;
+    }
+
+    if (is_ota_initialized) {
+        ArduinoOTA.handle();
+    }
+
 #ifdef ARDUINO_ARCH_SAMD
     wdtLoop();
-    ArduinoOTA.handle();
 #endif
 }
