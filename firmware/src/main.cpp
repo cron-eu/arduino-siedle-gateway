@@ -6,8 +6,8 @@
 
 #ifdef ARDUINO_ARCH_SAMD
 #include <WDTZero.h>
-#include <ArduinoOTA.h>
 #endif
+#include <ArduinoOTA.h>
 
 #include "siedle-log.h"
 #include "led.h"
@@ -27,6 +27,7 @@ WDTZero Watchdog;
 #endif
 
 static bool is_ota_initialized = false;
+static unsigned long ota_init_attempt_last_millis = 0;
 
 void __unused setup() {
     Debug.begin();
@@ -76,9 +77,13 @@ void __unused loop() {
 #endif
     webServer.loop();
 
-    if (!is_ota_initialized && WiFi.status() == WL_CONNECTED) {
-        ArduinoOTA.begin(WiFi.localIP(), OTA_USERNAME, OTA_PASSWORD, InternalStorage);
-        is_ota_initialized = true;
+    if (!is_ota_initialized && (millis() - ota_init_attempt_last_millis) > 500) {
+        ota_init_attempt_last_millis = millis();
+
+        if (WiFi.status() == WL_CONNECTED) {
+            ArduinoOTA.begin(WiFi.localIP(), OTA_USERNAME, OTA_PASSWORD, InternalStorage);
+            is_ota_initialized = true;
+        }
     }
 
     if (is_ota_initialized) {
