@@ -26,28 +26,20 @@ unsigned long getTime() {
 #ifdef ARDUINO_ARCH_SAMD
 const char broker[]      = SECRET_BROKER;
 const char* certificate  = SECRET_CERTIFICATE;
-void MQTTServiceClass::onMessageReceived(int messageSize) {
+#endif
 
-    char payload[16];
-    char *payload_p = payload;
-
-    unsigned int rxlen = 0;
-    while (mqttClient.available() && messageSize--) {
-        char c = mqttClient.read();
-        if (rxlen++ < (sizeof(payload)-1)) {
-            *payload_p++ = c;
-        }
-    }
-    *payload_p = 0; // terminate the string with the 0 byte
-    uint32_t cmd = atol(payload);
-
+void MQTTServiceClass::onMessageReceived(char* topic, byte* payload, unsigned int length) {
+    char *cmdString = (char*)malloc(length + 1);
+    memcpy(cmdString, payload, length);
+    cmdString[length] = 0; // null termination
+    uint32_t cmd = atol(cmdString);
+    free (cmdString);
     SiedleService.transmitAsync(cmd);
     rxCount++;
 }
-#endif
 
-void _onMessageReceivedWrapper(int count) {
-    MQTTService.onMessageReceived(count);
+void _onMessageReceivedWrapper(char* topic, byte* payload, unsigned int length) {
+    MQTTService.onMessageReceived(topic, payload, length);
 }
 
 #ifdef ARDUINO_ARCH_SAMD
@@ -71,6 +63,11 @@ void MQTTServiceClass::begin() {
     // Set the ECCX08 slot to use for the private key
     // and the accompanying public certificate for it
     sslClient.setEccSlot(0, certificate);
+    mqttClient.setServer(broker, 8883);
+
+    #elif defined(ESP8266)
+    loadSSLConfiguration();
+    #endif
 
     // Optional, set the client id used for MQTT,
     // each device that is connected to the broker
@@ -78,25 +75,7 @@ void MQTTServiceClass::begin() {
     // a client id for you based on the millis() value if not set
     //
     // mqttClient.setId("clientId");
-
-    #elif defined(ESP8266)
-    loadSSLConfiguration();
-    #endif
-
-    // Set the message callback, this function is
-    // called when the MQTTClient receives a message
-    #ifdef ARDUINO_ARCH_SAMD
-    mqttClient.onMessage(_onMessageReceivedWrapper);
-    #elif defined(ESP8266)
-    mqttClient.setCallback([this](char *topic, uint8_t *payload, unsigned int length) {
-        char *cmdString = (char*)malloc(length + 1);
-        memcpy(cmdString, payload, length);
-        cmdString[length] = 0; // null termination
-        uint32_t cmd = atol(cmdString);
-        free (cmdString);
-        SiedleService.transmitAsync(cmd);
-    });
-    #endif
+    mqttClient.setCallback(_onMessageReceivedWrapper);
 }
 
 #ifdef ESP8266
@@ -131,7 +110,7 @@ void MQTTServiceClass::loop() {
     if (!mqttClient.connected()) {
         if (elapsed > MQTT_RECONNECT_INTERVAL_MS && RTCSync.initialized) { // we need a valid time to establish a SSL connection
             #ifdef ARDUINO_ARCH_SAMD
-            auto connected = mqttClient.connect(broker, 8883);
+            auto connected = mqttClient.connect(MQTT_DEVICE_NAME);
             #elif defined(ESP8266)
             auto time = RTCSync.getEpoch();
             sslClient.setX509Time(time);
@@ -159,11 +138,7 @@ void MQTTServiceClass::loop() {
     }
 
     // poll for new MQTT messages and send keep alives
-    #ifdef ARDUINO_ARCH_SAMD
-    mqttClient.poll();
-    #elif defined(ESP8266)
     mqttClient.loop();
-    #endif
     // check if we have some messages to send
     if (mqttTxQueue.size() && millis() - lastTxMillis >= MQTT_MAX_SEND_RATE_MS) {
         // we want to limit the outgoing rate to avoid issues with the power management
@@ -172,16 +147,7 @@ void MQTTServiceClass::loop() {
         sprintf(buf, "{\"ts\":%lu,\"cmd\":%lu}", entry.payload.timestamp, (unsigned long)entry.payload.cmd);
 
         #ifdef ARDUINO_ARCH_SAMD
-        switch (entry.topic) {
-            case received:
-                mqttClient.beginMessage("siedle/received");
-                break;
-            case sent:
-                mqttClient.beginMessage("siedle/sent");
-                break;
-        }
-        mqttClient.print(buf);
-        mqttClient.endMessage();
+        mqttClient.publish(entry.topic == received ? "siedle/received" : "siedle/sent", buf);
         txCount++;
         lastTxMillis = millis();
         #elif defined(ESP8266)
