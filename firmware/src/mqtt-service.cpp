@@ -52,6 +52,7 @@ void MQTTServiceClass::begin() {
     mqttReconnects = 0;
     reconnectAttemptMillis = 0;
     lastTxMillis = 0;
+    state = mqtt_not_connected;
 
     #ifdef ARDUINO_ARCH_SAMD
     ECCX08.begin();
@@ -110,8 +111,14 @@ void MQTTServiceClass::loadSSLConfiguration() {
 void MQTTServiceClass::loop() {
     unsigned long elapsed = millis() - reconnectAttemptMillis;
 
-    if (!mqttClient.connected()) {
-        if (elapsed > MQTT_RECONNECT_INTERVAL_MS && RTCSync.initialized) { // we need a valid time to establish a SSL connection
+    // poll for new MQTT messages and send keep alives
+    mqttClient.loop();
+
+    if (elapsed > MQTT_RECONNECT_INTERVAL_MS && RTCSync.initialized) { // we need a valid time to establish a SSL connection
+        reconnectAttemptMillis = millis();
+
+        if (!mqttClient.connected()) {
+            state = mqtt_not_connected;
             #ifdef ARDUINO_ARCH_SAMD
             auto connected = mqttClient.connect(MQTT_DEVICE_NAME);
             #elif defined(ESP8266)
@@ -122,11 +129,9 @@ void MQTTServiceClass::loop() {
             auto connected = mqttClient.connect(name.c_str());
             #endif
             mqttReconnects++;
-            reconnectAttemptMillis = millis();
             if (connected) {
-                Debug.println("ok!");
-                // subscribe to a topic
-                mqttClient.subscribe("siedle/send");
+                state = mqtt_connected;
+                Debug.println("mqtt connected");
             } else {
                 Debug.println("failed!");
                 #ifdef ESP8266
@@ -134,37 +139,45 @@ void MQTTServiceClass::loop() {
                 sslClient.getLastSSLError(buf, sizeof(buf));
                 Debug.println(String(F("Last SSL error: ")) + buf);
                 #endif
-                // early return, retry after reconnectAttemptMillis
-                return;
+            }
+        } else {
+            // mqttClient.connected() == true
+            if (state == mqtt_connected) {
+                // subscribe to a topic
+                auto success = mqttClient.subscribe("siedle/send");
+                if (success) {
+                    Debug.println("mqtt subscribed");
+                    state = mqtt_connected_and_subscribed;
+                }
             }
         }
     }
 
-    // poll for new MQTT messages and send keep alives
-    mqttClient.loop();
-    // check if we have some messages to send
-    if (mqttTxQueue.size() && millis() - lastTxMillis >= MQTT_MAX_SEND_RATE_MS) {
-        // we want to limit the outgoing rate to avoid issues with the power management
-        auto entry = mqttTxQueue.pop();
-        char buf[32];
-        sprintf(buf, "{\"ts\":%lu,\"cmd\":%lu}", entry.payload.timestamp, (unsigned long)entry.payload.cmd);
+    if (state != mqtt_not_connected) {
+        // check if we have some messages to send
+        if (mqttTxQueue.size() && millis() - lastTxMillis >= MQTT_MAX_SEND_RATE_MS) {
+            // we want to limit the outgoing rate to avoid issues with the power management
+            auto entry = mqttTxQueue.pop();
+            char buf[32];
+            sprintf(buf, "{\"ts\":%lu,\"cmd\":%lu}", entry.payload.timestamp, (unsigned long)entry.payload.cmd);
 
-        #ifdef ARDUINO_ARCH_SAMD
-        mqttClient.publish(entry.topic == received ? "siedle/received" : "siedle/sent", buf);
-        txCount++;
-        lastTxMillis = millis();
-        #elif defined(ESP8266)
-        switch (entry.topic) {
-            case received:
-                mqttClient.publish(String(F("siedle/received")).c_str(), buf);
-                break;
-            case sent:
-                mqttClient.publish(String(F("siedle/sent")).c_str(), buf);
-                break;
+            #ifdef ARDUINO_ARCH_SAMD
+            mqttClient.publish(entry.topic == received ? "siedle/received" : "siedle/sent", buf);
+            txCount++;
+            lastTxMillis = millis();
+            #elif defined(ESP8266)
+            switch (entry.topic) {
+                case received:
+                    mqttClient.publish(String(F("siedle/received")).c_str(), buf);
+                    break;
+                case sent:
+                    mqttClient.publish(String(F("siedle/sent")).c_str(), buf);
+                    break;
+            }
+            #endif
         }
-        #endif
+        
     }
-
 }
 
 bool MQTTServiceClass::isConnected() {

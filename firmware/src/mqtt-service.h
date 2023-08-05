@@ -24,6 +24,12 @@ enum MQTTTopic {
     sent = 1
 };
 
+enum MQTTState {
+    mqtt_not_connected,
+    mqtt_connected,
+    mqtt_connected_and_subscribed,
+};
+
 typedef struct {
     SiedleLogEntry payload;
     MQTTTopic topic;
@@ -59,6 +65,7 @@ public:
 private:
     unsigned long reconnectAttemptMillis;
     unsigned long lastTxMillis;
+    MQTTState state;
     CircularBuffer<MQTTSendItem, MQTT_TX_QUEUE_LEN> mqttTxQueue;
 
     #ifdef ARDUINO_ARCH_SAMD
