@@ -158,20 +158,22 @@ void MQTTServiceClass::loop() {
         if (mqttTxQueue.size() && millis() - lastTxMillis >= MQTT_MAX_SEND_RATE_MS) {
             // we want to limit the outgoing rate to avoid issues with the power management
             auto entry = mqttTxQueue.pop();
-            char buf[32];
-            sprintf(buf, "{\"ts\":%lu,\"cmd\":%lu}", entry.payload.timestamp, (unsigned long)entry.payload.cmd);
+            // example payload string
+            // {"ts":1691240767,"cmd":1181356688}
+            auto payload = String("{\"ts\":") + entry.payload.timestamp
+                + String(",\"cmd\":") + (unsigned long)entry.payload.cmd + "";
 
             #ifdef ARDUINO_ARCH_SAMD
-            mqttClient.publish(entry.topic == received ? "siedle/received" : "siedle/sent", buf);
+            mqttClient.publish(entry.topic == received ? "siedle/received" : "siedle/sent", payload.c_str());
             txCount++;
             lastTxMillis = millis();
             #elif defined(ESP8266)
             switch (entry.topic) {
                 case received:
-                    mqttClient.publish(String(F("siedle/received")).c_str(), buf);
+                    mqttClient.publish(String(F("siedle/received")).c_str(), payload.c_str());
                     break;
                 case sent:
-                    mqttClient.publish(String(F("siedle/sent")).c_str(), buf);
+                    mqttClient.publish(String(F("siedle/sent")).c_str(), payload.c_str());
                     break;
             }
             #endif
