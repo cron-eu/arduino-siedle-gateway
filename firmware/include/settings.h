@@ -13,7 +13,7 @@
 
 // Siedle Log size (shown in the Web UI)
 #define LOG_SIZE 32
-
+ 
 #define MQTT_TX_QUEUE_LEN 32
 #define SIEDLE_TX_QUEUE_LEN 32
 
@@ -26,5 +26,8 @@
 
 // how often will the RTC synchronize with the WiFi clock
 #define RTC_SYNC_INTERVAL_SEC 172800˝
+
+// use the WiFi low power mode on SAMD devices
+#define USE_WIFI_LOW_POWER
 
 #endif //FIRMWARE_SETTINGS_H

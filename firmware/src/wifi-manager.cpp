@@ -15,6 +15,7 @@
 #endif
 
 #include <wifi_client_secrets.h>
+#include "settings.h"
 
 void WiFiManagerClass::loop() {
     if (millis() - connectionCheckMillis > 250) { // check connection status periodically
@@ -50,9 +51,13 @@ void WiFiManagerClass::begin() {
     #endif
     connectionCheckMillis = 0;
     wifiReconnects = 0;
+
 #ifdef ARDUINO_ARCH_SAMD
+#ifdef USE_WIFI_LOW_POWER
     WiFi.lowPowerMode();
 #endif
+#endif
+
     connect();
 }
 
