@@ -11,6 +11,7 @@
 #include <RTCZero.h>
 #endif
 
+#include "main_profiling.h"
 
 /**
  * Determine the boot time of the system
@@ -113,6 +114,10 @@ void webUIHTMLHandler(Print *handler) {
     handler->print(" / ");
     handler->print(SiedleService.overruns);
     handler->print("</dd></dl>");
+
+    handler->println(
+        String("<dl><dt>Mainloop max ms</dt><dd>") + max_main_loop_duration_ms + String("</dd></dl>")
+    );
 
     handler->print("<h3>Data</h3><table><tr><th>Timestamp</th><th>Direction</th><th>Command</th></tr>");
     for (unsigned int i = 0; i < siedleRxTxLog.size(); i++) {

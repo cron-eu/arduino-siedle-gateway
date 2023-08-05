@@ -14,6 +14,7 @@
 #include "rtc.h"
 #include "siedle-service.h"
 #include "web-ui.h"
+#include "main_profiling.h"
 
 #ifdef USE_MQTT
 #include "mqtt-service.h"
@@ -62,7 +63,10 @@ void inline wdtLoop() {
 }
 #endif
 
+
+
 void __unused loop() {
+    unsigned long loop_start_millis = millis();
     LED.loop();
     WiFiManager.loop();
     RTCSync.loop();
@@ -75,4 +79,10 @@ void __unused loop() {
 #ifdef ARDUINO_ARCH_SAMD
     wdtLoop();
 #endif
+    unsigned long loop_duration = millis() - loop_start_millis;
+
+    if (loop_duration > max_main_loop_duration_ms) {
+        max_main_loop_duration_ms = loop_duration;
+    }
+
 }
