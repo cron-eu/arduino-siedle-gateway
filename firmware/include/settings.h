@@ -28,6 +28,6 @@
 #define RTC_SYNC_INTERVAL_SEC 172800
 
 // use the WiFi low power mode on SAMD devices
-#define USE_WIFI_LOW_POWER
+// #define USE_WIFI_LOW_POWER
 
 #endif //FIRMWARE_SETTINGS_H
