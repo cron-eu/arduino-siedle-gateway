@@ -60,12 +60,12 @@ public:
         }
     }
     bool isConnected();
+    MQTTState state;
     void onMessageReceived(char* topic, byte* payload, unsigned int length);
 
 private:
     unsigned long reconnectAttemptMillis;
     unsigned long lastTxMillis;
-    MQTTState state;
     CircularBuffer<MQTTSendItem, MQTT_TX_QUEUE_LEN> mqttTxQueue;
 
     #ifdef ARDUINO_ARCH_SAMD

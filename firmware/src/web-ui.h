@@ -78,8 +78,18 @@ void webUIHTMLHandler(Print *handler) {
 //    handler->print("</dd></dl>");
 
 #ifdef USE_MQTT
-    handler->print("<dl><dt>AWS MQTT Link</dt><dd>");
-    handler->println(MQTTService.isConnected() ? "OK" : "Not Connected");
+    handler->print("<dl><dt>MQTT Status (Reconnects)</dt><dd>");
+    switch (MQTTService.state) {
+        case mqtt_not_connected:
+            handler->println("Not Connected");
+            break;
+        case mqtt_connected:
+            handler->println("Connecting");
+            break;
+        case mqtt_connected_and_subscribed:
+            handler->println("Ready");
+            break;
+    }
     handler->print("(");
     handler->print(MQTTService.mqttReconnects);
     handler->println(")");
