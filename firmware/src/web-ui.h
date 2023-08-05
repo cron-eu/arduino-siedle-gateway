@@ -123,15 +123,14 @@ void webUIHTMLHandler(Print *handler) {
     for (unsigned int i = 0; i < siedleRxTxLog.size(); i++) {
         auto entry = siedleRxTxLog[i];
         time = entry.log.timestamp;
-        char line[100];
+        handler->print("");
 
-        sprintf(line, "<tr><td>%s</th><td>%s</td><td><pre>%08lx</pre></td></tr>",
-                ctime(&time),
-                entry.direction == rx ? "<" : ">",
-                entry.log.cmd
-        );
+        auto html = String("<tr><td>") + ctime(&time)
+            + String("</th><td>") + (entry.direction == rx ? "<" : ">")
+            + String("</td><td><pre>")
+            + String(entry.log.cmd, 16) + "</pre></td></tr>";
 
-        handler->print(line);
+        handler->print(html);
     }
 
     handler->print("</table>");
