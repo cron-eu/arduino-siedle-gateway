@@ -161,7 +161,7 @@ void MQTTServiceClass::loop() {
             // example payload string
             // {"ts":1691240767,"cmd":1181356688}
             auto payload = String("{\"ts\":") + entry.payload.timestamp
-                + String(",\"cmd\":") + (unsigned long)entry.payload.cmd + "";
+                + String(",\"cmd\":") + (unsigned long)entry.payload.cmd + "}";
 
             #ifdef ARDUINO_ARCH_SAMD
             mqttClient.publish(entry.topic == received ? "siedle/received" : "siedle/sent", payload.c_str());
