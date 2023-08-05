@@ -87,7 +87,7 @@ void __unused loop() {
     }
 
     if (is_ota_initialized) {
-        ArduinoOTA.handle();
+        ArduinoOTA.poll();
     }
 
 #ifdef ARDUINO_ARCH_SAMD
