@@ -25,7 +25,7 @@
 #define MQTT_TIMEOUT_SEC 10
 
 // how often will the RTC synchronize with the WiFi clock
-#define RTC_SYNC_INTERVAL_SEC 172800˝
+#define RTC_SYNC_INTERVAL_SEC 172800
 
 // use the WiFi low power mode on SAMD devices
 #define USE_WIFI_LOW_POWER
