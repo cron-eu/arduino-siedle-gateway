@@ -126,7 +126,7 @@ void webUIHTMLHandler(Print *handler) {
         handler->print("");
 
         auto html = String("<tr><td>") + ctime(&time)
-            + String("</th><td>") + (entry.direction == rx ? "<" : ">")
+            + String("</td><td>") + (entry.direction == rx ? "&larr;" : "&rarr;")
             + String("</td><td><pre>")
             + String(entry.log.cmd, 16) + "</pre></td></tr>";
 
