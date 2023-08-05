@@ -1,9 +1,9 @@
 default: build
 
-src/aws_iot_secrets.h:
-	aws s3 cp s3://cron.cm/arduino-doorbell/aws_iot_secrets.h src/
+include/aws_iot_secrets.h:
+	aws s3 cp s3://cron.cm/arduino-doorbell/aws_iot_secrets.h include/
 
-setup: src/aws_iot_secrets.h
+setup: include/aws_iot_secrets.h
 
 check-git-clean:
 	@if ! [ -z "$(shell git status --untracked-files=no --porcelain)" ]; then exit 1 ; fi

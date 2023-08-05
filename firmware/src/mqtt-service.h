@@ -24,6 +24,12 @@ enum MQTTTopic {
     sent = 1
 };
 
+enum MQTTState {
+    mqtt_not_connected,
+    mqtt_connected,
+    mqtt_connected_and_subscribed,
+};
+
 typedef struct {
     SiedleLogEntry payload;
     MQTTTopic topic;
@@ -54,6 +60,7 @@ public:
         }
     }
     bool isConnected();
+    MQTTState state;
     void onMessageReceived(char* topic, byte* payload, unsigned int length);
 
 private:
