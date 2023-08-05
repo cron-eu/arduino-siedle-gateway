@@ -186,13 +186,21 @@ void MQTTServiceClass::loop() {
             } else if (sendDeviceStatusOverdue) {
                 deviceStateLastMillis = millis();
 
+                auto ipAddress = WiFi.localIP();
+                // Convert the IPAddress to a string
+                String ipAddressString;
+                for (int i = 0; i < 4; i++) {
+                    if (i > 0) ipAddressString += ".";
+                    ipAddressString += String(ipAddress[i]);
+                }
+
                 auto payload = String("{\"fw\":\"") + AUTO_VERSION
                  + String("\", \"boot\":") + RTCSync.bootEpoch + String(",\"wifi\":\"")
                  + WiFi.SSID()
                  + String("\",\"name\":\"")
                  + MQTT_DEVICE_NAME
                  + String("\",\"ip\":\"")
-                 + WiFi.localIP()
+                 + ipAddressString
                  + String("\"}");
 
                  mqttClient.publish("siedle/status", payload.c_str(), true);
