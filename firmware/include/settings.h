@@ -24,4 +24,7 @@
 // do not set this too high to avoid issues with the hardware watchdog!
 #define MQTT_TIMEOUT_SEC 10
 
+// Time inverval to send the current device state (as a retained message)
+#define SEND_DEVICE_STATE_EVERY_SEC 120
+
 #endif //FIRMWARE_SETTINGS_H

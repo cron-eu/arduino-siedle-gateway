@@ -153,30 +153,52 @@ void MQTTServiceClass::loop() {
         }
     }
 
-    if (state != mqtt_not_connected) {
-        // check if we have some messages to send
-        if (mqttTxQueue.size() && millis() - lastTxMillis >= MQTT_MAX_SEND_RATE_MS) {
-            // we want to limit the outgoing rate to avoid issues with the power management
-            auto entry = mqttTxQueue.pop();
-            char buf[32];
-            sprintf(buf, "{\"ts\":%lu,\"cmd\":%lu}", entry.payload.timestamp, (unsigned long)entry.payload.cmd);
+    // timestamp when the device state was last sent
+    static unsigned long deviceStateLastMillis = 0;
 
-            #ifdef ARDUINO_ARCH_SAMD
-            mqttClient.publish(entry.topic == received ? "siedle/received" : "siedle/sent", buf);
-            txCount++;
+    if (state != mqtt_not_connected) {
+
+        bool sendDeviceStatusOverdue = millis() - deviceStateLastMillis > SEND_DEVICE_STATE_EVERY_SEC;
+
+        // check if we have some messages to send
+        if ((mqttTxQueue.size() || sendDeviceStatusOverdue) && millis() - lastTxMillis >= MQTT_MAX_SEND_RATE_MS) {
+            // we want to limit the outgoing rate to avoid issues with the power management
             lastTxMillis = millis();
-            #elif defined(ESP8266)
-            switch (entry.topic) {
-                case received:
-                    mqttClient.publish(String(F("siedle/received")).c_str(), buf);
-                    break;
-                case sent:
-                    mqttClient.publish(String(F("siedle/sent")).c_str(), buf);
-                    break;
+
+            if (mqttTxQueue.size()) {
+                auto entry = mqttTxQueue.pop();
+                char buf[32];
+                sprintf(buf, "{\"ts\":%lu,\"cmd\":%lu}", entry.payload.timestamp, (unsigned long)entry.payload.cmd);
+
+                #ifdef ARDUINO_ARCH_SAMD
+                mqttClient.publish(entry.topic == received ? "siedle/received" : "siedle/sent", buf);
+                txCount++;
+                #elif defined(ESP8266)
+                switch (entry.topic) {
+                    case received:
+                        mqttClient.publish(String(F("siedle/received")).c_str(), buf);
+                        break;
+                    case sent:
+                        mqttClient.publish(String(F("siedle/sent")).c_str(), buf);
+                        break;
+                }
+                #endif
+            } else if (sendDeviceStatusOverdue) {
+                deviceStateLastMillis = millis();
+
+                auto payload = String("{\"fw\":\"") + AUTO_VERSION
+                 + String("\", \"boot\":") + RTCSync.bootEpoch + String(",\"wifi\":\"")
+                 + WiFi.SSID()
+                 + String("\",\"name\":\"")
+                 + MQTT_DEVICE_NAME
+                 + String("\",\"ip\":\"")
+                 + WiFi.localIP()
+                 + String("\"}");
+
+                 mqttClient.publish("siedle/status", payload.c_str(), true);
+
             }
-            #endif
         }
-        
     }
 }
 
