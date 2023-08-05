@@ -24,4 +24,7 @@
 // do not set this too high to avoid issues with the hardware watchdog!
 #define MQTT_TIMEOUT_SEC 10
 
+// how often will the RTC synchronize with the WiFi clock
+#define RTC_SYNC_INTERVAL_SEC 172800˝
+
 #endif //FIRMWARE_SETTINGS_H

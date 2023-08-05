@@ -44,7 +44,7 @@ public:
         #endif
 
         // if we're in the initializing phase, re-try every 3 seconds. Else use a longer sync interval
-        unsigned long interval = !initialized ? 8000 : 5 * 60 * 1000;
+        unsigned long interval = !initialized ? 8000 : ( RTC_SYNC_INTERVAL_SEC * 1000 );
 
         if (millis() - lastMillis >= interval) {
 
