@@ -11,8 +11,7 @@ jobs:
           key: platformio
       - run: sudo pip install -U platformio
       - run: "cd firmware ; platformio update"
-      - run: "cp firmware/include/wifi_client_secrets_example.h firmware/include/wifi_client_secrets.h"
-      - run: "cp firmware/include/aws_iot_secrets_example.h firmware/include/aws_iot_secrets.h"
+      - run: "for file in firmware/include/*_example.h ; do cp $file ${file%%_example.h}.h ; done "
       - run: "cd firmware ; platformio run -e mkrwifi1010 -e nano_33_iot -e esp"
 
       - save_cache:
