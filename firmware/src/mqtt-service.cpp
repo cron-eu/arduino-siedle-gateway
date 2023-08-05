@@ -158,7 +158,7 @@ void MQTTServiceClass::loop() {
 
     if (state != mqtt_not_connected) {
 
-        bool sendDeviceStatusOverdue = millis() - deviceStateLastMillis > SEND_DEVICE_STATE_EVERY_SEC;
+        bool sendDeviceStatusOverdue = !deviceStateLastMillis || (millis() - deviceStateLastMillis > SEND_DEVICE_STATE_EVERY_SEC * 1000);
 
         // check if we have some messages to send
         if ((mqttTxQueue.size() || sendDeviceStatusOverdue) && millis() - lastTxMillis >= MQTT_MAX_SEND_RATE_MS) {
