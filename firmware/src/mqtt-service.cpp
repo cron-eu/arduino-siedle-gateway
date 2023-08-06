@@ -78,7 +78,7 @@ void MQTTServiceClass::begin() {
     // must have a unique client id. The MQTTClient will generate
     // a client id for you based on the millis() value if not set
     //
-    // mqttClient.setId("clientId");
+    // mqttClient.setId(F("clientId"));
     mqttClient.setCallback(_onMessageReceivedWrapper);
 }
 
@@ -125,15 +125,15 @@ void MQTTServiceClass::loop() {
             auto time = RTCSync.getEpoch();
             sslClient.setX509Time(time);
             auto name = String(F(MQTT_DEVICE_NAME));
-            Debug.print(String(F("MQTT: connecting as ")) + name + F(" .. "));
+            Debug.print(String(F("MQTT: connecting as F(")) + name + F(") .. "));
             auto connected = mqttClient.connect(name.c_str());
             #endif
             mqttReconnects++;
             if (connected) {
                 state = mqtt_connected;
-                Debug.println("mqtt connected");
+                Debug.println(F("mqtt connected"));
             } else {
-                Debug.println("failed!");
+                Debug.println(F("failed!"));
                 #ifdef ESP8266
                 char buf[256];
                 sslClient.getLastSSLError(buf, sizeof(buf));
@@ -146,7 +146,7 @@ void MQTTServiceClass::loop() {
                 // subscribe to a topic
                 auto success = mqttClient.subscribe("siedle/send");
                 if (success) {
-                    Debug.println("mqtt subscribed");
+                    Debug.println(F("mqtt subscribed"));
                     state = mqtt_connected_and_subscribed;
                 }
             }
@@ -160,8 +160,8 @@ void MQTTServiceClass::loop() {
             auto entry = mqttTxQueue.pop();
             // example payload string
             // {"ts":1691240767,"cmd":1181356688}
-            auto payload = String("{\"ts\":") + entry.payload.timestamp
-                + String(",\"cmd\":") + (unsigned long)entry.payload.cmd + "}";
+            auto payload = String(F("{\"ts\":")) + entry.payload.timestamp
+                + String(F(",\"cmd\":")) + (unsigned long)entry.payload.cmd + "}";
 
             #ifdef ARDUINO_ARCH_SAMD
             mqttClient.publish(entry.topic == received ? "siedle/received" : "siedle/sent", payload.c_str());
