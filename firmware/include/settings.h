@@ -18,14 +18,14 @@
 #define SIEDLE_TX_QUEUE_LEN 32
 
 // MQTT connect retry interval in ms
-#define MQTT_RECONNECT_INTERVAL_MS 10000
+#define MQTT_RECONNECT_INTERVAL_MS 5000
 
 // MQTT socket timeout (in seconds)
-// do not set this too high to avoid issues with the hardware watchdog!
+// do not set this too high to avoid issues with the watchdog!
 #define MQTT_TIMEOUT_SEC 10
 
 // how often will the RTC synchronize with the WiFi clock
-#define RTC_SYNC_INTERVAL_SEC 120
+#define RTC_SYNC_INTERVAL_SEC 30
 
 // use the WiFi low power mode on SAMD devices
 #define USE_WIFI_LOW_POWER
