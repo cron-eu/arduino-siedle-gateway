@@ -7,6 +7,7 @@
 
 void SiedleServiceClass::begin() {
     lastTxMillis = 0;
+    lastTxCounter = 0;
     siedleClient = SiedleClient(SIEDLE_A_IN, SIEDLE_TX_PIN, SIEDLE_TX_CARRIER_PIN);
     siedleClient.begin();
 }
@@ -40,11 +41,18 @@ void SiedleServiceClass::loop() {
     if (doSend) {
         cmd = siedleTxQueue.pop();
         siedleClient.sendCmdAsync(cmd);
+        lastTxCmd = cmd;
+    }
+
+     // check if we have sent a new cmd since last run and, if so, send the cmd via MQTT
+     // note: the siedle client will not increment the tx counter if there were errors!
+    if (siedleClient.txCount > lastTxCounter) {
+        lastTxCounter = siedleClient.txCount;
+        MQTTService.sendAsync({RTCSync.getEpoch(), lastTxCmd}, sent);
     }
     interrupts();
 
     if (doSend) {
-        MQTTService.sendAsync({RTCSync.getEpoch(), cmd}, sent);
         siedleRxTxLog.push({ { RTCSync.getEpoch(), cmd }, tx });
         lastTxMillis = now;
     }

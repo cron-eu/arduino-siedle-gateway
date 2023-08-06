@@ -46,6 +46,8 @@ public:
 private:
     CircularBuffer<siedle_cmd_t, SIEDLE_TX_QUEUE_LEN> siedleTxQueue;
     unsigned long lastTxMillis;
+    unsigned int lastTxCounter;
+    siedle_cmd_t lastTxCmd;
 };
 
 extern SiedleServiceClass SiedleService;
