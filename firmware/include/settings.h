@@ -30,4 +30,7 @@
 // use the WiFi low power mode on SAMD devices
 #define USE_WIFI_LOW_POWER
 
+// Use the DEBUG_PRINT() for debugging using the serial console
+// #define USE_DEBUG_SERIAL_CONSOLE
+
 #endif //FIRMWARE_SETTINGS_H

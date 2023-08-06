@@ -91,7 +91,7 @@ void MQTTServiceClass::loadSSLConfiguration() {
     File ca_file = LittleFS.open(F(MQTT_CA_FILE), "r");
 
     if (!cert_file || !private_key_file || !ca_file) {
-        Debug.println(F("ERROR: load MQTT credentials failed."));
+        DEBUG_PRINTLN(F("ERROR: load MQTT credentials failed."));
         return;
     }
 
@@ -125,19 +125,19 @@ void MQTTServiceClass::loop() {
             auto time = RTCSync.getEpoch();
             sslClient.setX509Time(time);
             auto name = String(F(MQTT_DEVICE_NAME));
-            Debug.print(String(F("MQTT: connecting as ")) + name + F(" .. "));
+            DEBUG_PRINT(String(F("MQTT: connecting as ")) + name + F(" .. "));
             auto connected = mqttClient.connect(name.c_str());
             #endif
             mqttReconnects++;
             if (connected) {
                 state = mqtt_connected;
-                Debug.println("mqtt connected");
+                DEBUG_PRINTLN("mqtt connected");
             } else {
-                Debug.println("failed!");
+                DEBUG_PRINTLN("failed!");
                 #ifdef ESP8266
                 char buf[256];
                 sslClient.getLastSSLError(buf, sizeof(buf));
-                Debug.println(String(F("Last SSL error: ")) + buf);
+                DEBUG_PRINTLN(String(F("Last SSL error: ")) + buf);
                 #endif
             }
         } else {
@@ -146,7 +146,7 @@ void MQTTServiceClass::loop() {
                 // subscribe to a topic
                 auto success = mqttClient.subscribe("siedle/send");
                 if (success) {
-                    Debug.println("mqtt subscribed");
+                    DEBUG_PRINTLN("mqtt subscribed");
                     state = mqtt_connected_and_subscribed;
                 }
             }

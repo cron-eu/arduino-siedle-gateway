@@ -28,7 +28,7 @@ WDTZero Watchdog;
 void __unused setup() {
     Debug.begin();
 
-    Debug.println("Booting..");
+    DEBUG_PRINTLN("Booting..");
 
     LED.begin();
     SiedleService.begin();
