@@ -3,6 +3,9 @@
 // close an open TCP connection after
 #define WEB_SERVER_CONNECTION_TIMEOUT_MS 10000
 
+// bail out after the client sends more than bytes for a single input line
+#define WEB_SERVER_MAX_INPUT_LINE_BUF 128
+
 WebServer::WebServer(uint16_t port) : _server(port) {}
 
 void WebServer::begin() {
@@ -35,6 +38,7 @@ void WebServer::loop() {
         if (client) {
             status = WebServerStatus::web_server_connected;
             currentLine = new String();
+            currentLine->reserve(WEB_SERVER_MAX_INPUT_LINE_BUF);
             connectMillis = millis();
         }
         break;
@@ -42,6 +46,11 @@ void WebServer::loop() {
     case WebServerStatus::web_server_connected:
 
         if (millis() - connectMillis > WEB_SERVER_CONNECTION_TIMEOUT_MS) {
+            status = WebServerStatus::web_server_close;
+            break;
+        }
+
+        if (currentLine->length() >= WEB_SERVER_MAX_INPUT_LINE_BUF) {
             status = WebServerStatus::web_server_close;
             break;
         }
