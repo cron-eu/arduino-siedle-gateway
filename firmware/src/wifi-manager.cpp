@@ -15,6 +15,7 @@
 #endif
 
 #include <wifi_client_secrets.h>
+#include "settings.h"
 
 void WiFiManagerClass::loop() {
     if (millis() - connectionCheckMillis > 250) { // check connection status periodically
@@ -26,7 +27,7 @@ void WiFiManagerClass::loop() {
             if (connected) {
                 printWifiStatus();
                 #ifdef MDNS_HOSTNAME
-                Debug.println(String(F("mDNS service started for hostname: ")) + F(MDNS_HOSTNAME));
+                DEBUG_PRINTLN(String(F("mDNS service started for hostname: ")) + F(MDNS_HOSTNAME));
                 MDNS.begin(F(MDNS_HOSTNAME));
                 #endif
             }
@@ -50,16 +51,20 @@ void WiFiManagerClass::begin() {
     #endif
     connectionCheckMillis = 0;
     wifiReconnects = 0;
+
 #ifdef ARDUINO_ARCH_SAMD
+#ifdef USE_WIFI_LOW_POWER
     WiFi.lowPowerMode();
 #endif
+#endif
+
     connect();
 }
 
 void WiFiManagerClass::connect() {
     String ssid = F(SECRET_SSID);
     String pass = F(SECRET_PASS);
-    Debug.print(String(F("Connecting to WiFi Network '")) + ssid + "' .. ");
+    DEBUG_PRINT(String(F("Connecting to WiFi Network '")) + ssid + "' .. ");
     #ifdef ARDUINO_ARCH_SAMD
     WiFi.begin(SECRET_SSID, SECRET_PASS);
     #elif defined(ESP8266)
@@ -70,7 +75,7 @@ void WiFiManagerClass::connect() {
 
 void WiFiManagerClass::printWifiStatus() {
     // print the SSID of the network you're attached to:
-    Debug.println("done!");
+    DEBUG_PRINTLN("done!");
 
     #ifdef ARDUINO_ARCH_SAMD
     auto localIP = WiFi.localIP();
@@ -79,7 +84,7 @@ void WiFiManagerClass::printWifiStatus() {
     #endif
 
     // print ip and rssi of the current link
-    Debug.println(String(F("Local IP: ")) + localIP
+    DEBUG_PRINTLN(String(F("Local IP: ")) + localIP
                 + F(", signal strength (RSSI): ") + WiFi.RSSI() + F(" dBm."));
 }
 

@@ -44,7 +44,7 @@ public:
         #endif
 
         // if we're in the initializing phase, re-try every 3 seconds. Else use a longer sync interval
-        unsigned long interval = !initialized ? 8000 : 5 * 60 * 1000;
+        unsigned long interval = !initialized ? 8000 : ( RTC_SYNC_INTERVAL_SEC * 1000 );
 
         if (millis() - lastMillis >= interval) {
 
@@ -58,9 +58,9 @@ public:
             auto epoch = WiFi.getTime();
             #elif defined(ESP8266)
             if (!initialized) {
-                Debug.print(F("NTP force update triggered .. "));
+                DEBUG_PRINT(F("NTP force update triggered .. "));
                 auto success = ntp.forceUpdate();
-                Debug.println(success ? F("ok") : F("failed"));
+                DEBUG_PRINTLN(success ? F("ok") : F("failed"));
             } else {
                 ntp.update();
             }
@@ -68,7 +68,7 @@ public:
             #endif
             if (epoch > 10000) {
                 if (!initialized) {
-                    Debug.println(String(F("Got NTP time: ")) + epoch);
+                    DEBUG_PRINTLN(String(F("Got NTP time: ")) + epoch);
                 }
                 initialized = true;
                 #ifdef ARDUINO_ARCH_SAMD
