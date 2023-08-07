@@ -23,7 +23,7 @@ void WebServer::loop() {
 #endif
 
     if (client) {                             // if you get a client,
-        String currentLine = "";                // make a String to hold incoming data from the client
+        String currentLine;                // make a String to hold incoming data from the client
         while (client.connected()) {            // loop while the client's connected
             if (client.available()) {             // if there's bytes to read from the client,
                 char c = client.read();             // read a byte, then
@@ -34,27 +34,27 @@ void WebServer::loop() {
                     if (currentLine.length() == 0) {
                         // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
                         // and a content-type so the client knows what's coming, then a blank line:
-                        client.println("HTTP/1.1 200 OK");
-                        client.println("Content-type:text/html");
+                        client.println(F("HTTP/1.1 200 OK"));
+                        client.println(F("Content-type:text/html"));
                         client.println();
 
-                        client.print("<h1>Arduino Doorbell</h1>");
-//                        client.print("<h3>Battery Voltage</h3>");
-//                        client.print("<dl>");
-//                        client.print("<dt>ADC Output</dt>");
-//                        client.print("<dd>");
+                        client.print(F("<h1>Arduino Doorbell</h1>"));
+//                        client.print(F("<h3>Battery Voltage</h3>"));
+//                        client.print(F("<dl>"));
+//                        client.print(F("<dt>ADC Output</dt>"));
+//                        client.print(F("<dd>"));
 //                        client.print(get_battery_voltage());
-//                        client.print("</dd>");
+//                        client.print(F("</dd>"));
 
                         #ifdef ARDUINO_ARCH_SAMD
-                        client.print("<dl>");
-                        client.print("<dt>Firmware Version</dt>");
-                        client.print("<dd>");
+                        client.print(F("<dl>"));
+                        client.print(F("<dt>Firmware Version</dt>"));
+                        client.print(F("<dd>"));
                         client.print(AUTO_VERSION);
-                        client.print("<dt>WiFiNINA Firmware Version</dt>");
-                        client.print("<dd>");
+                        client.print(F("<dt>WiFiNINA Firmware Version</dt>"));
+                        client.print(F("<dd>"));
                         client.print(WiFi.firmwareVersion());
-                        client.print("</dd>");
+                        client.print(F("</dd>"));
                         #endif
 
                         if (rootPageHandler != NULL) {
