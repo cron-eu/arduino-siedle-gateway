@@ -35,8 +35,8 @@ void WiFiManagerClass::loop() {
 
         #ifdef ARDUINO_ARCH_SAMD
         if (!connected && millis() - reconnectMillis > 5000) { // reconnect every 5 seconds
-            reconnectMillis = millis();
             connect();
+            reconnectMillis = millis();
         }
         #endif
     }
