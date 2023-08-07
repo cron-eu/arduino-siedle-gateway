@@ -1,5 +1,8 @@
 #include "WebServer.h"
 
+// close an open TCP connection after
+#define WEB_SERVER_CONNECTION_TIMEOUT_MS 10000
+
 WebServer::WebServer(uint16_t port) : _server(port) {}
 
 void WebServer::begin() {
@@ -18,6 +21,7 @@ void WebServer::begin() {
 void WebServer::loop() {
 
     static String *currentLine;
+    static unsigned long connectMillis;
 
     switch (status) {
     case WebServerStatus::web_server_idle:
@@ -31,10 +35,16 @@ void WebServer::loop() {
         if (client) {
             status = WebServerStatus::web_server_connected;
             currentLine = new String();
+            connectMillis = millis();
         }
         break;
 
     case WebServerStatus::web_server_connected:
+
+        if (millis() - connectMillis > WEB_SERVER_CONNECTION_TIMEOUT_MS) {
+            status = WebServerStatus::web_server_close;
+            break;
+        }
 
         if (!client.connected()) {
             // bail out if the current connection has been closed by the client or due to network errors
