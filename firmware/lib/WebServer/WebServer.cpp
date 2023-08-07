@@ -94,7 +94,7 @@ void WebServer::loop() {
         if (client.connected()) {
             client.stop();
         }
-        delete(currentLine);
+        delete currentLine;
         status = WebServerStatus::web_server_idle;
         break;
 
