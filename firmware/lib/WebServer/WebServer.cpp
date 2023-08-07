@@ -4,7 +4,7 @@
 #define WEB_SERVER_CONNECTION_TIMEOUT_MS 10000
 
 // bail out after the client sends more than bytes for a single input line
-#define WEB_SERVER_MAX_INPUT_LINE_BUF 128
+#define WEB_SERVER_MAX_INPUT_LINE_BUF 2048
 
 WebServer::WebServer(uint16_t port) : _server(port) {}
 
