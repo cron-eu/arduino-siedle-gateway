@@ -3,6 +3,7 @@
 WebServer::WebServer(uint16_t port) : _server(port) {}
 
 void WebServer::begin() {
+    status = WebServerStatus::web_server_idle;
     _server.begin();
 }
 
@@ -93,7 +94,7 @@ void WebServer::loop() {
         if (client.connected()) {
             client.stop();
         }
-        free(currentLine);
+        delete(currentLine);
         status = WebServerStatus::web_server_idle;
         break;
 
