@@ -157,16 +157,16 @@ void MQTTServiceClass::loop() {
                 + String(",\"cmd\":") + (unsigned long)entry.payload.cmd + "}";
 
             #ifdef ARDUINO_ARCH_SAMD
-            mqttClient.publish(entry.topic == received ? "siedle/received" : "siedle/sent", payload.c_str());
+            mqttClient.publish(entry.topic == received ? "siedle/received" : "siedle/sent", payload);
             txCount++;
             lastTxMillis = millis();
             #elif defined(ESP8266)
             switch (entry.topic) {
                 case received:
-                    mqttClient.publish(String(F("siedle/received")).c_str(), payload.c_str());
+                    mqttClient.publish(F("siedle/received"), payload);
                     break;
                 case sent:
-                    mqttClient.publish(String(F("siedle/sent")).c_str(), payload.c_str());
+                    mqttClient.publish(F("siedle/sent"), payload);
                     break;
             }
             #endif
