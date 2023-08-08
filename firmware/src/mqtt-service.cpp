@@ -61,7 +61,6 @@ void MQTTServiceClass::begin() {
     // and the accompanying public certificate for it
     sslClient.setEccSlot(0, certificate);
     mqttClient.begin(broker, sslClient);
-    mqttClient.setTimeout(10);
 
     #elif defined(ESP8266)
     loadSSLConfiguration();
