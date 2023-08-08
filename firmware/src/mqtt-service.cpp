@@ -60,7 +60,7 @@ void MQTTServiceClass::begin() {
     // Set the ECCX08 slot to use for the private key
     // and the accompanying public certificate for it
     sslClient.setEccSlot(0, certificate);
-    mqttClient.begin(broker, sslClient);
+    mqttClient.begin(broker, 8883, sslClient);
 
     #elif defined(ESP8266)
     loadSSLConfiguration();
