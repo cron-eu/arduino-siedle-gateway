@@ -34,3 +34,6 @@
 // #define USE_DEBUG_SERIAL_CONSOLE
 
 #endif //FIRMWARE_SETTINGS_H
+
+// MQTT buffer size in bytes
+#define MQTT_BUF_SIZE 256

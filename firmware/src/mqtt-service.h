@@ -17,7 +17,7 @@
 #include <ESP8266WiFi.h>
 #endif
 
-#include <PubSubClient.h>
+#include <MQTTClient.h>
 
 enum MQTTTopic {
     received = 0,
@@ -61,7 +61,7 @@ public:
     }
     bool isConnected();
     MQTTState state;
-    void onMessageReceived(char* topic, byte* payload, unsigned int length);
+    void onMessageReceived(String &topic, String &payload);
 
 private:
     unsigned long reconnectAttemptMillis;
@@ -75,7 +75,7 @@ private:
     WiFiClientSecure sslClient;
     void loadSSLConfiguration();
     #endif
-    PubSubClient  mqttClient;
+    MQTTClient  mqttClient;
 };
 
 extern MQTTServiceClass MQTTService;
