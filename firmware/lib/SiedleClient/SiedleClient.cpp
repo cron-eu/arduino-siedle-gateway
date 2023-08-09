@@ -107,7 +107,7 @@ void SiedleClient::bitTimerISR() {
             if (bitNumber >= 0) {
                 auto bit = bitRead(cmd_tx_buf, bitNumber--);
                 digitalWrite(outputPin, !bit);
-            } else {
+            } else { // bitNumber < 0
                 digitalWrite(outputPin, LOW);
                 digitalWrite(outputCarrierPin, LOW);
 
