@@ -36,7 +36,9 @@
 #endif //FIRMWARE_SETTINGS_H
 
 // Watchdog Settings
-#define WATCHDOG_SETUP WDT_HARDCYCLE16S
+// use a 32 seconds (soft) watchdog timeout
+// we do need this quite log timeout because the MQTT reconnects take sometime about 15 seconds to complete
+#define WATCHDOG_SETUP WDT_SOFTCYCLE32S
 
 // MQTT buffer size in bytes
 #define MQTT_BUF_SIZE 256
