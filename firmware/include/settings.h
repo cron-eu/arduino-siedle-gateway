@@ -35,5 +35,8 @@
 
 #endif //FIRMWARE_SETTINGS_H
 
+// Watchdog Settings
+#define WATCHDOG_SETUP WDT_HARDCYCLE16S
+
 // MQTT buffer size in bytes
 #define MQTT_BUF_SIZE 256
