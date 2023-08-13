@@ -48,7 +48,7 @@ void __unused setup() {
     webServer.rootPageHandler = webUIHTMLHandler;
     webServer.begin();
 #ifdef ARDUINO_ARCH_SAMD
-    Watchdog.setup(WDT_HARDCYCLE16S);
+    Watchdog.setup(WATCHDOG_SETUP);
 #endif
 
 }
