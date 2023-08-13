@@ -23,7 +23,7 @@ void WebServer::begin() {
 
 void WebServer::loop() {
 
-    static String *currentLine;
+    static int currentLineLength;
     static unsigned long connectMillis;
 
     switch (status) {
@@ -37,9 +37,8 @@ void WebServer::loop() {
 
         if (client) {
             status = WebServerStatus::web_server_connected;
-            currentLine = new String();
-            currentLine->reserve(WEB_SERVER_MAX_INPUT_LINE_BUF);
             connectMillis = millis();
+            currentLineLength = 0;
         }
         break;
 
@@ -50,7 +49,7 @@ void WebServer::loop() {
             break;
         }
 
-        if (currentLine->length() >= WEB_SERVER_MAX_INPUT_LINE_BUF) {
+        if (currentLineLength >= WEB_SERVER_MAX_INPUT_LINE_BUF) {
             status = WebServerStatus::web_server_close;
             break;
         }
@@ -67,7 +66,7 @@ void WebServer::loop() {
 
                 // if the current line is blank, you got two newline characters in a row.
                 // that's the end of the client HTTP request, so send a response:
-                if (currentLine->length() == 0) {
+                if (currentLineLength > 0) {
                     // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
                     // and a content-type so the client knows what's coming, then a blank line:
                     client.println("HTTP/1.1 200 OK");
@@ -100,11 +99,11 @@ void WebServer::loop() {
                     // The HTTP response ends with another blank line:
                     client.println();
                     status = WebServerStatus::web_server_close;
-                } else {    // if you got a newline, then clear currentLine:
-                    currentLine->operator=("");
+                } else { // we got a newline
+                    currentLineLength = 0;
                 }
             } else if (c != '\r') {  // if you got anything else but a carriage return character,
-                currentLine->concat(c);      // add it to the end of the currentLine
+                currentLineLength++;
             }
         }
         break;
@@ -113,7 +112,6 @@ void WebServer::loop() {
         if (client.connected()) {
             client.stop();
         }
-        delete currentLine;
         status = WebServerStatus::web_server_idle;
         break;
 
