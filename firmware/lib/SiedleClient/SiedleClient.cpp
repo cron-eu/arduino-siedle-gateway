@@ -105,6 +105,7 @@ void SiedleClient::bitTimerISR() {
 
         case transmitting:
             if (bitNumber >= 0) {
+                digitalWrite(outputCarrierPin, HIGH);
                 auto bit = bitRead(cmd_tx_buf, bitNumber--);
                 digitalWrite(outputPin, !bit);
             } else { // bitNumber < 0
@@ -194,12 +195,6 @@ void SiedleClient::sendCmdAsync(siedle_cmd_t tx_cmd) {
     state = transmitting;
     bitNumber = 31;
 
-    // Output the first bit (#31). Remaining bits will be transmitted using the ISR
-    auto bit = bitRead(cmd_tx_buf, bitNumber--);
-    digitalWrite(outputCarrierPin, HIGH);
-    digitalWrite(outputPin, !bit);
-
-    // we did already transmit the first bit, transmit the remaining bits using the ISR
     Timer5::changeSampleRate(BIT_DURATION);
     Timer5::enable();
 }
