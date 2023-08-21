@@ -40,8 +40,11 @@ void SiedleServiceClass::loop() {
 
     if (doSend) {
         cmd = siedleTxQueue.pop();
-        siedleClient.sendCmdAsync(cmd);
-        lastTxCmd = cmd;
+        if (siedleClient.sendCmdAsync(cmd)) {
+            lastTxCmd = cmd;
+        } else { // sendCmdAsync has failed
+            siedleTxQueue.push(cmd);
+        }
     }
 
      // check if we have sent a new cmd since last run and, if so, send the cmd via MQTT
