@@ -39,7 +39,7 @@ public:
     volatile unsigned int txCount = 0;
 
     // Send a command. Returns false if there was an error while trying to send, e.g. the bus master did not respond on time.
-    void sendCmdAsync(siedle_cmd_t cmd);
+    bool sendCmdAsync(siedle_cmd_t cmd);
     volatile SiedleClientState state = idle;
     float getBusvoltage();
     void rxISR();

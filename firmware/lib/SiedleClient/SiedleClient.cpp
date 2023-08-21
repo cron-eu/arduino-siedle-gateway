@@ -187,7 +187,11 @@ float SiedleClient::getBusvoltage() {
     return (float)a * (float)ADC_FACTOR;
 }
 
-void SiedleClient::sendCmdAsync(siedle_cmd_t tx_cmd) {
+bool SiedleClient::sendCmdAsync(siedle_cmd_t tx_cmd) {
+    if (state != idle) {
+        return false;
+    }
+
     // disable the rx irq while we are transmitting data
     detachInterrupt(digitalPinToInterrupt(inputPin));
 
@@ -197,4 +201,5 @@ void SiedleClient::sendCmdAsync(siedle_cmd_t tx_cmd) {
 
     Timer5::changeSampleRate(BIT_DURATION);
     Timer5::enable();
+    return true;
 }
