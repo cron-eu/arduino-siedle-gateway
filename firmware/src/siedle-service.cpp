@@ -33,13 +33,29 @@ void SiedleServiceClass::loop() {
 
     noInterrupts();
     auto now = millis();
-    auto doSend = !siedleTxQueue.isEmpty()
+
+    if (siedleClient.state == idle) {
+        if (siedleClient.txError) {
+            if (retryCounter == -1) {   
+                retryCounter = 3;   
+            }   
+        } else {
+            retryCounter = -1;
+        }
+    }
+
+    auto doSend = (!siedleTxQueue.isEmpty() || retryCounter > 0) 
         && (now - lastTxMillis > BUS_MAX_SEND_RATE_MS)
         && siedleClient.state == idle;
     siedle_cmd_t cmd;
 
     if (doSend) {
-        cmd = siedleTxQueue.pop();
+        if (retryCounter > 0) {
+            retryCounter--;
+            cmd = lastTxCmd;
+        } else {
+            cmd = siedleTxQueue.pop();            
+        }
         siedleClient.sendCmdAsync(cmd);
         lastTxCmd = cmd;
     }

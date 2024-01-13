@@ -116,6 +116,7 @@ void SiedleClient::bitTimerISR() {
                 if (bitNumber-- < -3) {
                     // timeout
                     done = true;
+                    txError = true;
                 } else {
                     auto voltage = getBusvoltage();
                     if (voltage >= ADC_CARRIER_HIGH_THRESHOLD_VOLTAGE) {
@@ -193,6 +194,7 @@ void SiedleClient::sendCmdAsync(siedle_cmd_t tx_cmd) {
     cmd_tx_buf = tx_cmd;
     state = transmitting;
     bitNumber = 31;
+    txError = false;
 
     // Output the first bit (#31). Remaining bits will be transmitted using the ISR
     auto bit = bitRead(cmd_tx_buf, bitNumber--);

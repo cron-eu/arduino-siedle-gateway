@@ -55,6 +55,9 @@ public:
         return cmd;
     }
 
+    // last transmit was not successful
+    bool txError = false;
+
 private:
     int readBit();
     uint8_t inputPin;

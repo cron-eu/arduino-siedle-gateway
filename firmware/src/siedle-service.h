@@ -48,6 +48,7 @@ private:
     unsigned long lastTxMillis;
     unsigned int lastTxCounter;
     siedle_cmd_t lastTxCmd;
+    int retryCounter = -1;
 };
 
 extern SiedleServiceClass SiedleService;
