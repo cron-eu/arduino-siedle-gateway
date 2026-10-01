@@ -1,0 +1,54 @@
+name: firmware-idf
+
+on:
+  push:
+    paths:
+      - "firmware-idf/**"
+      - ".github/workflows/firmware-idf.yml"
+  pull_request:
+    paths:
+      - "firmware-idf/**"
+      - ".github/workflows/firmware-idf.yml"
+
+jobs:
+  host-tests:
+    runs-on: ubuntu-latest
+    container: espressif/idf:v6.1
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run host unit tests
+        run: |
+          . "$IDF_PATH/export.sh"
+          cmake -S firmware-idf/test/host -B build-host -G Ninja
+          cmake --build build-host
+          ctest --test-dir build-host --output-on-failure
+
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [esp32, esp32s3]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the firmware version comes from `git describe`
+      - name: Build
+        uses: espressif/esp-idf-ci-action@v1
+        with:
+          esp_idf_version: v6.1
+          target: ${{ matrix.target }}
+          path: firmware-idf
+      - uses: actions/upload-artifact@v4
+        with:
+          name: siedle-gateway-${{ matrix.target }}
+          path: |
+            firmware-idf/build/siedle-gateway.bin
+            firmware-idf/build/siedle-gateway.elf
+            firmware-idf/build/bootloader/bootloader.bin
+            firmware-idf/build/partition_table/partition-table.bin
+            firmware-idf/build/ota_data_initial.bin
+            firmware-idf/build/flasher_args.json
