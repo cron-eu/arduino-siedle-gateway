@@ -1,5 +1,8 @@
 #include "app_status.h"
 
+#include <stdatomic.h>
+#include <time.h>
+
 #include "esp_app_desc.h"
 #include "esp_system.h"
 #include "esp_timer.h"
@@ -7,10 +10,21 @@
 #include "wifi_mgr.h"
 
 static const char *s_hostname;
+static atomic_bool s_time_synced;
 
 void app_status_init(const char *hostname)
 {
     s_hostname = hostname;
+}
+
+void app_status_set_time_synced(void)
+{
+    atomic_store(&s_time_synced, true);
+}
+
+bool app_status_time_synced(void)
+{
+    return atomic_load(&s_time_synced);
 }
 
 static const char *reset_reason_name(esp_reset_reason_t reason)
@@ -66,6 +80,11 @@ cJSON *app_status_build(void)
     cJSON_AddStringToObject(device, "reset_reason", reset_reason_name(esp_reset_reason()));
     cJSON_AddNumberToObject(device, "heap_free", esp_get_free_heap_size());
     cJSON_AddNumberToObject(device, "heap_min", esp_get_minimum_free_heap_size());
+    bool synced = app_status_time_synced();
+    cJSON_AddBoolToObject(device, "time_synced", synced);
+    if (synced) {
+        cJSON_AddNumberToObject(device, "time", (double)time(NULL));
+    }
 
     wifi_mgr_status_t w;
     wifi_mgr_get_status(&w);

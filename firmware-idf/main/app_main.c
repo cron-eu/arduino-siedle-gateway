@@ -1,13 +1,16 @@
 /*
  * Siedle In-Home bus <-> AWS IoT gateway.
  *
- * Boot sequence: NVS -> Wi-Fi (setup hotspot if needed) -> mDNS -> web UI -> reset button.
+ * Boot sequence: NVS -> Wi-Fi (setup hotspot if needed) -> mDNS -> SNTP -> web UI -> reset button.
  */
+#include <sys/time.h>
+
 #include "app_status.h"
 #include "esp_app_desc.h"
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_netif.h"
+#include "esp_netif_sntp.h"
 #include "mdns.h"
 #include "nvs_flash.h"
 #include "reset_button.h"
@@ -27,6 +30,25 @@ static esp_err_t init_nvs(void)
         err = nvs_flash_init();
     }
     return err;
+}
+
+// Runs in the lwIP context after every successful SNTP sync
+static void on_time_sync(struct timeval *tv)
+{
+    if (app_status_time_synced()) {
+        return;
+    }
+    ESP_LOGI(TAG, "time synchronized");
+    app_status_set_time_synced();
+}
+
+// While offline, SNTP backs off its retries (up to 150 s). Restart it as soon as we are online so the cloud
+// connection does not wait for the next retry.
+static void on_got_ip(void *arg, esp_event_base_t base, int32_t id, void *data)
+{
+    if (!app_status_time_synced()) {
+        esp_netif_sntp_start();
+    }
 }
 
 static void start_mdns(const char *hostname)
@@ -64,6 +86,11 @@ void app_main(void)
     };
     ESP_ERROR_CHECK(wifi_mgr_start(&wifi_cfg));
     start_mdns(hostname);
+
+    esp_sntp_config_t sntp_cfg = ESP_NETIF_SNTP_DEFAULT_CONFIG(CONFIG_GATEWAY_NTP_SERVER);
+    sntp_cfg.sync_cb = on_time_sync;
+    ESP_ERROR_CHECK(esp_netif_sntp_init(&sntp_cfg));
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, on_got_ip, NULL));
 
     const web_ui_config_t web_cfg = { .build_status = app_status_build };
     ESP_ERROR_CHECK(web_ui_start(&web_cfg));

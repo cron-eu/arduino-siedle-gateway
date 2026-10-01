@@ -6,6 +6,10 @@ menu "Siedle Gateway"
         help
             DHCP and mDNS name, the web UI is reachable at http://<hostname>.local/.
 
+    config GATEWAY_NTP_SERVER
+        string "NTP server"
+        default "de.pool.ntp.org"
+
     config GATEWAY_RESET_BUTTON_GPIO
         int "Wi-Fi reset button GPIO (-1 to disable)"
         range -1 48
