@@ -1,8 +1,9 @@
 /*
  * Siedle In-Home bus <-> AWS IoT gateway.
  *
- * Boot sequence: NVS -> Wi-Fi (setup hotspot if needed) -> mDNS -> reset button.
+ * Boot sequence: NVS -> Wi-Fi (setup hotspot if needed) -> mDNS -> web UI -> reset button.
  */
+#include "app_status.h"
 #include "esp_app_desc.h"
 #include "esp_event.h"
 #include "esp_log.h"
@@ -11,6 +12,8 @@
 #include "nvs_flash.h"
 #include "reset_button.h"
 #include "sdkconfig.h"
+#include "siedle_log.h"
+#include "web_ui.h"
 #include "wifi_mgr.h"
 
 static const char *TAG = "main";
@@ -51,8 +54,10 @@ void app_main(void)
     ESP_ERROR_CHECK(init_nvs());
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
+    ESP_ERROR_CHECK(siedle_log_init());
 
     const char *hostname = CONFIG_GATEWAY_HOSTNAME;
+    app_status_init(hostname);
 
     const wifi_mgr_config_t wifi_cfg = {
         .hostname = hostname,
@@ -60,5 +65,7 @@ void app_main(void)
     ESP_ERROR_CHECK(wifi_mgr_start(&wifi_cfg));
     start_mdns(hostname);
 
+    const web_ui_config_t web_cfg = { .build_status = app_status_build };
+    ESP_ERROR_CHECK(web_ui_start(&web_cfg));
     ESP_ERROR_CHECK(reset_button_start());
 }

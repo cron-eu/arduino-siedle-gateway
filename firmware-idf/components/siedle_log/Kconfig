@@ -1,0 +1,10 @@
+menu "Siedle event log"
+
+    config SIEDLE_LOG_SIZE
+        int "Number of bus events kept in RAM"
+        range 4 256
+        default 32
+        help
+            The most recent bus events are shown in the web UI.
+
+endmenu

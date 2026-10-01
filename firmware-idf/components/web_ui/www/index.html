@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Siedle Gateway</title>
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--fg:#1d2024;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--accent-fg:#fff;--ok:#15803d;--warn:#b45309;--err:#b91c1c;--chip:#eef1f5}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1115;--card:#181b21;--fg:#e6e8eb;--muted:#9aa1ab;--line:#2a2f37;--accent:#5b8def;--accent-fg:#fff;--ok:#4ade80;--warn:#fbbf24;--err:#f87171;--chip:#232831}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-text-size-adjust:100%}
+header,main,footer{max-width:680px;margin:0 auto;padding-left:16px;padding-right:16px}
+header{padding-top:20px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+h1{font-size:22px;margin:0}
+h2{font-size:16px;margin:0 0 12px}
+main{padding-top:4px;padding-bottom:16px}
+footer{padding-bottom:24px;color:var(--muted);font-size:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin:12px 0}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.offline{color:var(--err);font-size:13px}
+dl{display:grid;grid-template-columns:max-content 1fr;gap:8px 16px;margin:0}
+dt{color:var(--muted)}
+dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;background:var(--muted);vertical-align:1px}
+.dot.ok{background:var(--ok)}.dot.warn{background:var(--warn)}.dot.err{background:var(--err)}
+button{font:inherit;border:0;border-radius:10px;padding:10px 16px;background:var(--accent);color:var(--accent-fg);cursor:pointer}
+button.secondary{background:var(--chip);color:var(--fg)}
+button.link{background:none;color:var(--accent);padding:10px 4px}
+button:disabled{opacity:.6;cursor:default}
+.networks{list-style:none;margin:0 0 12px;padding:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.networks li+li{border-top:1px solid var(--line)}
+.networks button{width:100%;display:flex;align-items:center;gap:12px;background:none;color:var(--fg);border-radius:0;padding:12px 14px;text-align:left}
+.networks button:hover,.networks button:focus-visible{background:var(--chip)}
+.networks .name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.networks .placeholder{padding:14px;color:var(--muted)}
+.lock{color:var(--muted);display:inline-flex}
+.bars{display:inline-flex;align-items:flex-end;gap:2px;height:14px}
+.bars i{width:3px;background:var(--line);border-radius:1px}
+.bars i:nth-child(1){height:4px}.bars i:nth-child(2){height:7px}.bars i:nth-child(3){height:10px}.bars i:nth-child(4){height:14px}
+.bars i.on{background:var(--fg)}
+label{display:block;margin:0 0 12px}
+label>span{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
+.hint{display:block;font-size:12px;color:var(--muted);margin-top:4px}
+input[type=text],input[type=password]{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg)}
+input[readonly]{color:var(--muted)}
+input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.check{display:flex;align-items:center;gap:8px;font-size:14px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.notice{border-radius:10px;padding:12px 14px;margin:0 0 12px;background:var(--chip);border-left:4px solid var(--accent)}
+.notice.ok{border-left-color:var(--ok)}.notice.err{border-left-color:var(--err)}
+.notice p{margin:0}.notice p+p{margin-top:6px}
+.notice a{color:var(--accent);font-weight:600}
+.spinner{width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;display:inline-block;vertical-align:-3px;margin-right:8px;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.log{list-style:none;margin:0;padding:0}
+.log li{display:flex;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.log li:first-child{border-top:0;padding-top:0}
+.log .dir{font-size:11px;font-weight:700;letter-spacing:.04em;border-radius:6px;padding:2px 6px;background:var(--chip);height:fit-content;min-width:30px;text-align:center}
+.log .dir.tx{color:var(--accent)}
+.log .body{flex:1;min-width:0}
+.log .title{font-weight:600}
+.log .title.err{color:var(--err)}
+.log .meta,.log time{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.log time{white-space:nowrap}
+[hidden]{display:none!important}
+@media (max-width:440px){dl{grid-template-columns:1fr;gap:0}dd{margin-bottom:10px}}
+@media (prefers-reduced-motion:reduce){.spinner{animation:none}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Siedle Gateway</h1>
+  <span id="host" class="muted"></span>
+  <span id="offline" class="offline" role="status" hidden>Connection lost, retrying&hellip;</span>
+</header>
+<main>
+  <section id="setup" class="card" aria-labelledby="setup-title" hidden>
+    <h2 id="setup-title">Wi-Fi setup</h2>
+    <div id="setup-notice" class="notice" role="status" aria-live="polite" hidden></div>
+    <div id="step-pick">
+      <p class="muted small">Choose the network the gateway should join.</p>
+      <ul id="networks" class="networks"></ul>
+      <div class="actions">
+        <button id="rescan" class="secondary" type="button">Scan again</button>
+        <button id="manual" class="link" type="button">Other network&hellip;</button>
+      </div>
+    </div>
+    <form id="step-credentials" autocomplete="off" hidden>
+      <label><span>Network name</span><input id="ssid" type="text" maxlength="32" required autocapitalize="none" spellcheck="false"></label>
+      <label id="password-row"><span>Password</span><input id="password" type="password" minlength="8" maxlength="64" autocapitalize="none" spellcheck="false" aria-describedby="password-hint"><small id="password-hint" class="hint">At least 8 characters</small></label>
+      <label class="check" id="show-password-row"><input id="show-password" type="checkbox"> Show password</label>
+      <div class="actions">
+        <button id="connect" type="submit">Connect</button>
+        <button id="back" class="secondary" type="button">Back</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card" aria-labelledby="status-title">
+    <h2 id="status-title">Status</h2>
+    <dl id="status"><dt>Loading&hellip;</dt><dd></dd></dl>
+  </section>
+
+  <section class="card" aria-labelledby="log-title">
+    <h2 id="log-title">Bus events</h2>
+    <ul id="log" class="log"></ul>
+    <p id="log-empty" class="muted small">No bus events yet.</p>
+  </section>
+
+  <p id="wifi-hint" class="muted small" hidden>To move the gateway to another Wi-Fi network, hold its BOOT button for 5 seconds. It then opens the setup hotspot again.</p>
+</main>
+<footer id="footer"></footer>
+
+<script>
+"use strict";
+// All device provided strings (SSIDs!) are rendered with textContent, never as HTML.
+const $ = id => document.getElementById(id);
+const el = (tag, cls, text) => {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+};
+const LOCK_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" role="img" aria-label="password protected"><path fill="currentColor" d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zM9 10V7a3 3 0 0 1 6 0v3H9z"/></svg>';
+
+let setupOpen = false;
+let pending = null; // { ssid, since } while the gateway tries new credentials
+
+async function api(path, options = {}) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), options.timeout || 8000);
+  try {
+    const res = await fetch(path, Object.assign({ cache: "no-store" }, options, { signal: ctrl.signal }));
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error || "HTTP " + res.status);
+    return body;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function duration(s) {
+  const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
+  if (d) return d + " d " + h + " h";
+  if (h) return h + " h " + m + " min";
+  return m + " min";
+}
+
+function when(ts) {
+  if (!ts) return "–";
+  const date = new Date(ts * 1000);
+  return date.toDateString() === new Date().toDateString() ? date.toLocaleTimeString() : date.toLocaleString();
+}
+
+function bars(rssi) {
+  const level = rssi >= -55 ? 4 : rssi >= -65 ? 3 : rssi >= -75 ? 2 : 1;
+  const span = el("span", "bars");
+  span.setAttribute("role", "img");
+  span.setAttribute("aria-label", "signal " + level + " of 4");
+  for (let i = 1; i <= 4; i++) span.append(el("i", i <= level ? "on" : ""));
+  return span;
+}
+
+function spinner() {
+  const s = el("span", "spinner");
+  s.setAttribute("aria-hidden", "true");
+  return s;
+}
+
+/* ---- status ---------------------------------------------------------------------------------------------- */
+
+function row(dl, label, value, state) {
+  dl.append(el("dt", null, label));
+  const dd = el("dd");
+  if (state) dd.append(el("span", "dot " + state));
+  dd.append(value);
+  dl.append(dd);
+}
+
+function renderStatus(s) {
+  const d = s.device, w = s.wifi, c = s.cloud;
+  const dl = el("dl");
+  dl.id = "status";
+
+  if (w.state === "connected") row(dl, "Wi-Fi", w.ssid + " · " + w.rssi + " dBm · " + w.ip, "ok");
+  else if (w.state === "unconfigured") row(dl, "Wi-Fi", "Not configured", "warn");
+  else row(dl, "Wi-Fi", "Connecting to " + w.ssid + "…", "warn");
+  if (w.portal) row(dl, "Setup hotspot", w.ap_ssid + (w.ap_secured ? " (password protected)" : " (open)"), "warn");
+
+  if (!c.configured) row(dl, "Cloud", "No AWS IoT identity provisioned", "warn");
+  else row(dl, "Cloud", (c.connected ? "Connected as " : "Connecting as ") + c.client_id + (c.connected ? "" : "…"),
+           c.connected ? "ok" : "warn");
+  if (c.configured) row(dl, "Messages", c.published + " published · " + c.received + " received · " + c.dropped + " dropped");
+
+  row(dl, "Bus", s.bus.available ? "Listening" : "Driver not available yet", s.bus.available ? "ok" : "warn");
+  row(dl, "Clock", d.time_synced ? new Date(d.time * 1000).toLocaleString() : "Not synchronized yet", d.time_synced ? "ok" : "warn");
+  row(dl, "Uptime", duration(d.uptime_s));
+  row(dl, "Memory", Math.round(d.heap_free / 1024) + " KiB free (lowest " + Math.round(d.heap_min / 1024) + " KiB)");
+  row(dl, "Last reset", d.reset_reason);
+
+  $("status").replaceWith(dl);
+  $("host").textContent = d.hostname + ".local";
+  $("footer").textContent = "Firmware " + d.version + " · ESP-IDF " + d.idf + " · " + d.chip;
+  $("wifi-hint").hidden = w.portal;
+  updateSetup(s);
+}
+
+function renderLog(entries) {
+  const list = $("log");
+  list.replaceChildren();
+  $("log-empty").hidden = entries.length > 0;
+  for (const e of entries) {
+    const li = el("li");
+    li.append(el("span", "dir " + e.dir, e.dir.toUpperCase()));
+    const body = el("div", "body");
+    const failed = e.dir === "tx" && !e.ok;
+    body.append(
+      el("div", failed ? "title err" : "title", (e.signal_name || "Signal " + e.signal) + (failed ? " (not acknowledged)" : "")),
+      el("div", "meta", e.src + " → " + e.dst + " · 0x" + e.cmd.toString(16).padStart(8, "0") + " (" + e.cmd + ")"));
+    li.append(body, el("time", null, when(e.ts)));
+    list.append(li);
+  }
+}
+
+/* ---- Wi-Fi setup ----------------------------------------------------------------------------------------- */
+
+function notice(kind, ...content) {
+  const box = $("setup-notice");
+  box.className = "notice" + (kind ? " " + kind : "");
+  box.replaceChildren(...content.map(c => {
+    if (typeof c !== "string") return c;
+    return el("p", null, c);
+  }));
+  box.hidden = content.length === 0;
+}
+
+function showStep(step) {
+  $("step-pick").hidden = step !== "pick";
+  $("step-credentials").hidden = step !== "credentials";
+}
+
+function placeholder(...content) {
+  const li = el("li", "placeholder");
+  li.append(...content);
+  return li;
+}
+
+async function scan() {
+  const list = $("networks");
+  list.replaceChildren(placeholder(spinner(), "Looking for networks…"));
+  $("rescan").disabled = true;
+  try {
+    const networks = await api("/api/wifi/scan", { timeout: 15000 });
+    list.replaceChildren();
+    if (!networks.length) list.append(placeholder("No networks found."));
+    for (const n of networks) {
+      const button = el("button");
+      button.type = "button";
+      button.append(bars(n.rssi), el("span", "name", n.ssid));
+      if (n.secured) {
+        const lock = el("span", "lock");
+        lock.innerHTML = LOCK_SVG; // static markup
+        button.append(lock);
+      }
+      button.addEventListener("click", () => pick(n.ssid, n.secured));
+      const li = el("li");
+      li.append(button);
+      list.append(li);
+    }
+  } catch (e) {
+    list.replaceChildren(placeholder("Scan failed: " + e.message));
+  } finally {
+    $("rescan").disabled = false;
+  }
+}
+
+function pick(ssid, secured) {
+  const manual = ssid === null;
+  $("ssid").value = manual ? "" : ssid;
+  $("ssid").readOnly = !manual;
+  $("password").value = "";
+  $("password").required = secured && !manual;
+  $("password-row").hidden = !secured;
+  $("show-password-row").hidden = !secured;
+  $("connect").disabled = false;
+  notice(null);
+  showStep("credentials");
+  (manual ? $("ssid") : secured ? $("password") : $("connect")).focus();
+}
+
+function reasonText(reason) {
+  if (reason === 201) return "Network not found. Is the gateway within range?";
+  if ([2, 15, 202, 204].includes(reason)) return "The network did not accept the password. Please check it and try again.";
+  return "Could not join the network (reason " + reason + ").";
+}
+
+function checkPending(s) {
+  const w = s.wifi;
+  if (w.trial === "ok" && w.state === "connected" && w.ssid === pending.ssid) {
+    const url = "http://" + s.device.hostname + ".local/";
+    const link = el("a", null, url);
+    link.href = url;
+    const address = el("p", null, "From now on the gateway is reachable at ");
+    address.append(link, " (or http://" + w.ip + "/).");
+    notice("ok", "Connected to " + w.ssid + ".", address,
+           "The setup hotspot closes in about a minute. Switch this device back to your usual Wi-Fi network.");
+    pending = null;
+    showStep(null);
+  } else if (w.trial === "failed") {
+    notice("err", reasonText(w.last_reason));
+    pending = null;
+    $("connect").disabled = false;
+    showStep("credentials");
+  } else if (Date.now() - pending.since > 60000) {
+    notice("err", "No answer from the gateway. Make sure this device is still connected to the setup hotspot.");
+    pending = null;
+    $("connect").disabled = false;
+    showStep("credentials");
+  }
+}
+
+function updateSetup(s) {
+  if (s.wifi.portal && !setupOpen) {
+    setupOpen = true;
+    $("setup").hidden = false;
+    showStep("pick");
+    scan();
+  } else if (!s.wifi.portal && setupOpen && !pending) {
+    setupOpen = false;
+    $("setup").hidden = true;
+  }
+  if (pending) checkPending(s);
+}
+
+$("rescan").addEventListener("click", scan);
+$("manual").addEventListener("click", () => pick(null, true));
+$("back").addEventListener("click", () => { notice(null); showStep("pick"); });
+$("show-password").addEventListener("change", e => { $("password").type = e.target.checked ? "text" : "password"; });
+
+$("step-credentials").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const ssid = $("ssid").value;
+  const password = $("password-row").hidden ? "" : $("password").value;
+  $("connect").disabled = true;
+  notice("", el("p", null, "Connecting to " + ssid + "…"));
+  $("setup-notice").firstChild.prepend(spinner());
+  try {
+    await api("/api/wifi", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ssid, password }),
+    });
+    pending = { ssid, since: Date.now() };
+    showStep(null);
+  } catch (e) {
+    notice("err", e.message);
+    $("connect").disabled = false;
+  }
+});
+
+/* ---- polling --------------------------------------------------------------------------------------------- */
+
+async function refresh() {
+  try {
+    renderStatus(await api("/api/status"));
+    $("offline").hidden = true;
+    if (!pending) renderLog(await api("/api/log"));
+  } catch (e) {
+    // while the gateway joins a network its hotspot may switch channels for a moment
+    if (!pending) $("offline").hidden = false;
+  }
+  setTimeout(refresh, pending ? 1500 : 4000);
+}
+
+refresh();
+</script>
+</body>
+</html>
