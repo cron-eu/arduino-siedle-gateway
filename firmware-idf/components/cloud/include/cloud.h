@@ -8,6 +8,7 @@
  *   <prefix>/sent                   publish   same format, for every frame sent and acknowledged
  *   <prefix>/send                   subscribe decimal uint32 command to put on the bus
  *   <prefix>/<client_id>/status     publish   retained device status JSON, {"online":false} as last will
+ *   <prefix>/<client_id>/ota        subscribe {"url":"https://..."} to start a firmware update
  */
 #pragma once
 

@@ -17,6 +17,7 @@
 #include "esp_netif_sntp.h"
 #include "mdns.h"
 #include "nvs_flash.h"
+#include "ota.h"
 #include "reset_button.h"
 #include "sdkconfig.h"
 #include "siedle_log.h"
@@ -94,6 +95,7 @@ void app_main(void)
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     ESP_ERROR_CHECK(siedle_log_init());
+    ESP_ERROR_CHECK(ota_init());
 
     if (devcfg_load(&s_devcfg) != ESP_OK) {
         ESP_LOGE(TAG, "reading the device configuration failed, continuing without");

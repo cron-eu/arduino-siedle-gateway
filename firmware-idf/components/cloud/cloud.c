@@ -12,6 +12,7 @@
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "mqtt_client.h"
+#include "ota.h"
 
 #define PREFIX CONFIG_CLOUD_TOPIC_PREFIX
 #define TOPIC_RECEIVED PREFIX "/received"
@@ -24,6 +25,7 @@ static const char *TAG = "cloud";
 static esp_mqtt_client_handle_t s_client;
 static cloud_config_t s_cfg;
 static char *s_topic_status;
+static char *s_topic_ota;
 static esp_timer_handle_t s_status_timer;
 
 static atomic_bool s_connected;
@@ -84,6 +86,21 @@ static void handle_send(const char *data, int len)
     }
 }
 
+static void handle_ota(const char *data, int len)
+{
+    cJSON *msg = cJSON_ParseWithLength(data, len);
+    const cJSON *url = cJSON_GetObjectItemCaseSensitive(msg, "url");
+    if (!cJSON_IsString(url)) {
+        ESP_LOGW(TAG, "ota: expected {\"url\":\"https://...\"}");
+    } else {
+        esp_err_t err = ota_start(url->valuestring);
+        if (err != ESP_OK) {
+            ESP_LOGW(TAG, "ota: %s", esp_err_to_name(err));
+        }
+    }
+    cJSON_Delete(msg);
+}
+
 static bool topic_is(const esp_mqtt_event_t *event, const char *topic)
 {
     return event->topic_len == (int)strlen(topic) && strncmp(event->topic, topic, event->topic_len) == 0;
@@ -99,7 +116,10 @@ static void mqtt_event_handler(void *arg, esp_event_base_t base, int32_t id, voi
         atomic_store(&s_connected, true);
         atomic_fetch_add(&s_connects, 1);
         esp_mqtt_client_subscribe(s_client, TOPIC_SEND, QOS);
+        esp_mqtt_client_subscribe(s_client, s_topic_ota, QOS);
         publish_status();
+        // reaching the cloud proves a freshly updated image works
+        ota_mark_valid();
         break;
 
     case MQTT_EVENT_DISCONNECTED:
@@ -117,6 +137,8 @@ static void mqtt_event_handler(void *arg, esp_event_base_t base, int32_t id, voi
             ESP_LOGW(TAG, "ignoring fragmented message");
         } else if (topic_is(event, TOPIC_SEND)) {
             handle_send(event->data, event->data_len);
+        } else if (topic_is(event, s_topic_ota)) {
+            handle_ota(event->data, event->data_len);
         }
         break;
 
@@ -145,7 +167,8 @@ esp_err_t cloud_init(const cloud_config_t *cfg)
                         TAG, "incomplete configuration");
     s_cfg = *cfg;
 
-    if (asprintf(&s_topic_status, PREFIX "/%s/status", cfg->client_id) < 0) {
+    if (asprintf(&s_topic_status, PREFIX "/%s/status", cfg->client_id) < 0
+        || asprintf(&s_topic_ota, PREFIX "/%s/ota", cfg->client_id) < 0) {
         return ESP_ERR_NO_MEM;
     }
 
