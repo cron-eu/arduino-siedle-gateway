@@ -1,0 +1,7 @@
+key,type,encoding,value
+devcfg,namespace,,
+mqtt_uri,data,string,mqtts://xxxxxxxxxxxxxx-ats.iot.eu-central-1.amazonaws.com:8883
+client_id,data,string,SiedleGateway
+client_cert,file,string,@DEVCFG_DIR@/certificate.pem.crt
+client_key,file,string,@DEVCFG_DIR@/private.pem.key
+ap_pass,data,string,choose-a-setup-password

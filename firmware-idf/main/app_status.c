@@ -3,6 +3,7 @@
 #include <stdatomic.h>
 #include <time.h>
 
+#include "cloud.h"
 #include "esp_app_desc.h"
 #include "esp_system.h"
 #include "esp_timer.h"
@@ -10,11 +11,13 @@
 #include "wifi_mgr.h"
 
 static const char *s_hostname;
+static const char *s_client_id;
 static atomic_bool s_time_synced;
 
-void app_status_init(const char *hostname)
+void app_status_init(const char *hostname, const char *client_id)
 {
     s_hostname = hostname;
+    s_client_id = client_id;
 }
 
 void app_status_set_time_synced(void)
@@ -99,9 +102,18 @@ cJSON *app_status_build(void)
     cJSON_AddBoolToObject(wifi, "ap_secured", w.ap_secured);
     cJSON_AddStringToObject(wifi, "trial", trial_name(w.trial));
 
-    // the cloud connection follows
+    cloud_status_t c;
+    cloud_get_status(&c);
     cJSON *cloud = cJSON_AddObjectToObject(root, "cloud");
-    cJSON_AddBoolToObject(cloud, "configured", false);
+    cJSON_AddBoolToObject(cloud, "configured", c.configured);
+    if (c.configured) {
+        cJSON_AddStringToObject(cloud, "client_id", s_client_id);
+    }
+    cJSON_AddBoolToObject(cloud, "connected", c.connected);
+    cJSON_AddNumberToObject(cloud, "connects", c.connects);
+    cJSON_AddNumberToObject(cloud, "published", c.published);
+    cJSON_AddNumberToObject(cloud, "received", c.received);
+    cJSON_AddNumberToObject(cloud, "dropped", c.dropped);
 
     // the bus driver follows in phase 2
     cJSON *bus = cJSON_AddObjectToObject(root, "bus");

@@ -5,6 +5,7 @@ menu "Siedle Gateway"
         default "siedle"
         help
             DHCP and mDNS name, the web UI is reachable at http://<hostname>.local/.
+            Can be overridden per device with the "hostname" key in devcfg.
 
     config GATEWAY_NTP_SERVER
         string "NTP server"

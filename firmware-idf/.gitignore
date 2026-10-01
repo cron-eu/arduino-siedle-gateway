@@ -5,6 +5,11 @@
 /sdkconfig.old
 /managed_components/
 
+# per-device configuration and secrets, see devcfg/README.md
+/devcfg/*
+!/devcfg/README.md
+!/devcfg/devcfg.example.csv
+
 # machine specific settings written by the ESP-IDF VS Code extension (port, ESP-IDF install)
 /.vscode/settings.json
 
