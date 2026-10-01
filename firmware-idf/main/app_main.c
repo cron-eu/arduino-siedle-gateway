@@ -1,9 +1,17 @@
 /*
  * Siedle In-Home bus <-> AWS IoT gateway.
+ *
+ * Boot sequence: NVS -> Wi-Fi (setup hotspot if needed) -> mDNS -> reset button.
  */
 #include "esp_app_desc.h"
+#include "esp_event.h"
 #include "esp_log.h"
+#include "esp_netif.h"
+#include "mdns.h"
 #include "nvs_flash.h"
+#include "reset_button.h"
+#include "sdkconfig.h"
+#include "wifi_mgr.h"
 
 static const char *TAG = "main";
 
@@ -18,10 +26,39 @@ static esp_err_t init_nvs(void)
     return err;
 }
 
+static void start_mdns(const char *hostname)
+{
+    esp_err_t err = mdns_init();
+    if (err == ESP_OK) {
+        err = mdns_hostname_set(hostname);
+    }
+    if (err == ESP_OK) {
+        err = mdns_instance_name_set("Siedle Gateway");
+    }
+    if (err == ESP_OK) {
+        err = mdns_service_add(NULL, "_http", "_tcp", 80, NULL, 0);
+    }
+    if (err != ESP_OK) {
+        ESP_LOGW(TAG, "mDNS: %s", esp_err_to_name(err));
+    }
+}
+
 void app_main(void)
 {
     const esp_app_desc_t *app = esp_app_get_description();
     ESP_LOGI(TAG, "%s %s", app->project_name, app->version);
 
     ESP_ERROR_CHECK(init_nvs());
+    ESP_ERROR_CHECK(esp_netif_init());
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+
+    const char *hostname = CONFIG_GATEWAY_HOSTNAME;
+
+    const wifi_mgr_config_t wifi_cfg = {
+        .hostname = hostname,
+    };
+    ESP_ERROR_CHECK(wifi_mgr_start(&wifi_cfg));
+    start_mdns(hostname);
+
+    ESP_ERROR_CHECK(reset_button_start());
 }

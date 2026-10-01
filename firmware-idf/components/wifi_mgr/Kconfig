@@ -1,0 +1,28 @@
+menu "Wi-Fi manager"
+
+    config WIFI_MGR_AP_SSID_PREFIX
+        string "Setup hotspot SSID prefix"
+        default "Siedle-Setup"
+        help
+            The last two bytes of the MAC address are appended, e.g. "Siedle-Setup-A1B2".
+
+    config WIFI_MGR_AP_CHANNEL
+        int "Setup hotspot channel"
+        range 1 13
+        default 1
+        help
+            While the station is connected the hotspot follows the station's channel.
+
+    config WIFI_MGR_PORTAL_FALLBACK_SEC
+        int "Open the setup hotspot after being offline for (seconds)"
+        default 300
+        help
+            The station keeps retrying in the background while the hotspot is open.
+
+    config WIFI_MGR_PORTAL_LINGER_SEC
+        int "Keep the setup hotspot open after connecting (seconds)"
+        default 60
+        help
+            Gives the setup page time to show the new address before the hotspot disappears.
+
+endmenu

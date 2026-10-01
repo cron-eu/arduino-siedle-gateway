@@ -1,0 +1,23 @@
+menu "Siedle Gateway"
+
+    config GATEWAY_HOSTNAME
+        string "Hostname"
+        default "siedle"
+        help
+            DHCP and mDNS name, the web UI is reachable at http://<hostname>.local/.
+
+    config GATEWAY_RESET_BUTTON_GPIO
+        int "Wi-Fi reset button GPIO (-1 to disable)"
+        range -1 48
+        default 0
+        help
+            Active low, the internal pull-up is enabled. GPIO0 is the BOOT button on ESP32 and ESP32-S3 dev boards.
+
+    config GATEWAY_RESET_BUTTON_HOLD_SEC
+        int "Hold the reset button for (seconds)"
+        range 2 30
+        default 5
+        help
+            Holding the button this long forgets the Wi-Fi credentials and opens the setup hotspot.
+
+endmenu
