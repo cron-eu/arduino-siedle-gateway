@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "esp_netif_ip_addr.h" // local change: make the header self-contained
+
 #ifdef __cplusplus
 extern "C" {
 #endif
