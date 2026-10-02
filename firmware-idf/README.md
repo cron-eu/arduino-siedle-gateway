@@ -127,6 +127,8 @@ Roadmap
 2. Bus driver: RMT based receive/transmit through a comparator front end, run in parallel with the old gateway
    until the logs match. See [`../doc/Bus-Measurements.md`](../doc/Bus-Measurements.md) for the measurements
    this depends on.
-3. Audio hardware prototype: gyrator power supply, I2S codec (ES8311) coupled to the bus
-4. Calls: answer the door from a phone (SIP or WebRTC), open the door during the call
+3. Bus power and audio hardware: gyrator power stage ([`../doc/Bus-Power.md`](../doc/Bus-Power.md)), I2S codec
+   (ES8311) coupled to the bus
+4. Calls from a web page behind the office proxy: answer the door, push-to-talk, open the door
+   ([`../doc/Audio.md`](../doc/Audio.md))
 5. Hardening: secure boot, flash and NVS encryption, custom PCB
