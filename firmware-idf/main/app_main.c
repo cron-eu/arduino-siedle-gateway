@@ -2,7 +2,7 @@
  * Siedle In-Home bus <-> AWS IoT gateway.
  *
  * Boot sequence: NVS -> device config -> Wi-Fi (setup hotspot if needed) -> mDNS -> cloud client -> SNTP
- * (connects the cloud once the time is valid) -> web UI -> reset button.
+ * (connects the cloud once the time is valid) -> web UI -> setup button.
  */
 #include <inttypes.h>
 #include <sys/time.h>
@@ -18,8 +18,8 @@
 #include "mdns.h"
 #include "nvs_flash.h"
 #include "ota.h"
-#include "reset_button.h"
 #include "sdkconfig.h"
+#include "setup_button.h"
 #include "siedle_log.h"
 #include "web_ui.h"
 #include "wifi_mgr.h"
@@ -132,5 +132,5 @@ void app_main(void)
 
     const web_ui_config_t web_cfg = { .build_status = app_status_build };
     ESP_ERROR_CHECK(web_ui_start(&web_cfg));
-    ESP_ERROR_CHECK(reset_button_start());
+    ESP_ERROR_CHECK(setup_button_start());
 }

@@ -25,4 +25,11 @@ menu "Wi-Fi manager"
         help
             Gives the setup page time to show the new address before the hotspot disappears.
 
+    config WIFI_MGR_PORTAL_IDLE_SEC
+        int "Close a hotspot opened on request after being unused for (seconds)"
+        default 600
+        help
+            Applies to the hotspot opened with the setup button. While the station is offline, it stays open like
+            the automatic one.
+
 endmenu

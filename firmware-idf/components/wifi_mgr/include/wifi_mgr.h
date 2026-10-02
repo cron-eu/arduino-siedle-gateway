@@ -5,8 +5,11 @@
  * - Without credentials, or when the station could not connect for CONFIG_WIFI_MGR_PORTAL_FALLBACK_SEC, the
  *   setup hotspot ("<prefix>-XXXX") is started next to the station interface. A DNS server answers every query
  *   with the hotspot address so phones and laptops pop up the setup page automatically.
+ * - wifi_mgr_open_portal() opens the hotspot on request (setup button) and keeps the configured network. It closes
+ *   again after CONFIG_WIFI_MGR_PORTAL_IDLE_SEC without clients.
  * - Once the station is connected, the hotspot is shut down after CONFIG_WIFI_MGR_PORTAL_LINGER_SEC, giving the
- *   setup page time to show the result.
+ *   setup page time to show the result. A hotspot opened on request only closes this way if it was used to change
+ *   the network.
  *
  * Other components can rely on the regular IP_EVENT_STA_GOT_IP / WIFI_EVENT_STA_DISCONNECTED events.
  */
@@ -34,6 +37,14 @@ typedef enum {
     WIFI_MGR_STA_DISCONNECTED, /**< connection lost or failed, retrying with backoff */
 } wifi_mgr_sta_state_t;
 
+/** Why the setup hotspot is open */
+typedef enum {
+    WIFI_MGR_PORTAL_OFF,
+    WIFI_MGR_PORTAL_UNCONFIGURED, /**< no network configured: first setup, or after wifi_mgr_forget() */
+    WIFI_MGR_PORTAL_MANUAL,       /**< opened with wifi_mgr_open_portal() */
+    WIFI_MGR_PORTAL_FALLBACK,     /**< opened automatically, the station was offline for too long */
+} wifi_mgr_portal_t;
+
 /** Outcome of the last wifi_mgr_connect() call */
 typedef enum {
     WIFI_MGR_TRIAL_NONE,
@@ -48,7 +59,7 @@ typedef struct {
     char ip[16];          /**< station IPv4 address, empty if not connected */
     int8_t rssi;          /**< dBm, 0 if not connected */
     uint8_t last_reason;  /**< last wifi_err_reason_t of a disconnect */
-    bool portal_active;
+    wifi_mgr_portal_t portal;
     char ap_ssid[33];
     bool ap_secured;
     wifi_mgr_trial_t trial;
@@ -80,6 +91,12 @@ esp_err_t wifi_mgr_connect(const char *ssid, const char *password);
 
 /** Erase the stored credentials and open the setup hotspot. */
 esp_err_t wifi_mgr_forget(void);
+
+/**
+ * Open the setup hotspot and stay on the configured network. The hotspot closes again after
+ * CONFIG_WIFI_MGR_PORTAL_IDLE_SEC without clients, or once a new network was set up through it.
+ */
+esp_err_t wifi_mgr_open_portal(void);
 
 #ifdef __cplusplus
 }

@@ -36,6 +36,7 @@ static esp_netif_t *s_ap_netif;
 static esp_timer_handle_t s_retry_timer;
 static esp_timer_handle_t s_fallback_timer;
 static esp_timer_handle_t s_portal_stop_timer;
+static esp_timer_handle_t s_portal_idle_timer;
 static dns_server_handle_t s_dns;
 
 static credentials_t s_saved;      // stored in NVS, ssid[0] == 0 if none
@@ -47,7 +48,7 @@ static uint8_t s_last_reason;
 static uint32_t s_retry_count;
 static bool s_scanning;
 static bool s_expect_disconnect; // the next WIFI_REASON_ASSOC_LEAVE was caused by us
-static bool s_portal_active;
+static wifi_mgr_portal_t s_portal;
 static char s_ap_ssid[33];
 static char s_ap_password[65];
 static char s_portal_uri[32];
@@ -174,9 +175,22 @@ static void retry_timer_cb(void *arg)
 /* ---- setup hotspot ----------------------------------------------------------------------------------------- */
 
 // (lock held)
-static void portal_start(void)
+static void portal_arm_idle_timer(void)
 {
-    if (s_portal_active) {
+    esp_timer_stop(s_portal_idle_timer);
+    esp_timer_start_once(s_portal_idle_timer, (uint64_t)CONFIG_WIFI_MGR_PORTAL_IDLE_SEC * 1000000);
+}
+
+// Open the hotspot, or change the reason it is open for (lock held)
+static void portal_open(wifi_mgr_portal_t reason)
+{
+    if (reason == WIFI_MGR_PORTAL_MANUAL) {
+        portal_arm_idle_timer();
+    } else {
+        esp_timer_stop(s_portal_idle_timer);
+    }
+    if (s_portal != WIFI_MGR_PORTAL_OFF) {
+        s_portal = reason;
         return;
     }
 
@@ -207,7 +221,7 @@ static void portal_start(void)
     dns_server_config_t dns_cfg = DNS_SERVER_CONFIG_SINGLE("*", "WIFI_AP_DEF");
     s_dns = start_dns_server(&dns_cfg);
 
-    s_portal_active = true;
+    s_portal = reason;
     ESP_LOGI(TAG, "setup hotspot '%s' (%s) started, portal at %s", s_ap_ssid,
              s_ap_password[0] ? "WPA2" : "open", s_portal_uri);
 }
@@ -215,24 +229,27 @@ static void portal_start(void)
 // (lock held)
 static void portal_stop(void)
 {
-    if (!s_portal_active) {
+    if (s_portal == WIFI_MGR_PORTAL_OFF) {
         return;
     }
+    esp_timer_stop(s_portal_stop_timer);
+    esp_timer_stop(s_portal_idle_timer);
     if (s_dns) {
         stop_dns_server(s_dns);
         s_dns = NULL;
     }
     esp_wifi_set_mode(WIFI_MODE_STA);
-    s_portal_active = false;
+    s_portal = WIFI_MGR_PORTAL_OFF;
     ESP_LOGI(TAG, "setup hotspot stopped");
 }
 
 static void fallback_timer_cb(void *arg)
 {
     LOCK();
-    if (s_state != WIFI_MGR_STA_CONNECTED) {
+    // a hotspot opened on request keeps its reason, its idle timeout takes care of it
+    if (s_state != WIFI_MGR_STA_CONNECTED && s_portal == WIFI_MGR_PORTAL_OFF) {
         ESP_LOGW(TAG, "no connection for %d s, opening the setup hotspot", CONFIG_WIFI_MGR_PORTAL_FALLBACK_SEC);
-        portal_start();
+        portal_open(WIFI_MGR_PORTAL_FALLBACK);
     }
     UNLOCK();
 }
@@ -246,9 +263,28 @@ static void portal_stop_timer_cb(void *arg)
     UNLOCK();
 }
 
+// Close a hotspot opened on request once nobody uses it anymore
+static void portal_idle_timer_cb(void *arg)
+{
+    LOCK();
+    if (s_portal == WIFI_MGR_PORTAL_MANUAL) {
+        wifi_sta_list_t clients;
+        if (esp_wifi_ap_get_sta_list(&clients) == ESP_OK && clients.num > 0) {
+            portal_arm_idle_timer(); // still in use, check again later
+        } else if (s_state == WIFI_MGR_STA_CONNECTED) {
+            ESP_LOGI(TAG, "setup hotspot unused for %d s", CONFIG_WIFI_MGR_PORTAL_IDLE_SEC);
+            portal_stop();
+        } else {
+            // offline: stay open like the automatic hotspot, until the station is back
+            s_portal = WIFI_MGR_PORTAL_FALLBACK;
+        }
+    }
+    UNLOCK();
+}
+
 static void start_fallback_timer(void)
 {
-    if (!s_portal_active && !esp_timer_is_active(s_fallback_timer)) {
+    if (s_portal == WIFI_MGR_PORTAL_OFF && !esp_timer_is_active(s_fallback_timer)) {
         esp_timer_start_once(s_fallback_timer, (uint64_t)CONFIG_WIFI_MGR_PORTAL_FALLBACK_SEC * 1000000);
     }
 }
@@ -298,7 +334,8 @@ static void on_got_ip(const ip_event_got_ip_t *event)
     esp_timer_stop(s_retry_timer);
     esp_timer_stop(s_fallback_timer);
 
-    if (s_trial_state == WIFI_MGR_TRIAL_PENDING) {
+    bool new_network = s_trial_state == WIFI_MGR_TRIAL_PENDING;
+    if (new_network) {
         esp_err_t err = store_credentials(&s_trial);
         if (err != ESP_OK) {
             ESP_LOGE(TAG, "storing credentials failed: %s", esp_err_to_name(err));
@@ -307,7 +344,8 @@ static void on_got_ip(const ip_event_got_ip_t *event)
         s_trial_state = WIFI_MGR_TRIAL_OK;
     }
 
-    if (s_portal_active) {
+    // a hotspot opened on request stays until it is unused, unless it was used to change the network
+    if (s_portal != WIFI_MGR_PORTAL_OFF && (s_portal != WIFI_MGR_PORTAL_MANUAL || new_network)) {
         esp_timer_stop(s_portal_stop_timer);
         esp_timer_start_once(s_portal_stop_timer, (uint64_t)CONFIG_WIFI_MGR_PORTAL_LINGER_SEC * 1000000);
     }
@@ -327,6 +365,11 @@ static void event_handler(void *arg, esp_event_base_t base, int32_t id, void *da
         case WIFI_EVENT_AP_STACONNECTED:
             ESP_LOGI(TAG, "client " MACSTR " joined the setup hotspot",
                      MAC2STR(((wifi_event_ap_staconnected_t *)data)->mac));
+            break;
+        case WIFI_EVENT_AP_STADISCONNECTED:
+            if (s_portal == WIFI_MGR_PORTAL_MANUAL) {
+                portal_arm_idle_timer(); // count the idle time from the moment the last client left
+            }
             break;
         default:
             break;
@@ -369,9 +412,11 @@ esp_err_t wifi_mgr_start(const wifi_mgr_config_t *cfg)
     const esp_timer_create_args_t retry_args = { .callback = retry_timer_cb, .name = "wifi_retry" };
     const esp_timer_create_args_t fallback_args = { .callback = fallback_timer_cb, .name = "wifi_fallback" };
     const esp_timer_create_args_t stop_args = { .callback = portal_stop_timer_cb, .name = "portal_stop" };
+    const esp_timer_create_args_t idle_args = { .callback = portal_idle_timer_cb, .name = "portal_idle" };
     ESP_RETURN_ON_ERROR(esp_timer_create(&retry_args, &s_retry_timer), TAG, "timer");
     ESP_RETURN_ON_ERROR(esp_timer_create(&fallback_args, &s_fallback_timer), TAG, "timer");
     ESP_RETURN_ON_ERROR(esp_timer_create(&stop_args, &s_portal_stop_timer), TAG, "timer");
+    ESP_RETURN_ON_ERROR(esp_timer_create(&idle_args, &s_portal_idle_timer), TAG, "timer");
 
     wifi_init_config_t init_cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_RETURN_ON_ERROR(esp_wifi_init(&init_cfg), TAG, "wifi init");
@@ -390,7 +435,7 @@ esp_err_t wifi_mgr_start(const wifi_mgr_config_t *cfg)
         start_fallback_timer();
     } else {
         ESP_LOGI(TAG, "no Wi-Fi configured");
-        portal_start();
+        portal_open(WIFI_MGR_PORTAL_UNCONFIGURED);
     }
     UNLOCK();
 
@@ -407,7 +452,7 @@ void wifi_mgr_get_status(wifi_mgr_status_t *out)
         strlcpy(out->ssid, creds->ssid, sizeof(out->ssid));
     }
     out->last_reason = s_last_reason;
-    out->portal_active = s_portal_active;
+    out->portal = s_portal;
     strlcpy(out->ap_ssid, s_ap_ssid, sizeof(out->ap_ssid));
     out->ap_secured = s_ap_password[0] != '\0';
     out->trial = s_trial_state;
@@ -428,7 +473,7 @@ void wifi_mgr_get_status(wifi_mgr_status_t *out)
 bool wifi_mgr_portal_active(void)
 {
     LOCK();
-    bool active = s_portal_active;
+    bool active = s_portal != WIFI_MGR_PORTAL_OFF;
     UNLOCK();
     return active;
 }
@@ -542,7 +587,22 @@ esp_err_t wifi_mgr_forget(void)
     s_state = WIFI_MGR_STA_UNCONFIGURED;
     esp_timer_stop(s_retry_timer);
     esp_timer_stop(s_portal_stop_timer);
-    portal_start();
+    portal_open(WIFI_MGR_PORTAL_UNCONFIGURED);
     UNLOCK();
     return err;
+}
+
+esp_err_t wifi_mgr_open_portal(void)
+{
+    LOCK();
+    if (s_saved.ssid[0] == '\0') {
+        portal_open(WIFI_MGR_PORTAL_UNCONFIGURED); // nothing to fall back to, stays open anyway
+    } else {
+        ESP_LOGI(TAG, "opening the setup hotspot on request, it closes after %d s without clients",
+                 CONFIG_WIFI_MGR_PORTAL_IDLE_SEC);
+        esp_timer_stop(s_portal_stop_timer);
+        portal_open(WIFI_MGR_PORTAL_MANUAL);
+    }
+    UNLOCK();
+    return ESP_OK;
 }

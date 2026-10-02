@@ -10,7 +10,7 @@ The bus driver (phase 2) and audio come next, see [Roadmap](#roadmap).
 Hardware
 ----
 
-Any ESP32 or ESP32-S3 board with at least 4 MB flash. The BOOT button (GPIO0) doubles as the Wi-Fi reset button.
+Any ESP32 or ESP32-S3 board with at least 4 MB flash. The BOOT button (GPIO0) doubles as the setup button.
 
 Development setup
 ----
@@ -48,7 +48,9 @@ A device without Wi-Fi credentials opens the hotspot **`Siedle-Setup-XXXX`**. Jo
 the setup page pops up (otherwise open `http://192.168.4.1`). Pick the network and enter the password. The page
 then shows the new address, `http://siedle.local/`. Credentials are only stored after the connection succeeded.
 
-- **Changing the network:** hold the BOOT button for 5 seconds. The device forgets the network and opens the
+- **Changing the network:** hold the BOOT button for 3 seconds and release it. The device opens the hotspot and
+  stays on its current network until you pick another one. The hotspot closes after 10 minutes without clients.
+- **Forgetting the network:** hold the BOOT button for 10 seconds. The device forgets the network and opens the
   hotspot.
 - **Fallback:** if the configured network is unreachable for 5 minutes, the hotspot opens automatically. The
   device keeps retrying in the background and closes the hotspot once it is back online.
@@ -107,7 +109,7 @@ Layout
 
 | Path                       | Purpose                                                                  |
 |----------------------------|--------------------------------------------------------------------------|
-| `main/`                    | boot sequence, status JSON, reset button                                 |
+| `main/`                    | boot sequence, status JSON, setup button                                 |
 | `components/siedle_proto/` | frame format, encode/decode (no ESP-IDF dependencies, host tested)       |
 | `components/siedle_log/`   | ring buffer of recent bus events                                         |
 | `components/wifi_mgr/`     | station management, setup hotspot, captive portal DNS                    |
