@@ -7,7 +7,7 @@
 
 #include "cJSON.h"
 
-void app_status_init(const char *hostname, const char *client_id);
+void app_status_init(const char *hostname);
 
 void app_status_set_time_synced(void);
 

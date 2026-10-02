@@ -190,8 +190,9 @@ function renderStatus(s) {
   if (w.portal) row(dl, "Setup hotspot", w.ap_ssid + (w.ap_secured ? " (password protected)" : " (open)"), "warn");
 
   if (!c.configured) row(dl, "Cloud", "No AWS IoT identity provisioned", "warn");
-  else row(dl, "Cloud", (c.connected ? "Connected as " : "Connecting as ") + c.client_id + (c.connected ? "" : "…"),
-           c.connected ? "ok" : "warn");
+  else if (c.connected) row(dl, "Cloud", "Connected as " + c.client_id, "ok");
+  else if (c.error) row(dl, "Cloud", c.client_id + " · " + c.error, "err");
+  else row(dl, "Cloud", "Connecting as " + c.client_id + "…", "warn");
   if (c.configured) row(dl, "Messages", c.published + " published · " + c.received + " received · " + c.dropped + " dropped");
 
   row(dl, "Bus", s.bus.available ? "Listening" : "Driver not available yet", s.bus.available ? "ok" : "warn");
