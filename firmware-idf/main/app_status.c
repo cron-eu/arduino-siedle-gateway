@@ -11,13 +11,11 @@
 #include "wifi_mgr.h"
 
 static const char *s_hostname;
-static const char *s_client_id;
 static atomic_bool s_time_synced;
 
-void app_status_init(const char *hostname, const char *client_id)
+void app_status_init(const char *hostname)
 {
     s_hostname = hostname;
-    s_client_id = client_id;
 }
 
 void app_status_set_time_synced(void)
@@ -107,9 +105,12 @@ cJSON *app_status_build(void)
     cJSON *cloud = cJSON_AddObjectToObject(root, "cloud");
     cJSON_AddBoolToObject(cloud, "configured", c.configured);
     if (c.configured) {
-        cJSON_AddStringToObject(cloud, "client_id", s_client_id);
+        cJSON_AddStringToObject(cloud, "client_id", c.client_id);
     }
     cJSON_AddBoolToObject(cloud, "connected", c.connected);
+    if (c.error[0]) {
+        cJSON_AddStringToObject(cloud, "error", c.error);
+    }
     cJSON_AddNumberToObject(cloud, "connects", c.connects);
     cJSON_AddNumberToObject(cloud, "published", c.published);
     cJSON_AddNumberToObject(cloud, "received", c.received);

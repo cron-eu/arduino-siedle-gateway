@@ -28,7 +28,6 @@
 static const char *TAG = "main";
 
 static devcfg_t s_devcfg;
-static bool s_cloud_ready;
 
 static esp_err_t init_nvs(void)
 {
@@ -57,9 +56,7 @@ static void on_time_sync(struct timeval *tv)
     }
     ESP_LOGI(TAG, "time synchronized");
     app_status_set_time_synced();
-    if (s_cloud_ready) {
-        ESP_ERROR_CHECK_WITHOUT_ABORT(cloud_start());
-    }
+    ESP_ERROR_CHECK_WITHOUT_ABORT(cloud_start());
 }
 
 // While offline, SNTP backs off its retries (up to 150 s). Restart it as soon as we are online so the cloud
@@ -104,7 +101,7 @@ void app_main(void)
         ESP_LOGE(TAG, "reading the device configuration failed, continuing without");
     }
     const char *hostname = s_devcfg.hostname ? s_devcfg.hostname : CONFIG_GATEWAY_HOSTNAME;
-    app_status_init(hostname, s_devcfg.client_id);
+    app_status_init(hostname);
 
     const wifi_mgr_config_t wifi_cfg = {
         .hostname = hostname,
@@ -115,16 +112,19 @@ void app_main(void)
     ESP_ERROR_CHECK_WITHOUT_ABORT(identity_ensure_key());
     start_mdns(hostname);
 
+    const cloud_callbacks_t cloud_callbacks = {
+        .on_send_request = on_send_request,
+        .build_status = app_status_build,
+    };
+    ESP_ERROR_CHECK(cloud_init(&cloud_callbacks));
     if (devcfg_has_cloud(&s_devcfg)) {
         const cloud_config_t cloud_cfg = {
             .uri = s_devcfg.mqtt_uri,
             .client_id = s_devcfg.client_id,
             .client_cert = s_devcfg.client_cert,
             .client_key = s_devcfg.client_key,
-            .on_send_request = on_send_request,
-            .build_status = app_status_build,
         };
-        s_cloud_ready = cloud_init(&cloud_cfg) == ESP_OK;
+        ESP_ERROR_CHECK_WITHOUT_ABORT(cloud_configure(&cloud_cfg));
     } else {
         ESP_LOGW(TAG, "no AWS IoT identity in devcfg, running without cloud connection");
     }
