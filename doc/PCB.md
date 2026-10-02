@@ -4,8 +4,9 @@ Interface PCB
 The board that connects the ESP32 to the Siedle bus: power, data in and out, and audio. Background:
 [Bus-Power.md](Bus-Power.md), [Audio.md](Audio.md#hardware), [Bus-Measurements.md](Bus-Measurements.md).
 
-**Status:** planning. The topology is known, most component values are not: they follow from the bus measurements
-and the breadboard bring-up. The schematic can be drawn now, the board ordered afterwards.
+**Status:** schematic draft in [hardware/interface-pcb](../hardware/interface-pcb) (KiCad 10). The topology is
+complete, many component values are not: they follow from the bus measurements and the breadboard bring-up. No
+layout yet; don't order before the values are confirmed.
 
 Revisions
 ----
@@ -37,25 +38,32 @@ So revision 1 should be built to absorb changed values:
 - Test points on bus +, VOUT, 5 V, 3.3 V, the comparator input and outputs, the audio nodes and the I2S lines, plus
   a ground point for the scope.
 
-Schematic outline
+Schematic
 ----
 
-One KiCad sheet per block:
+[hardware/interface-pcb/interface-pcb.kicad_sch](../hardware/interface-pcb/interface-pcb.kicad_sch), one sheet per
+block. The blocks connect through global labels (BUS, the GPIO signals), the power nets through GND, +3V3 and +5V.
+Within a sheet, the parts are connected through net labels rather than wires: a first draft, to be rearranged
+and wired by hand as the values settle. Each sheet explains its block in a note.
 
-1. **Bus input.** 2-pin screw terminal (Ta +, Tb −), F1 PTC, TVS1. Board ground is Tb. The receive, send and data
-   circuits connect here, before D1 (see [Bus-Power.md](Bus-Power.md#circuit)).
-2. **Power stage.** As in [Bus-Power.md](Bus-Power.md#parts-list), plus:
-   - a Schottky diode between U1's 5 V and the D1 Mini's 5 V pin, so a USB cable on the D1 Mini cannot feed back
-     into U1;
-   - a 2-pin terminal or jumper for an external 5 V supply, the fallback if the bus budget is too small.
-3. **Data in.** Bus divided down to the comparators' input range, references from 3.3 V, hysteresis through
-   feedback resistors, open-drain outputs to GPIO 34 and 35 with pull-ups to 3.3 V.
-4. **Data out.** Two transistors from GPIO 16 and 17: 200 Ω across the bus for the whole telegram, 10 Ω during
-   0 bits (the [sending recipe](ReverseEngineering.md#findings-from-other-projects)). The transistors need
-   ≥ 60 V and the current the bus power supply delivers into a short.
-5. **Audio.** ES8311 on the D1 Mini's 3.3 V with its decoupling and reference capacitors, I2C pull-ups, I2S to GPIO
-   25–27 and 32. Receive and send stages as in [Audio.md](Audio.md#audio-front-end).
-6. **ESP32.** D1 Mini footprint, Wi-Fi / admin button on GPIO 33, VOUT monitor on GPIO 36.
+1. **Bus input and power.** Screw terminal (Ta +, Tb −, board ground is Tb), F1 PTC, TVS1, then the gyrator, the
+   filter and U1 as in [Bus-Power.md](Bus-Power.md#parts-list), with SMD parts where they exist (Q1 IRFR120N in
+   DPAK, C1 a 100 V X7R ceramic). Additions: D2, so a USB cable on the D1 Mini cannot feed back into U1; JP1 to
+   cut the bus supply off; J2 for an external 5 V supply (not fitted); the VOUT monitor for GPIO 36.
+2. **Bus data in and out.** The bus divided by 21 into an LM393 on 3.3 V, thresholds at about 4.3 V (data) and
+   12.2 V (acknowledge) with hysteresis. The outputs are inverted: low while the bus is above the threshold. Out:
+   200 Ω (carrier) and 10 Ω (0 bits) across the bus through BCP56 transistors on GPIO 16 and 17 (the
+   [sending recipe](ReverseEngineering.md#findings-from-other-projects)).
+3. **Audio.** ES8311 on the D1 Mini's 3.3 V with the decoupling of the datasheet's application circuit, at I2C
+   address 0x18. Its master clock comes from the I2S bit clock; a 0 Ω option routes GPIO 0 (the classic ESP32's
+   only MCLK pin) instead. Receive: coupling capacitor, series resistor, BAT54S clamps, mid-rail bias, into MIC1P.
+   Send: MCP6002 and a BC846 current sink; GPIO 4 ramps its DC bias, the DAC adds the speech. JP2 and JP3 cut
+   either path off the bus.
+4. **ESP32.** The D1 Mini (project symbol and footprint), the setup button on GPIO 33, an LED on GPIO 2, mounting
+   holes.
+
+Parts carry their LCSC number in an `LCSC` field where it is checked (JLCPCB library, 2 October 2026). The rest,
+mostly common resistor values, get theirs at layout time.
 
 Mechanics
 ----
@@ -131,16 +139,22 @@ Ordering as the GmbH (an assessment, to confirm with the tax adviser):
 KiCad workflow
 ----
 
-- KiCad 9 or newer (`brew install --cask kicad`), which brings `kicad-cli` for ERC, DRC and the fabrication outputs.
-- Symbols and footprints for LCSC parts: the "easyeda2kicad" converter or the JLCPCB part library plugin, so every
-  part carries its LCSC number in an `LCSC` field.
+- KiCad 10 (`brew install --cask kicad`), with `kicad-cli` for ERC, DRC and the fabrication outputs:
+  `kicad-cli sch erc hardware/interface-pcb/interface-pcb.kicad_sch` reports no violations for the draft.
+- The project library `gateway` holds the parts KiCad lacks: the ES8311, the D1 Mini, the R-78CK, and the IRFR120N
+  and BCP56 adapted to their footprints.
+- The D1 Mini footprint (`gateway:D1_Mini_ESP32_Socket`) places the four rows of 10 pads 22.86 mm apart (inner
+  rows), with the antenna end marked. Its pad numbers follow
+  [besi/kicad-esp32-wemos-d1-mini](https://github.com/besi/kicad-esp32-wemos-d1-mini). Check it against the real
+  board before the layout.
 - Fabrication outputs for JLCPCB (Gerbers, drill files, BOM and placement file) with the "Fabrication Toolkit"
-  plugin, which reads that field.
-- D1 Mini footprint: start from [besi/kicad-esp32-wemos-d1-mini](https://github.com/besi/kicad-esp32-wemos-d1-mini)
-  and check it against the real board.
-- The project lives in `hardware/interface-pcb/`.
+  plugin, which reads the `LCSC` field. Footprints for new LCSC parts: the "easyeda2kicad" converter.
 
 Open questions
 ----
 
 - The items in [What is settled](#what-is-settled).
+- Whether the D1 Mini's 3.3 V regulator copes with the ES8311 and the comparators on top of the ESP32 (it should:
+  together about 10 mA).
+- The R-78CK footprint: the draft uses KiCad's R-78E footprint (same SIP-3 pinout), to be checked against the R-78CK
+  drawing.

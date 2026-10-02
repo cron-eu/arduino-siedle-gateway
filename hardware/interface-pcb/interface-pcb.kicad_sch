@@ -1,0 +1,210 @@
+(kicad_sch
+	(version 20260306)
+	(generator "eeschema")
+	(generator_version "10.0")
+	(uuid "10653c94-f447-5f87-9187-3dc11d9ab931")
+	(paper "A4")
+	(title_block
+		(title "Siedle gateway interface board")
+		(date "2026-10-02")
+		(rev "1")
+		(comment 1 "Revision 1 draft (doc/PCB.md)")
+	)
+	(lib_symbols)
+	(text "Siedle In-Home bus gateway, interface board revision 1: a carrier for the ESP32 D1 Mini.\nPower from the bus through a gyrator, data in through comparators, data out through\ntwo pull-down transistors, audio through an ES8311 codec. Blocks connect through global\nlabels. Design notes: doc/PCB.md, doc/Bus-Power.md, doc/Audio.md.\n\nStatus: draft. Topology settled, many values provisional until the bus measurements\n(doc/Bus-Measurements.md) and the breadboard bring-up. Do not order yet."
+		(exclude_from_sim no)
+		(at 30.48 132.08 0)
+		(effects
+			(font
+				(size 1.524 1.524)
+			)
+			(justify left top)
+		)
+		(uuid "51cfc500-bee9-576e-9caf-17b3038ee0e0")
+	)
+	(sheet
+		(at 106.68 50.8)
+		(size 60.96 20.32)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0)
+		)
+		(uuid "a38d47c0-e6cf-53f5-84b8-50b848f2c2ba")
+		(property "Sheetname" "Bus data in and out"
+			(at 106.68 50.1 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.524 1.524)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "bus_data.kicad_sch"
+			(at 106.68 71.72 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(instances
+			(project "interface-pcb"
+				(path "/10653c94-f447-5f87-9187-3dc11d9ab931"
+					(page "3")
+				)
+			)
+		)
+	)
+	(sheet
+		(at 30.48 50.8)
+		(size 60.96 20.32)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0)
+		)
+		(uuid "c68f7d0d-f82b-5cdc-80ee-9955238d066b")
+		(property "Sheetname" "Bus input and power"
+			(at 30.48 50.1 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.524 1.524)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "bus_power.kicad_sch"
+			(at 30.48 71.72 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(instances
+			(project "interface-pcb"
+				(path "/10653c94-f447-5f87-9187-3dc11d9ab931"
+					(page "2")
+				)
+			)
+		)
+	)
+	(sheet
+		(at 182.88 50.8)
+		(size 60.96 20.32)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0)
+		)
+		(uuid "e903a31f-115e-5738-8088-52dcc9b421cc")
+		(property "Sheetname" "Audio"
+			(at 182.88 50.1 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.524 1.524)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "audio.kicad_sch"
+			(at 182.88 71.72 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(instances
+			(project "interface-pcb"
+				(path "/10653c94-f447-5f87-9187-3dc11d9ab931"
+					(page "4")
+				)
+			)
+		)
+	)
+	(sheet
+		(at 30.48 91.44)
+		(size 60.96 20.32)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0)
+		)
+		(uuid "ff339972-2db2-5e34-9158-8e24bc584550")
+		(property "Sheetname" "ESP32"
+			(at 30.48 90.74 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.524 1.524)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "esp32.kicad_sch"
+			(at 30.48 112.36 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(instances
+			(project "interface-pcb"
+				(path "/10653c94-f447-5f87-9187-3dc11d9ab931"
+					(page "5")
+				)
+			)
+		)
+	)
+	(sheet_instances
+		(path "/"
+			(page "1")
+		)
+	)
+)

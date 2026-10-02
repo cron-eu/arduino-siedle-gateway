@@ -33,4 +33,5 @@ Other material
 - [examples/mikrocontroller-net-308271](examples/mikrocontroller-net-308271): schematic and code of the WiFi/MQTT gateway from mikrocontroller.net
 - [images](images): figures used by these documents
 - [hardware/bus-power/gyrator.cir](../hardware/bus-power/gyrator.cir): ngspice simulation of the power stage
+- [hardware/interface-pcb](../hardware/interface-pcb): KiCad project of the interface board (schematic draft)
 - [hardware/arduino-doorbell](../hardware/arduino-doorbell): Eagle schematics of the Arduino prototype
