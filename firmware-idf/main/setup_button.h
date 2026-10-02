@@ -3,7 +3,8 @@
  *
  * - hold for CONFIG_GATEWAY_SETUP_BUTTON_HOTSPOT_SEC and release: opens the setup hotspot, the Wi-Fi network stays
  *   configured
- * - hold for CONFIG_GATEWAY_SETUP_BUTTON_RESET_SEC: forgets the Wi-Fi network and opens the setup hotspot
+ * - hold for CONFIG_GATEWAY_SETUP_BUTTON_RESET_SEC: forgets the Wi-Fi network and the hotspot password, and opens
+ *   the setup hotspot. The cloud identity stays.
  */
 #pragma once
 

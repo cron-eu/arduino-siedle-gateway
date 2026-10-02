@@ -27,7 +27,7 @@ extern "C" {
 
 typedef struct {
     const char *hostname;    /**< DHCP hostname of the station interface */
-    const char *ap_password; /**< setup hotspot WPA2 password (>= 8 chars), NULL or empty for an open hotspot */
+    const char *ap_password; /**< setup hotspot WPA2 password (8-64 chars), NULL or empty for an open hotspot */
 } wifi_mgr_config_t;
 
 typedef enum {
@@ -61,7 +61,7 @@ typedef struct {
     uint8_t last_reason;  /**< last wifi_err_reason_t of a disconnect */
     wifi_mgr_portal_t portal;
     char ap_ssid[33];
-    bool ap_secured;
+    bool ap_secured;      /**< the hotspot uses a password (while open), or will use one */
     wifi_mgr_trial_t trial;
 } wifi_mgr_status_t;
 
@@ -78,6 +78,9 @@ void wifi_mgr_get_status(wifi_mgr_status_t *out);
 
 bool wifi_mgr_portal_active(void);
 
+/** Whether the setup hotspot is open, and why */
+wifi_mgr_portal_t wifi_mgr_portal_mode(void);
+
 /**
  * Scan for networks (blocking, ~2-3 s). Results are de-duplicated by SSID and sorted by signal strength.
  */
@@ -89,7 +92,7 @@ esp_err_t wifi_mgr_scan(wifi_mgr_ap_t *out, size_t max, size_t *found);
  */
 esp_err_t wifi_mgr_connect(const char *ssid, const char *password);
 
-/** Erase the stored credentials and open the setup hotspot. */
+/** Erase the stored credentials and open the setup hotspot, with the current hotspot password. */
 esp_err_t wifi_mgr_forget(void);
 
 /**
@@ -97,6 +100,12 @@ esp_err_t wifi_mgr_forget(void);
  * CONFIG_WIFI_MGR_PORTAL_IDLE_SEC without clients, or once a new network was set up through it.
  */
 esp_err_t wifi_mgr_open_portal(void);
+
+/** Change the hostname, it is used from the next DHCP request on. */
+esp_err_t wifi_mgr_set_hostname(const char *hostname);
+
+/** Change the setup hotspot password (8-64 chars, NULL or empty for none), used the next time the hotspot opens. */
+esp_err_t wifi_mgr_set_ap_password(const char *password);
 
 #ifdef __cplusplus
 }

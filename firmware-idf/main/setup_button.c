@@ -7,6 +7,7 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "identity.h"
 #include "sdkconfig.h"
 #include "wifi_mgr.h"
 
@@ -30,7 +31,11 @@ static void button_task(void *arg)
         if (gpio_get_level(pin) == 0) {
             pressed_ms += POLL_MS;
             if (pressed_ms == reset_ms) { // fires once per press, while the button is still held
-                ESP_LOGW(TAG, "held for %d s", CONFIG_GATEWAY_SETUP_BUTTON_RESET_SEC);
+                ESP_LOGW(TAG, "held for %d s, resetting the network settings", CONFIG_GATEWAY_SETUP_BUTTON_RESET_SEC);
+                // a forgotten hotspot password would lock the owner out, and whoever can press the button can
+                // reach the USB port as well
+                identity_set_ap_password(NULL);
+                wifi_mgr_set_ap_password(NULL);
                 wifi_mgr_forget();
             }
             continue;

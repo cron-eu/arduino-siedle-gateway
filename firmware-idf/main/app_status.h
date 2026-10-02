@@ -7,7 +7,8 @@
 
 #include "cJSON.h"
 
-void app_status_init(const char *hostname);
+/** The hostname shown in the status (copied) */
+void app_status_set_hostname(const char *hostname);
 
 void app_status_set_time_synced(void);
 
