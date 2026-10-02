@@ -18,7 +18,7 @@ Project Folder Structure
 * `firmware/**` Firmware for the Arduino MKR1010 WiFi Board (C++)
 * `lambda/**` AWS Lambda functions (Slack integration)
 * `hardware/**` Schematics (Eagle)
-* `doc/*` Documentation Files (Markdown)
+* `doc/**` Documentation, see [doc/README.md](doc/README.md)
 
 
 Author
