@@ -25,5 +25,14 @@ target_include_directories(test_siedle_proto PRIVATE ${COMPONENTS_DIR}/siedle_pr
 target_compile_options(test_siedle_proto PRIVATE -Wall -Wextra -Werror)
 target_link_libraries(test_siedle_proto PRIVATE unity)
 
+add_executable(test_identity_validate
+    test_identity_validate.c
+    ${COMPONENTS_DIR}/identity/identity_validate.c
+)
+target_include_directories(test_identity_validate PRIVATE ${COMPONENTS_DIR}/identity/include)
+target_compile_options(test_identity_validate PRIVATE -Wall -Wextra -Werror)
+target_link_libraries(test_identity_validate PRIVATE unity)
+
 enable_testing()
 add_test(NAME siedle_proto COMMAND test_siedle_proto)
+add_test(NAME identity_validate COMMAND test_identity_validate)

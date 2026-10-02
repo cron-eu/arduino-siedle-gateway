@@ -1,0 +1,7 @@
+# The device key and its certificate signing request are created on the device. Selected here rather than in
+# sdkconfig.defaults, so existing sdkconfig files pick it up as well.
+config IDENTITY_X509_CSR_WRITE
+    bool
+    default y
+    select MBEDTLS_X509_CREATE_C
+    select MBEDTLS_X509_CSR_WRITE_C
