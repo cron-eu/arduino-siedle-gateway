@@ -2,3 +2,6 @@
 
 # local settings written by the ESP-IDF VS Code extension
 /.vscode/settings.json
+
+# schematic PDFs and other exports
+/output/

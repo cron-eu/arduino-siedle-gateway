@@ -41,26 +41,54 @@ So revision 1 should be built to absorb changed values:
 Schematic
 ----
 
-[hardware/interface-pcb/interface-pcb.kicad_sch](../hardware/interface-pcb/interface-pcb.kicad_sch), one sheet per
-block. The blocks connect through global labels (BUS, the GPIO signals), the power nets through GND, +3V3 and +5V.
-Within a sheet, the parts are connected through net labels rather than wires: a first draft, to be rearranged
-and wired by hand as the values settle. Each sheet explains its block in a note.
+[hardware/interface-pcb/interface-pcb.kicad_sch](../hardware/interface-pcb/interface-pcb.kicad_sch) contains four
+A3 landscape sheets. The controller and overview share the root sheet; power, data and audio each have a circuit
+sheet. Wires show the signal paths, dividers, filters and feedback loops. Global labels connect the sheets;
+local labels join separate functional blocks on the same sheet. GND is Tb throughout.
 
-1. **Bus input and power.** Screw terminal (Ta +, Tb −, board ground is Tb), F1 PTC, TVS1, then the gyrator, the
+1. **Controller and measurement map.** The D1 Mini (project symbol and footprint), the setup button on GPIO 33,
+   an LED on GPIO 2, the 3.3 V test point and mounting holes. The three sheet boxes provide navigation and a
+   compact probe map. I2S signal names are from the ESP32's perspective: DOUT goes to the codec, DIN comes back.
+2. **Bus input and power.** Screw terminal (Ta +, Tb −, board ground is Tb), F1 PTC, TVS1, then the gyrator, the
    filter and U1 as in [Bus-Power.md](Bus-Power.md#parts-list), with SMD parts where they exist (Q1 IRFR120N in
    DPAK, C1 a 100 V X7R ceramic). Additions: D2, so a USB cable on the D1 Mini cannot feed back into U1; JP1 to
    cut the bus supply off; J2 for an external 5 V supply (not fitted); the VOUT monitor for GPIO 36.
-2. **Bus data in and out.** The bus divided by 21 into an LM393 on 3.3 V, thresholds at about 4.3 V (data) and
+3. **Bus data in and out.** The bus divided by 21 into an LM393 on 3.3 V, thresholds at about 4.3 V (data) and
    12.2 V (acknowledge) with hysteresis. The outputs are inverted: low while the bus is above the threshold. Out:
    200 Ω (carrier) and 10 Ω (0 bits) across the bus through BCP56 transistors on GPIO 16 and 17 (the
    [sending recipe](ReverseEngineering.md#findings-from-other-projects)).
-3. **Audio.** ES8311 on the D1 Mini's 3.3 V with the decoupling of the datasheet's application circuit, at I2C
-   address 0x18. Its master clock comes from the I2S bit clock; a 0 Ω option routes GPIO 0 (the classic ESP32's
-   only MCLK pin) instead. Receive: coupling capacitor, series resistor, BAT54S clamps, mid-rail bias, into MIC1P.
+4. **Audio.** ES8311 on the D1 Mini's 3.3 V with the decoupling of the datasheet's application circuit, at I2C
+   address 0x18. In the default clock configuration, R30 holds the MCLK pin low and the codec must be configured
+   to derive its internal clock from SCLK. For external MCLK on GPIO 0, remove R30 and fit R31 instead. Receive:
+   coupling capacitor, series resistor, BAT54S clamps, mid-rail bias, into MIC1P.
    Send: MCP6002 and a BC846 current sink; GPIO 4 ramps its DC bias, the DAC adds the speech. JP2 and JP3 cut
    either path off the bus.
-4. **ESP32.** The D1 Mini (project symbol and footprint), the setup button on GPIO 33, an LED on GPIO 2, mounting
-   holes.
+
+### Using the sheets during measurements
+
+The test points identify nodes in the **planned** board; there is no PCB yet. Start with the installation captures
+in [Bus-Measurements.md](Bus-Measurements.md). The other probe references are for later breadboard bring-up and
+the first board.
+
+| Sheet | Probe references | What they help establish |
+|---|---|---|
+| Controller | TP14: 3.3 V | D1 Mini regulator voltage under the additional load |
+| Power | TP1: BUS; TP2: VOUT; TP3: 5 V; TP4: GND/Tb | input voltage, startup, hold-up and ripple |
+| Data | TP7: BUS_SENSE; TP5: DATA_IN; TP6: ACK_IN | divider scaling, switching thresholds, hysteresis and timing |
+| Audio | TP8: RX_IN; TP9: TX_FB; TP10–13: I2S | speech amplitude, current-sink bias and clipping, digital clocks/data |
+
+Two details deserve explicit bring-up checks:
+
+- **Transmit disable:** TX_EN lowers the DC bias; it does not disconnect the DAC from TX_SUM through C42.
+  Verify the residual current at TP9 with TX_EN low and the DAC active. Firmware must mute the DAC while disabled;
+  decide from the bench results whether a hardware mute is also needed. JP3 disconnects the stage for testing.
+- **Comparator input range:** BUS/21 is about 1.52 V at 32 V. Do not assume that this is inside the LM393's
+  full-temperature common-mode range on 3.3 V. TI specifies VCC − 2 V, but also documents valid output operation
+  with one input in range; the reference inputs here are lower. Check the exact ordered manufacturer's part and
+  the measured bus range before choosing the final divider. See the [TI LM393 datasheet, section 5.8](https://www.ti.com/lit/ds/symlink/lm393.pdf).
+
+The clock-source selection is also a firmware requirement, as shown by Espressif's
+[ES8311 driver](https://github.com/espressif/esp-adf/blob/release/v2.x/components/esp_codec_dev/device/es8311/es8311.c).
 
 Parts carry their LCSC number in an `LCSC` field where it is checked (JLCPCB library, 2 October 2026). The rest,
 mostly common resistor values, get theirs at layout time.
@@ -141,6 +169,10 @@ KiCad workflow
 
 - KiCad 10 (`brew install --cask kicad`), with `kicad-cli` for ERC, DRC and the fabrication outputs:
   `kicad-cli sch erc hardware/interface-pcb/interface-pcb.kicad_sch` reports no violations for the draft.
+- Export the four sheets for review or printing with
+  `kicad-cli sch export pdf --no-background-color -o interface-pcb.pdf hardware/interface-pcb/interface-pcb.kicad_sch`.
+  A3 at 100% preserves the intended text size; the PDF remains sharp when zoomed. ERC checks connectivity rules,
+  not analog behavior, thermal ratings or the bus loading.
 - The project library `gateway` holds the parts KiCad lacks: the ES8311, the D1 Mini, the R-78CK, and the IRFR120N
   and BCP56 adapted to their footprints.
 - The D1 Mini footprint (`gateway:D1_Mini_ESP32_Socket`) places the four rows of 10 pads 22.86 mm apart (inner
