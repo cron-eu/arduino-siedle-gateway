@@ -1250,7 +1250,7 @@
 		)
 		(uuid "eaccd303-bacf-5228-a750-9972fe68d665")
 	)
-	(text "BUS SENSE / 21"
+	(text "BUS SENSE / 34"
 		(exclude_from_sim no)
 		(at 17.78 50.8 0)
 		(effects
@@ -1308,7 +1308,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "200k"
+		(property "Value" "330k"
 			(at 46.99 90.551 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -2051,7 +2051,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "150k"
+		(property "Value" "240k"
 			(at 140.97 85.471 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -3061,7 +3061,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "47k"
+		(property "Value" "82k"
 			(at 280.67 85.471 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -3941,7 +3941,7 @@
 		)
 		(uuid "e706d757-e7d5-5060-8f27-ebeb9ba019f8")
 	)
-	(text "Probe TP7 together with TP1.\nR10 / R11 set the scaling; C10 filters RF.\nCheck LM393 input common-mode margin."
+	(text "Probe TP7 together with TP1.\nR10 / R11 set the scaling; C10 filters RF.\n32 V -> 0.94 V, inside the LM393 input range."
 		(exclude_from_sim no)
 		(at 17.78 160.02 0)
 		(effects
@@ -3952,7 +3952,7 @@
 		)
 		(uuid "3aebc0ae-d865-57cd-8428-e8c945de6c67")
 	)
-	(text "TP5 / GPIO34\nNominal threshold about 4.3 V at BUS.\nMeasure both edges to set hysteresis."
+	(text "TP5 / GPIO34\nThreshold about 5.5 V rising, 4.5 V falling.\nMeasure both edges to set hysteresis."
 		(exclude_from_sim no)
 		(at 121.92 160.02 0)
 		(effects
@@ -3963,7 +3963,7 @@
 		)
 		(uuid "d73190fe-f770-5154-94b3-3047432233ab")
 	)
-	(text "TP6 / GPIO35\nNominal threshold about 12.2 V at BUS.\nCapture the end of the telegram."
+	(text "TP6 / GPIO35\nThreshold about 13.1 V rising, 12.1 V falling.\nCapture the end of the telegram."
 		(exclude_from_sim no)
 		(at 256.54 160.02 0)
 		(effects

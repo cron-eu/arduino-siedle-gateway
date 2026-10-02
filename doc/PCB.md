@@ -53,8 +53,9 @@ local labels join separate functional blocks on the same sheet. GND is Tb throug
    filter and U1 as in [Bus-Power.md](Bus-Power.md#parts-list), with SMD parts where they exist (Q1 IRFR120N in
    DPAK, C1 a 100 V X7R ceramic). Additions: D2, so a USB cable on the D1 Mini cannot feed back into U1; JP1 to
    cut the bus supply off; J2 for an external 5 V supply (not fitted); the VOUT monitor for GPIO 36.
-3. **Bus data in and out.** The bus divided by 21 into an LM393 on 3.3 V, thresholds at about 4.3 V (data) and
-   12.2 V (acknowledge) with hysteresis. The outputs are inverted: low while the bus is above the threshold. Out:
+3. **Bus data in and out.** The bus divided by 34 into an LM393 on 3.3 V. Thresholds with hysteresis: about 5.5 V
+   rising and 4.5 V falling (data), 13.1 V and 12.1 V (acknowledge). The outputs are inverted: low while the bus is
+   above the threshold. Out:
    200 Ω (carrier) and 10 Ω (0 bits) across the bus through BCP56 transistors on GPIO 16 and 17 (the
    [sending recipe](ReverseEngineering.md#findings-from-other-projects)).
 4. **Audio.** ES8311 on the D1 Mini's 3.3 V with the decoupling of the datasheet's application circuit, at I2C
@@ -82,10 +83,10 @@ Two details deserve explicit bring-up checks:
 - **Transmit disable:** TX_EN lowers the DC bias; it does not disconnect the DAC from TX_SUM through C42.
   Verify the residual current at TP9 with TX_EN low and the DAC active. Firmware must mute the DAC while disabled;
   decide from the bench results whether a hardware mute is also needed. JP3 disconnects the stage for testing.
-- **Comparator input range:** BUS/21 is about 1.52 V at 32 V. Do not assume that this is inside the LM393's
-  full-temperature common-mode range on 3.3 V. TI specifies VCC − 2 V, but also documents valid output operation
-  with one input in range; the reference inputs here are lower. Check the exact ordered manufacturer's part and
-  the measured bus range before choosing the final divider. See the [TI LM393 datasheet, section 5.8](https://www.ti.com/lit/ds/symlink/lm393.pdf).
+- **Comparator input range:** the LM393's inputs work up to VCC − 2 V over its full temperature range, 1.3 V on
+  3.3 V ([TI LM393 datasheet](https://www.ti.com/lit/ds/symlink/lm393.pdf); the ordered C7955 is onsemi's
+  LM393DR2G, check its datasheet too). BUS/34 stays below 0.95 V at 32 V, and below 1.3 V up to about 44 V. If
+  the measured levels move the thresholds, keep that margin when choosing new references.
 
 The clock-source selection is also a firmware requirement, as shown by Espressif's
 [ES8311 driver](https://github.com/espressif/esp-adf/blob/release/v2.x/components/esp_codec_dev/device/es8311/es8311.c).
