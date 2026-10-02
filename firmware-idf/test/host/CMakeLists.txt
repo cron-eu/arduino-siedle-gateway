@@ -33,6 +33,15 @@ target_include_directories(test_identity_validate PRIVATE ${COMPONENTS_DIR}/iden
 target_compile_options(test_identity_validate PRIVATE -Wall -Wextra -Werror)
 target_link_libraries(test_identity_validate PRIVATE unity)
 
+add_executable(test_web_ui_host
+    test_web_ui_host.c
+    ${COMPONENTS_DIR}/web_ui/web_ui_host.c
+)
+target_include_directories(test_web_ui_host PRIVATE ${COMPONENTS_DIR}/web_ui)
+target_compile_options(test_web_ui_host PRIVATE -Wall -Wextra -Werror)
+target_link_libraries(test_web_ui_host PRIVATE unity)
+
 enable_testing()
 add_test(NAME siedle_proto COMMAND test_siedle_proto)
 add_test(NAME identity_validate COMMAND test_identity_validate)
+add_test(NAME web_ui_host COMMAND test_web_ui_host)

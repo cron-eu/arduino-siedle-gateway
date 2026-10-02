@@ -12,6 +12,7 @@
 #include "lwip/inet.h"
 #include "lwip/sockets.h"
 #include "siedle_log.h"
+#include "web_ui_host.h"
 #include "web_ui_internal.h"
 #include "wifi_mgr.h"
 
@@ -78,18 +79,20 @@ cJSON *web_ui_recv_json(httpd_req_t *req, size_t max_len)
     return json;
 }
 
-// Whether the request came in through the setup hotspot. The station can be connected while the hotspot is open,
+static bool hotspot_ip(esp_netif_ip_info_t *out)
+{
+    esp_netif_t *ap = esp_netif_get_handle_from_ifkey("WIFI_AP_DEF");
+    return ap && esp_netif_get_ip_info(ap, out) == ESP_OK;
+}
+
+// Whether the connection came in through the setup hotspot. The station can be connected while the hotspot is open,
 // and the setup endpoints must not be reachable from the regular network.
-static bool via_hotspot(httpd_req_t *req)
+static bool from_hotspot(httpd_req_t *req)
 {
     esp_netif_ip_info_t ap_ip;
-    esp_netif_t *ap = esp_netif_get_handle_from_ifkey("WIFI_AP_DEF");
-    if (ap == NULL || esp_netif_get_ip_info(ap, &ap_ip) != ESP_OK) {
-        return false;
-    }
     struct sockaddr_storage local;
     socklen_t len = sizeof(local);
-    if (getsockname(httpd_req_to_sockfd(req), (struct sockaddr *)&local, &len) != 0) {
+    if (!hotspot_ip(&ap_ip) || getsockname(httpd_req_to_sockfd(req), (struct sockaddr *)&local, &len) != 0) {
         return false;
     }
     if (local.ss_family == AF_INET) {
@@ -99,6 +102,25 @@ static bool via_hotspot(httpd_req_t *req)
     const struct sockaddr_in6 *local6 = (struct sockaddr_in6 *)&local;
     return local.ss_family == AF_INET6 && IN6_IS_ADDR_V4MAPPED(&local6->sin6_addr)
            && local6->sin6_addr.un.u32_addr[3] == ap_ip.ip.addr;
+}
+
+// A setup request: through the hotspot, and addressed to the gateway by its hotspot address or .local name. The name
+// check keeps out web pages that reach the gateway through DNS rebinding, from a browser that is on the hotspot and
+// on another network at the same time.
+static bool via_hotspot(httpd_req_t *req)
+{
+    esp_netif_ip_info_t ap_ip;
+    char host[80];
+    char ip[16];
+    const char *hostname = NULL;
+    if (!from_hotspot(req) || !hotspot_ip(&ap_ip)
+        || httpd_req_get_hdr_value_str(req, "Host", host, sizeof(host)) != ESP_OK) {
+        return false;
+    }
+    snprintf(ip, sizeof(ip), IPSTR, IP2STR(&ap_ip.ip));
+    // only changed from the setup page, which also runs on this task
+    esp_netif_get_hostname(esp_netif_get_handle_from_ifkey("WIFI_STA_DEF"), &hostname);
+    return web_ui_host_is_gateway(host, ip, hostname);
 }
 
 // The cloud and device settings control the door (siedle/send can open it), so they need someone on site: the
@@ -247,7 +269,7 @@ static esp_err_t wifi_connect_handler(httpd_req_t *req)
 // Captive portal: send every unknown URL from hotspot clients (OS connectivity checks) to the setup page
 static esp_err_t not_found_handler(httpd_req_t *req, httpd_err_code_t code)
 {
-    if (!wifi_mgr_portal_active() || !via_hotspot(req)) {
+    if (!wifi_mgr_portal_active() || !from_hotspot(req)) {
         return httpd_resp_send_err(req, HTTPD_404_NOT_FOUND, "not found");
     }
 
