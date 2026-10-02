@@ -1,8 +1,7 @@
 {
 	"name": "lambda",
 	"version": "1.0.0",
-	"dependencies": {},
 	"devDependencies": {
-		"aws-sdk": "2.1427.0"
+		"@aws-sdk/client-iot-data-plane": "3.1145.0"
 	}
 }
