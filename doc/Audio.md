@@ -27,8 +27,8 @@ How the Siedle In-Home bus carries speech
 The bus uses the same two wires (Ta/Tb) for three things:
 
 - **Power:** about 28 V DC from the bus power supply feeds every station.
-- **Data:** 32-bit frames, MSB first, 2 ms per bit. A station pulls the bus below about 4.5 V for every 0 bit.
-  The firmware decodes these today (`siedle_proto`).
+- **Data:** 32-bit frames (telegrams), MSB first, 2 ms per bit. During a telegram the bus sits at about 2 V for a
+  0 bit and 7–8 V for a 1 bit, and returns to idle afterwards. The firmware decodes these today (`siedle_proto`).
 - **Speech:** during a call, the voice rides on the DC as a small AC voltage, as on an analog telephone line.
 
 This works because the bus power supply feeds the wires through a high impedance for AC (a choke or its electronic
@@ -41,15 +41,21 @@ large capacitors, like the Arduino prototype's input, is close to a short circui
 quieter for the whole building (see the "Eingangskondensator dämpft Audio auf Busleitung" thread in
 [ReverseEngineering.md](ReverseEngineering.md)). The [bus power stage](Bus-Power.md) solves that.
 
+What is known so far, mostly from [other projects](ReverseEngineering.md#findings-from-other-projects):
+
 | | Status |
 |---|---|
 | Frame format, bit timing, signals (ring, talk start, door open, talk end) | known, used by the firmware |
-| Speech as AC on the same pair, devices need a high AC impedance | very likely (principle, forum thread) |
-| Speech level, bandwidth, bus impedance | to be measured |
-| Both directions at once, or voice switching at the door station | to be measured |
-| Audio on the bus before someone picks up | to be measured |
-| DC current of a talking station | to be measured |
-| Current budget of the bus power supply | Siedle system manual, plus measurement |
+| Speech as plain analog audio on the same pair, in both directions | confirmed by others (test tone measured 1:1) |
+| Devices need a high impedance at audio frequencies | confirmed by others (220 µF made the door speaker "very, very quiet") |
+| Speech level | about 50–200 mV according to others, to be measured |
+| Bandwidth, bus impedance | to be measured |
+| Audio on the bus before someone picks up | probably not: speech only starts after talk start |
+| Concurrent calls | one speech channel per installation, whoever answers first gets it |
+| DC current of a talking station | 30 mA for an indoor station, 80 mA for the door loudspeaker (system manual) |
+| Current budget for the gateway | no official figure, depends on our power supply (see [Bus-Power.md](Bus-Power.md#bus-voltage-and-current-budget)) |
+
+No open project handles Siedle In-Home audio yet. Existing ones (ESPHome, FHEM, AVR) stop at telegrams.
 
 A call on the bus
 ----
@@ -127,13 +133,15 @@ flowchart LR
 ```
 
 - **Data in:** a comparator with hysteresis turns the bus voltage into a clean digital signal for the RMT
-  peripheral, with its threshold between the ~4.5 V low level and the idle level. A second comparator at about
-  12 V replaces the ADC based "acknowledged" check of the Arduino firmware.
+  peripheral, with its threshold at about 4.5 V, between the 0 bit level (about 2 V) and the 1 bit level (7–8 V).
+  A second comparator at about 12 V detects the end of a telegram, when the bus returns to idle. The Arduino
+  firmware checks that with the ADC and calls it "acknowledged".
 - **Data out:** the existing transistor stage that pulls the bus down.
-- **Speech:** a film capacitor blocks the DC, a small 600 Ω audio transformer couples the speech, an op-amp hybrid
-  splits send and receive, and an ES8311 codec digitizes (ADC) and produces (DAC) the audio on I2S. If the
-  measurements show that the bus expects current modulation like a telephone line, only the send side changes,
-  into a transistor current stage.
+- **Speech:** a film capacitor blocks the DC, an op-amp hybrid splits send and receive, and an ES8311 codec
+  digitizes (ADC) and produces (DAC) the audio on I2S. To receive, the speech (about 50–200 mV) is amplified into the
+  codec's input range. To send, a transistor current sink modulated by the codec output is the likely way, as the
+  [Comelit Simplebus projects](https://github.com/vvigilante/comelit-simplebus1) do on their 2-wire bus. A small
+  600 Ω audio transformer remains an option for galvanic isolation.
 - **Power:** [Bus-Power.md](Bus-Power.md).
 - **Protection:** PTC fuse and TVS diode at the bus terminals.
 
@@ -176,7 +184,9 @@ cancellation. On the browser side, the browser cancels its own echo (`getUserMed
 
 A small state machine: idle → ringing (ring frame for our address) → in call (after "answer": talk start frame
 sent, audio open) → idle (hang up: talk end frame, or a timeout, or a real handset took the call). Only one person
-answers at a time.
+answers at a time, and the installation has a single speech channel: if a real handset answers first, the gateway
+cannot take the call, and the other way round. Push-to-talk has a precedent: Siedle's own hands-free indoor stations
+offer it.
 
 ### Web API (draft)
 
@@ -257,7 +267,9 @@ Plan
 2. Build the power stage on a breadboard ([Bus-Power.md](Bus-Power.md)).
 3. Software spike: call page and WebSocket audio on the dev board with a test tone and a loopback instead of the
    bus, served through the Odroid. Proves the HTTPS microphone path, the latency and the protocol.
-4. Listen-only audio front end on the breadboard (transformer, ES8311 module): hear the door in the browser.
+4. Listen-only audio front end on the breadboard (amplifier, ES8311 module): hear the door in the browser. An
+   even quicker first test is the ESP32's own ADC at 8 kHz, as the Comelit Simplebus 1 project does, though with a
+   different pin plan.
 5. Push-to-talk and call control (answer, open door, hang up), plus the link in the Slack message.
 6. Interface PCB as a carrier board for the D1 Mini (KiCad).
 7. Later: full duplex, Home Assistant integration, VPN for phones.
@@ -266,6 +278,9 @@ Open questions
 ----
 
 - The measurement items in the table above.
+- The model of our bus power supply and the number of stations, for the current budget.
+- Our door ring arrives as signal 2, while others publish INCOMING_RING as 12 (`110001`): which call types exist
+  in our installation?
 - Which bus address the gateway answers with, and what happens when a real handset picks up at the same time.
 - The current budget of the bus power supply.
 - Board details: is there a BOOT button, and a diode on the USB 5 V line?
