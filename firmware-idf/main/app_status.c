@@ -1,21 +1,26 @@
 #include "app_status.h"
 
 #include <stdatomic.h>
+#include <string.h>
 #include <time.h>
 
 #include "cloud.h"
 #include "esp_app_desc.h"
 #include "esp_system.h"
 #include "esp_timer.h"
+#include "freertos/FreeRTOS.h"
 #include "sdkconfig.h"
 #include "wifi_mgr.h"
 
-static const char *s_hostname;
+static portMUX_TYPE s_hostname_mux = portMUX_INITIALIZER_UNLOCKED;
+static char s_hostname[64];
 static atomic_bool s_time_synced;
 
-void app_status_init(const char *hostname)
+void app_status_set_hostname(const char *hostname)
 {
-    s_hostname = hostname;
+    taskENTER_CRITICAL(&s_hostname_mux);
+    strlcpy(s_hostname, hostname, sizeof(s_hostname));
+    taskEXIT_CRITICAL(&s_hostname_mux);
 }
 
 void app_status_set_time_synced(void)
@@ -54,6 +59,16 @@ static const char *sta_state_name(wifi_mgr_sta_state_t state)
     }
 }
 
+static const char *portal_name(wifi_mgr_portal_t portal)
+{
+    switch (portal) {
+    case WIFI_MGR_PORTAL_UNCONFIGURED: return "unconfigured";
+    case WIFI_MGR_PORTAL_MANUAL: return "manual";
+    case WIFI_MGR_PORTAL_FALLBACK: return "fallback";
+    default: return "off";
+    }
+}
+
 static const char *trial_name(wifi_mgr_trial_t trial)
 {
     switch (trial) {
@@ -72,8 +87,12 @@ cJSON *app_status_build(void)
     }
 
     const esp_app_desc_t *app = esp_app_get_description();
+    char hostname[sizeof(s_hostname)];
+    taskENTER_CRITICAL(&s_hostname_mux);
+    strlcpy(hostname, s_hostname, sizeof(hostname));
+    taskEXIT_CRITICAL(&s_hostname_mux);
     cJSON *device = cJSON_AddObjectToObject(root, "device");
-    cJSON_AddStringToObject(device, "hostname", s_hostname);
+    cJSON_AddStringToObject(device, "hostname", hostname);
     cJSON_AddStringToObject(device, "version", app->version);
     cJSON_AddStringToObject(device, "idf", app->idf_ver);
     cJSON_AddStringToObject(device, "chip", CONFIG_IDF_TARGET);
@@ -96,6 +115,7 @@ cJSON *app_status_build(void)
     cJSON_AddNumberToObject(wifi, "rssi", w.rssi);
     cJSON_AddNumberToObject(wifi, "last_reason", w.last_reason);
     cJSON_AddBoolToObject(wifi, "portal", w.portal != WIFI_MGR_PORTAL_OFF);
+    cJSON_AddStringToObject(wifi, "portal_mode", portal_name(w.portal));
     cJSON_AddStringToObject(wifi, "ap_ssid", w.ap_ssid);
     cJSON_AddBoolToObject(wifi, "ap_secured", w.ap_secured);
     cJSON_AddStringToObject(wifi, "trial", trial_name(w.trial));

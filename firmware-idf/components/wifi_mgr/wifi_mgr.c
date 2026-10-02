@@ -49,8 +49,10 @@ static uint32_t s_retry_count;
 static bool s_scanning;
 static bool s_expect_disconnect; // the next WIFI_REASON_ASSOC_LEAVE was caused by us
 static wifi_mgr_portal_t s_portal;
+static bool s_portal_secured;       // the open hotspot uses a password
 static char s_ap_ssid[33];
-static char s_ap_password[65];
+static char s_ap_password[65];      // for the next time the hotspot opens
+static bool s_ap_password_changed;  // since the hotspot opened
 static char s_portal_uri[32];
 
 #define LOCK()   xSemaphoreTake(s_lock, portMAX_DELAY)
@@ -222,6 +224,8 @@ static void portal_open(wifi_mgr_portal_t reason)
     s_dns = start_dns_server(&dns_cfg);
 
     s_portal = reason;
+    s_portal_secured = s_ap_password[0] != '\0';
+    s_ap_password_changed = false;
     ESP_LOGI(TAG, "setup hotspot '%s' (%s) started, portal at %s", s_ap_ssid,
              s_ap_password[0] ? "WPA2" : "open", s_portal_uri);
 }
@@ -287,6 +291,17 @@ static void start_fallback_timer(void)
     if (s_portal == WIFI_MGR_PORTAL_OFF && !esp_timer_is_active(s_fallback_timer)) {
         esp_timer_start_once(s_fallback_timer, (uint64_t)CONFIG_WIFI_MGR_PORTAL_FALLBACK_SEC * 1000000);
     }
+}
+
+// (lock held)
+static esp_err_t set_ap_password(const char *password)
+{
+    size_t len = password ? strlen(password) : 0;
+    ESP_RETURN_ON_FALSE(len == 0 || (len >= 8 && len < sizeof(s_ap_password)), ESP_ERR_INVALID_ARG, TAG,
+                        "setup hotspot password needs 8-64 characters");
+    strlcpy(s_ap_password, len ? password : "", sizeof(s_ap_password));
+    s_ap_password_changed |= s_portal != WIFI_MGR_PORTAL_OFF;
+    return ESP_OK;
 }
 
 /* ---- events ------------------------------------------------------------------------------------------------ */
@@ -390,14 +405,11 @@ esp_err_t wifi_mgr_start(const wifi_mgr_config_t *cfg)
     // the vendored captive portal DNS server logs every query at info level
     esp_log_level_set("example_dns_redirect_server", ESP_LOG_WARN);
 
-    if (cfg->ap_password && strlen(cfg->ap_password) >= 8) {
-        strlcpy(s_ap_password, cfg->ap_password, sizeof(s_ap_password));
-    } else {
-        if (cfg->ap_password && cfg->ap_password[0]) {
-            ESP_LOGW(TAG, "setup hotspot password too short (< 8 chars), ignored");
-        }
-        ESP_LOGW(TAG, "setup hotspot will be open, set ap_pass in devcfg to secure it");
+    LOCK();
+    if (set_ap_password(cfg->ap_password) != ESP_OK || s_ap_password[0] == '\0') {
+        ESP_LOGW(TAG, "the setup hotspot is open, set a password on the setup page to secure it");
     }
+    UNLOCK();
 
     uint8_t mac[6];
     ESP_RETURN_ON_ERROR(esp_read_mac(mac, ESP_MAC_WIFI_SOFTAP), TAG, "read mac");
@@ -454,7 +466,7 @@ void wifi_mgr_get_status(wifi_mgr_status_t *out)
     out->last_reason = s_last_reason;
     out->portal = s_portal;
     strlcpy(out->ap_ssid, s_ap_ssid, sizeof(out->ap_ssid));
-    out->ap_secured = s_ap_password[0] != '\0';
+    out->ap_secured = s_portal != WIFI_MGR_PORTAL_OFF ? s_portal_secured : s_ap_password[0] != '\0';
     out->trial = s_trial_state;
     UNLOCK();
 
@@ -476,6 +488,14 @@ bool wifi_mgr_portal_active(void)
     bool active = s_portal != WIFI_MGR_PORTAL_OFF;
     UNLOCK();
     return active;
+}
+
+wifi_mgr_portal_t wifi_mgr_portal_mode(void)
+{
+    LOCK();
+    wifi_mgr_portal_t mode = s_portal;
+    UNLOCK();
+    return mode;
 }
 
 static int compare_rssi(const void *a, const void *b)
@@ -587,6 +607,9 @@ esp_err_t wifi_mgr_forget(void)
     s_state = WIFI_MGR_STA_UNCONFIGURED;
     esp_timer_stop(s_retry_timer);
     esp_timer_stop(s_portal_stop_timer);
+    if (s_ap_password_changed) {
+        portal_stop(); // reopen it with the new password, e.g. after the setup button reset it
+    }
     portal_open(WIFI_MGR_PORTAL_UNCONFIGURED);
     UNLOCK();
     return err;
@@ -605,4 +628,17 @@ esp_err_t wifi_mgr_open_portal(void)
     }
     UNLOCK();
     return ESP_OK;
+}
+
+esp_err_t wifi_mgr_set_hostname(const char *hostname)
+{
+    return esp_netif_set_hostname(s_sta_netif, hostname);
+}
+
+esp_err_t wifi_mgr_set_ap_password(const char *password)
+{
+    LOCK();
+    esp_err_t err = set_ap_password(password);
+    UNLOCK();
+    return err;
 }

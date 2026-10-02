@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 
 #include "esp_check.h"
 #include "esp_http_server.h"
@@ -11,9 +12,9 @@
 #include "lwip/inet.h"
 #include "lwip/sockets.h"
 #include "siedle_log.h"
+#include "web_ui_internal.h"
 #include "wifi_mgr.h"
 
-#define MAX_BODY_LEN  256
 #define SCAN_MAX_APS  20
 
 static const char *TAG = "web_ui";
@@ -23,7 +24,7 @@ extern const char index_html_end[] asm("_binary_index_html_end");
 
 static web_ui_config_t s_cfg;
 
-static esp_err_t send_json(httpd_req_t *req, cJSON *json)
+esp_err_t web_ui_send_json(httpd_req_t *req, cJSON *json)
 {
     char *body = json ? cJSON_PrintUnformatted(json) : NULL;
     cJSON_Delete(json);
@@ -37,12 +38,44 @@ static esp_err_t send_json(httpd_req_t *req, cJSON *json)
     return err;
 }
 
-static esp_err_t send_error(httpd_req_t *req, const char *status, const char *message)
+esp_err_t web_ui_send_error(httpd_req_t *req, const char *status, const char *message)
 {
     cJSON *json = cJSON_CreateObject();
     cJSON_AddStringToObject(json, "error", message);
     httpd_resp_set_status(req, status);
-    return send_json(req, json);
+    return web_ui_send_json(req, json);
+}
+
+// Only JSON is accepted: browsers send that cross-origin only after a CORS preflight, which this server never
+// answers, so other web sites open in the same browser can't post here.
+cJSON *web_ui_recv_json(httpd_req_t *req, size_t max_len)
+{
+    char type[64];
+    if (httpd_req_get_hdr_value_str(req, "Content-Type", type, sizeof(type)) != ESP_OK
+        || strncasecmp(type, "application/json", strlen("application/json")) != 0 || req->content_len == 0
+        || req->content_len > max_len) {
+        return NULL;
+    }
+    char *body = malloc(req->content_len);
+    if (body == NULL) {
+        return NULL;
+    }
+    size_t received = 0;
+    int timeouts = 0;
+    while (received < req->content_len) {
+        int ret = httpd_req_recv(req, body + received, req->content_len - received);
+        if (ret == HTTPD_SOCK_ERR_TIMEOUT && ++timeouts < 3) {
+            continue;
+        }
+        if (ret <= 0) {
+            free(body);
+            return NULL;
+        }
+        received += ret;
+    }
+    cJSON *json = cJSON_ParseWithLength(body, received);
+    free(body);
+    return json;
 }
 
 // Whether the request came in through the setup hotspot. The station can be connected while the hotspot is open,
@@ -82,7 +115,7 @@ static esp_err_t status_handler(httpd_req_t *req)
         // tells the page whether to offer the setup
         cJSON_AddBoolToObject(status, "via_hotspot", via_hotspot(req));
     }
-    return send_json(req, status);
+    return web_ui_send_json(req, status);
 }
 
 static esp_err_t log_handler(httpd_req_t *req)
@@ -111,7 +144,7 @@ static esp_err_t log_handler(httpd_req_t *req)
         cJSON_AddItemToArray(list, item);
     }
     free(entries);
-    return send_json(req, list);
+    return web_ui_send_json(req, list);
 }
 
 static bool require_portal(httpd_req_t *req)
@@ -119,8 +152,25 @@ static bool require_portal(httpd_req_t *req)
     if (wifi_mgr_portal_active() && via_hotspot(req)) {
         return true;
     }
-    send_error(req, "403 Forbidden", "Wi-Fi setup is only available on the setup hotspot");
+    web_ui_send_error(req, "403 Forbidden", "Wi-Fi setup is only available on the setup hotspot");
     return false;
+}
+
+// The cloud and device settings control the door (siedle/send can open it), so they need someone on site: the
+// hotspot must have been opened with the setup button, or be open because no network is configured. The hotspot
+// that opens by itself after the gateway was offline is not enough, jamming the Wi-Fi for a few minutes opens it.
+bool web_ui_require_admin(httpd_req_t *req)
+{
+    wifi_mgr_portal_t mode = wifi_mgr_portal_mode();
+    if (!via_hotspot(req) || mode == WIFI_MGR_PORTAL_OFF) {
+        web_ui_send_error(req, "403 Forbidden", "Only available on the setup hotspot");
+        return false;
+    }
+    if (mode == WIFI_MGR_PORTAL_FALLBACK) {
+        web_ui_send_error(req, "403 Forbidden", "Locked, this hotspot opened by itself. Open it with the setup button.");
+        return false;
+    }
+    return true;
 }
 
 static esp_err_t wifi_scan_handler(httpd_req_t *req)
@@ -136,7 +186,7 @@ static esp_err_t wifi_scan_handler(httpd_req_t *req)
     esp_err_t err = wifi_mgr_scan(aps, SCAN_MAX_APS, &found);
     if (err != ESP_OK) {
         free(aps);
-        return send_error(req, "503 Service Unavailable", esp_err_to_name(err));
+        return web_ui_send_error(req, "503 Service Unavailable", esp_err_to_name(err));
     }
 
     cJSON *list = cJSON_CreateArray();
@@ -148,7 +198,7 @@ static esp_err_t wifi_scan_handler(httpd_req_t *req)
         cJSON_AddItemToArray(list, item);
     }
     free(aps);
-    return send_json(req, list);
+    return web_ui_send_json(req, list);
 }
 
 static esp_err_t wifi_connect_handler(httpd_req_t *req)
@@ -156,25 +206,10 @@ static esp_err_t wifi_connect_handler(httpd_req_t *req)
     if (!require_portal(req)) {
         return ESP_OK;
     }
-    if (req->content_len == 0 || req->content_len > MAX_BODY_LEN) {
-        return send_error(req, "400 Bad Request", "invalid body");
+    cJSON *json = web_ui_recv_json(req, WEB_UI_SMALL_BODY_LEN);
+    if (json == NULL) {
+        return web_ui_send_error(req, "400 Bad Request", "invalid body");
     }
-
-    char body[MAX_BODY_LEN + 1];
-    size_t received = 0;
-    while (received < req->content_len) {
-        int ret = httpd_req_recv(req, body + received, req->content_len - received);
-        if (ret == HTTPD_SOCK_ERR_TIMEOUT) {
-            continue;
-        }
-        if (ret <= 0) {
-            return ESP_FAIL;
-        }
-        received += ret;
-    }
-    body[received] = '\0';
-
-    cJSON *json = cJSON_Parse(body);
     const cJSON *ssid = cJSON_GetObjectItemCaseSensitive(json, "ssid");
     const cJSON *password = cJSON_GetObjectItemCaseSensitive(json, "password");
     esp_err_t err = ESP_ERR_INVALID_ARG;
@@ -184,11 +219,11 @@ static esp_err_t wifi_connect_handler(httpd_req_t *req)
     cJSON_Delete(json);
 
     if (err != ESP_OK) {
-        return send_error(req, "400 Bad Request",
-                          "SSID must be 1-32 characters, the password empty or 8-64 characters");
+        return web_ui_send_error(req, "400 Bad Request",
+                                 "SSID must be 1-32 characters, the password empty or 8-64 characters");
     }
     httpd_resp_set_status(req, "202 Accepted");
-    return send_json(req, cJSON_CreateObject());
+    return web_ui_send_json(req, cJSON_CreateObject());
 }
 
 // Captive portal: send every unknown URL from hotspot clients (OS connectivity checks) to the setup page
@@ -217,8 +252,9 @@ esp_err_t web_ui_start(const web_ui_config_t *cfg)
 
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.max_open_sockets = 10;
+    config.max_uri_handlers = 16;
     config.lru_purge_enable = true; // captive portal probes open lots of connections
-    config.stack_size = 6144;
+    config.stack_size = 8192; // creating a CSR on this task takes about 4.6 KB
 
     // redirected portal probes produce lots of noise
     esp_log_level_set("httpd_uri", ESP_LOG_ERROR);
@@ -238,6 +274,7 @@ esp_err_t web_ui_start(const web_ui_config_t *cfg)
     for (size_t i = 0; i < sizeof(handlers) / sizeof(handlers[0]); i++) {
         ESP_RETURN_ON_ERROR(httpd_register_uri_handler(server, &handlers[i]), TAG, "register %s", handlers[i].uri);
     }
+    ESP_RETURN_ON_ERROR(web_ui_admin_register(server, cfg), TAG, "admin");
     ESP_RETURN_ON_ERROR(httpd_register_err_handler(server, HTTPD_404_NOT_FOUND, not_found_handler), TAG, "404");
 
     ESP_LOGI(TAG, "web UI started on port %d", config.server_port);
