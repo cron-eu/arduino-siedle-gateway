@@ -18,7 +18,8 @@ Decisions so far
 - **Web page:** served by the gateway behind the Odroid, which terminates TLS and handles the login. The gateway
   itself stays plain HTTP on the LAN.
 - **Phones outside the office:** later, through a VPN into the office network.
-- **PCB:** later, with KiCad.
+- **PCB:** later, with KiCad, in two revisions: first a carrier for the D1 Mini, then an Espressif module soldered
+  onto the board (not the bare chip), see [Plan](#plan).
 
 How the Siedle In-Home bus carries speech
 ----
@@ -121,7 +122,8 @@ ESP32-WROOM-32 module (ESP32-D0WD-V3), 4 MB flash, no PSRAM, CP2104 USB serial c
 - **Probably no BOOT button** (the board follows the MH-ET LIVE MiniKit design, which only has a reset button). The
   Wi-Fi reset and admin hotspot need a button on the interface board. For development, a push button between
   GPIO0 and GND works, as long as it isn't held during a reset.
-- **Carrier board:** the D1 Mini plugs onto the interface board.
+- **Carrier board:** the D1 Mini plugs onto the first revision of the interface board. The second revision replaces it
+  with an ESP32 module on the board.
 
 ### Bus interface
 
@@ -328,8 +330,13 @@ Plan
    and listen-only through the internal ADC with an op-amp.
 5. Listen-only with the ES8311 module (coupling capacitor, clamp diodes): hear the door in the browser.
 6. Push-to-talk and call control (answer, open door, hang up), plus the link in the Slack message.
-7. Interface PCB as a carrier board for the D1 Mini (KiCad).
-8. Later: full duplex, Home Assistant integration, VPN for phones.
+7. Interface PCB, revision 1 (KiCad): a carrier board for the D1 Mini. The board house places the ES8311 and the
+   other SMD parts (JLCPCB, for example, stocks the ES8311 as C962342); the large through-hole parts are soldered by
+   hand.
+8. Interface PCB, revision 2: an Espressif module on the board instead of the D1 Mini, once the current budget and the
+   chip are settled. U1 then delivers 3.3 V directly (R-78CK3.3-0.5), about a third less current than feeding 5 V
+   into the D1 Mini.
+9. Later: full duplex, Home Assistant integration, VPN for phones.
 
 Open questions
 ----
@@ -340,4 +347,8 @@ Open questions
   in our installation?
 - Which bus address the gateway answers with, and what happens when a real handset picks up at the same time.
 - Board details: is there a BOOT button, and a diode on the USB 5 V line?
+- The module for PCB revision 2: ESP32-WROOM-32E (the current chip, so firmware and pin plan carry over, no PSRAM) or
+  ESP32-S3-WROOM-1-N16R8 (8 MB PSRAM and USB built in, faster echo cancellation, but no DAC and a new pin plan). Full
+  duplex decides it. Either way the board needs a way to flash it (a USB serial chip or a header for the classic
+  ESP32, a USB connector for the S3), a BOOT button, and the module's antenna at the board edge.
 - Login method on the proxy: access list or single sign-on.

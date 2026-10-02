@@ -146,4 +146,5 @@ Open points
 - The current budget of our bus power supply (power supply model, number of stations, a measurement under load).
 - Real speech level and bus impedance, to judge the remaining Wi-Fi noise ([Bus-Measurements.md](Bus-Measurements.md)).
 - Feeding 3.3 V directly into the D1 Mini instead of 5 V would save about a third of the current, but conflicts
-  with plugging in USB.
+  with plugging in USB. PCB revision 2, with the ESP32 module on the board, gets the saving from a 3.3 V U1
+  (R-78CK3.3-0.5, 5–40 V in), see [Audio.md](Audio.md#plan).
