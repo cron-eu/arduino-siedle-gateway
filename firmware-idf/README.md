@@ -4,7 +4,8 @@ Siedle Gateway Firmware (ESP-IDF)
 Firmware for ESP32 / ESP32-S3 based gateways between the Siedle In-Home bus and AWS IoT. It replaces the Arduino
 firmware in [`../firmware`](../firmware), keeping its MQTT topics so the Lambda functions keep working.
 
-**Status:** phase 1. Connectivity is in place: Wi-Fi with captive portal setup, AWS IoT, web UI, OTA updates.
+**Status:** phase 1. Connectivity is in place: Wi-Fi and AWS IoT identity set up on a captive portal, web UI, OTA
+updates.
 The bus driver (phase 2) and audio come next, see [Roadmap](#roadmap).
 
 Hardware
@@ -50,17 +51,24 @@ then shows the new address, `http://siedle.local/`. Credentials are only stored 
 
 - **Changing the network:** hold the BOOT button for 3 seconds and release it. The device opens the hotspot and
   stays on its current network until you pick another one. The hotspot closes after 10 minutes without clients.
-- **Forgetting the network:** hold the BOOT button for 10 seconds. The device forgets the network and opens the
-  hotspot.
+- **Forgetting the network:** hold the BOOT button for 10 seconds. The device forgets the network and the hotspot
+  password, and opens the hotspot.
 - **Fallback:** if the configured network is unreachable for 5 minutes, the hotspot opens automatically. The
   device keeps retrying in the background and closes the hotspot once it is back online.
-- **Security:** set `ap_pass` in devcfg to protect the hotspot with WPA2. On the regular network the web UI is
-  read-only, so changing Wi-Fi always needs physical access to the hotspot or the button.
+- **Security:** set a hotspot password on the setup page (**Gateway** card) to protect the hotspot with WPA2. On
+  the regular network the web UI is read-only, so changes always need physical access to the hotspot or the
+  button. The setup endpoints only answer requests that come in through the hotspot.
 
 ### Cloud
 
-The AWS IoT identity is flashed separately from the firmware, see [`devcfg/README.md`](devcfg/README.md). The
-device connects once its clock is synchronized via NTP, because certificate validity is checked.
+The device creates its own key on first boot. Its AWS IoT certificate, endpoint and thing name are set up on the
+setup page (**Cloud** card) with the AWS IoT console, see [`docs/aws-iot.md`](docs/aws-iot.md). Since they control
+the door, they can only be changed on a hotspot opened with the BOOT button or on a device without Wi-Fi, not on
+the one that opens by itself after 5 minutes offline. The device connects once its clock is synchronized via NTP,
+because certificate validity is checked.
+
+The identity and the setup page settings are kept in the `identity` namespace of the `nvs` partition, so all
+devices run the same firmware image and OTA updates keep them.
 
 MQTT topics
 ----
@@ -95,12 +103,28 @@ Development
 ----
 
 ```bash
-# host unit tests (protocol encoding/decoding, cross-checked against lambda/siedle-lib.js)
+# host unit tests (protocol encoding/decoding cross-checked against lambda/siedle-lib.js, setup page input checks)
 cmake -S test/host -B build-host -G Ninja && cmake --build build-host && ctest --test-dir build-host
 
 # work on the web UI without hardware, with a simulated device API
-python3 tools/mock_server.py --portal          # http://localhost:8080
+python3 tools/mock_server.py --portal          # http://localhost:8080, a new device on its hotspot
+python3 tools/mock_server.py --portal manual   # hotspot opened with the BOOT button
+python3 tools/mock_server.py --portal fallback # hotspot opened by itself, cloud settings locked
 ```
+
+To swap certificates on a development board without the BOOT button and the hotspot, build with
+[`sdkconfig.dev`](sdkconfig.dev). It unlocks the cloud and gateway settings on the regular network
+(*Web UI* → *Allow changing the cloud and gateway settings from the network*):
+
+```bash
+idf.py -B build-dev -D SDKCONFIG=build-dev/sdkconfig -D SDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.dev" \
+  -p /dev/cu.usbserial-XXXX flash monitor
+```
+
+Never install such a build: anyone on its network could point it at their own AWS account and open the door. It
+warns at boot, shows a banner on the setup page and reports `"settings_from_network": true` in its status. The
+option is off in `sdkconfig.defaults`, which release builds use, and not available with secure boot or flash
+encryption.
 
 After a crash, `idf.py coredump-info` reads the core dump stored in flash.
 
@@ -116,9 +140,9 @@ Layout
 | `components/web_ui/`       | HTTP server, JSON API, `www/index.html`                                  |
 | `components/cloud/`        | AWS IoT MQTT client                                                      |
 | `components/ota/`          | HTTPS updates with rollback                                              |
-| `components/devcfg/`       | reads the per-device configuration                                       |
+| `components/identity/`     | key, CSR, certificate and settings in NVS, input checks host tested      |
 | `components/dns_server/`   | captive portal DNS, vendored from the ESP-IDF examples (CC0)             |
-| `devcfg/`                  | per-device configuration and secrets (git-ignored)                       |
+| `docs/`                    | connecting a gateway to AWS IoT                                          |
 | `test/host/`               | unit tests that run on the development machine                           |
 | `tools/`                   | development helpers                                                      |
 
