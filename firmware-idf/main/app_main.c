@@ -1,8 +1,8 @@
 /*
  * Siedle In-Home bus <-> AWS IoT gateway.
  *
- * Boot sequence: NVS -> device config -> Wi-Fi (setup hotspot if needed) -> mDNS -> cloud client -> SNTP
- * (connects the cloud once the time is valid) -> web UI -> setup button.
+ * Boot sequence: NVS -> device config -> Wi-Fi (setup hotspot if needed) -> device key (first boot) -> mDNS ->
+ * cloud client -> SNTP (connects the cloud once the time is valid) -> web UI -> setup button.
  */
 #include <inttypes.h>
 #include <sys/time.h>
@@ -15,6 +15,7 @@
 #include "esp_log.h"
 #include "esp_netif.h"
 #include "esp_netif_sntp.h"
+#include "identity.h"
 #include "mdns.h"
 #include "nvs_flash.h"
 #include "ota.h"
@@ -33,7 +34,8 @@ static esp_err_t init_nvs(void)
 {
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        ESP_LOGW(TAG, "NVS partition is full or has a newer format, erasing it");
+        ESP_LOGE(TAG, "NVS partition is full or has a newer format, erasing it. The Wi-Fi network and the device "
+                      "identity (key, AWS IoT certificate) are lost and have to be set up again.");
         ESP_ERROR_CHECK(nvs_flash_erase());
         err = nvs_flash_init();
     }
@@ -92,6 +94,7 @@ void app_main(void)
     ESP_LOGI(TAG, "%s %s", app->project_name, app->version);
 
     ESP_ERROR_CHECK(init_nvs());
+    ESP_ERROR_CHECK(identity_init());
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     ESP_ERROR_CHECK(siedle_log_init());
@@ -108,6 +111,8 @@ void app_main(void)
         .ap_password = s_devcfg.ap_password,
     };
     ESP_ERROR_CHECK(wifi_mgr_start(&wifi_cfg));
+    // only now: the hardware random number generator is a true one while Wi-Fi is running
+    ESP_ERROR_CHECK_WITHOUT_ABORT(identity_ensure_key());
     start_mdns(hostname);
 
     if (devcfg_has_cloud(&s_devcfg)) {
