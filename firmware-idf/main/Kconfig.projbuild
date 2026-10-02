@@ -11,18 +11,27 @@ menu "Siedle Gateway"
         string "NTP server"
         default "de.pool.ntp.org"
 
-    config GATEWAY_RESET_BUTTON_GPIO
-        int "Wi-Fi reset button GPIO (-1 to disable)"
+    config GATEWAY_SETUP_BUTTON_GPIO
+        int "Setup button GPIO (-1 to disable)"
         range -1 48
         default 0
         help
             Active low, the internal pull-up is enabled. GPIO0 is the BOOT button on ESP32 and ESP32-S3 dev boards.
 
-    config GATEWAY_RESET_BUTTON_HOLD_SEC
-        int "Hold the reset button for (seconds)"
-        range 2 30
-        default 5
+    config GATEWAY_SETUP_BUTTON_HOTSPOT_SEC
+        int "Hold the setup button to open the setup hotspot (seconds)"
+        range 1 30
+        default 3
         help
-            Holding the button this long forgets the Wi-Fi credentials and opens the setup hotspot.
+            Releasing the button after holding it this long opens the setup hotspot. The Wi-Fi network stays
+            configured, and the hotspot closes again once it is no longer used.
+
+    config GATEWAY_SETUP_BUTTON_RESET_SEC
+        int "Hold the setup button to forget the Wi-Fi network (seconds)"
+        range 2 60
+        default 10
+        help
+            Holding the button this long forgets the Wi-Fi credentials and opens the setup hotspot. Must be longer
+            than the hotspot hold time.
 
 endmenu

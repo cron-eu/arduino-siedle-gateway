@@ -8,7 +8,7 @@
  *   POST /api/wifi         {"ssid":..,"password":..}   (setup hotspot only)
  *
  * The Wi-Fi endpoints are only available while the setup hotspot is open, so changing the network requires
- * physical access to the device (long press of the reset button) once it is installed.
+ * physical access to the device (setup button) once it is installed.
  */
 #pragma once
 

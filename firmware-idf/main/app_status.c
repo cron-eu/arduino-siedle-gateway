@@ -97,7 +97,7 @@ cJSON *app_status_build(void)
     cJSON_AddStringToObject(wifi, "ip", w.ip);
     cJSON_AddNumberToObject(wifi, "rssi", w.rssi);
     cJSON_AddNumberToObject(wifi, "last_reason", w.last_reason);
-    cJSON_AddBoolToObject(wifi, "portal", w.portal_active);
+    cJSON_AddBoolToObject(wifi, "portal", w.portal != WIFI_MGR_PORTAL_OFF);
     cJSON_AddStringToObject(wifi, "ap_ssid", w.ap_ssid);
     cJSON_AddBoolToObject(wifi, "ap_secured", w.ap_secured);
     cJSON_AddStringToObject(wifi, "trial", trial_name(w.trial));
