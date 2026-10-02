@@ -19,7 +19,8 @@
  *
  * The setup endpoints are only available to clients of the setup hotspot, so on the regular network the UI is
  * read-only and changes need physical access to the device. The station may be connected while the hotspot is
- * open, so it is the interface a request comes in through that counts. /api/status tells the page with
+ * open, so it is the interface a request comes in through that counts. The request must also be addressed to
+ * http://192.168.4.1/ or http://<hostname>.local/, against DNS rebinding. /api/status tells the page with
  * "via_hotspot".
  *
  * The cloud and device settings control the door (siedle/send can open it), so they also need the hotspot to be
