@@ -5,8 +5,8 @@ The board that connects the ESP32 to the Siedle bus: power, data in and out, and
 [Bus-Power.md](Bus-Power.md), [Audio.md](Audio.md#hardware), [Bus-Measurements.md](Bus-Measurements.md).
 
 **Status:** schematic draft in [hardware/interface-pcb](../hardware/interface-pcb) (KiCad 10). The topology is
-complete, many component values are not: they follow from the bus measurements and the breadboard bring-up. No
-layout yet; don't order before the values are confirmed.
+complete, many component values are not: they follow from the bus measurements and the breadboard bring-up. The
+[layout](#layout) has its parts placed, nothing routed yet. Don't order before the values are confirmed.
 
 Revisions
 ----
@@ -115,8 +115,47 @@ asks for a flat, compact, 3D-printed case. Its constraints can be fixed before t
   11 × 8 mm footprint, 10 mm high).
 - **Outside access:** the bus terminal at one edge, the button and an LED reachable or visible through the case,
   the D1 Mini's USB port reachable for flashing.
-- **Board size:** aim for at most 100 × 100 mm (the cheapest PCB price class), probably about 80 × 60 mm, four M3
-  mounting holes.
+- **Board size:** 100 × 80 mm, inside the cheapest PCB price class (up to 100 × 100 mm), four M3 mounting holes.
+
+Layout
+----
+
+[hardware/interface-pcb/interface-pcb.kicad_pcb](../hardware/interface-pcb/interface-pcb.kicad_pcb): 2 layers,
+100 × 80 mm. The parts are placed by block, nothing is routed yet. The footprints carry their links to the
+schematic, so *Update PCB from Schematic* in KiCad keeps working (the DRC's schematic parity check finds no
+differences).
+
+Floorplan, seen from the top with the bus terminal on the left:
+
+| Area | Parts |
+|---|---|
+| Left edge | J1 (bus terminal, wires enter from the left), F1, TVS1 |
+| Top left | gyrator (Q1, Q2, R1–R4, C1, DZ1, D1), below it the data out stage (Q3, Q4, R20–R25) |
+| Left side, lying | C2, along the left edge |
+| Bottom, lying | C3 along the bottom edge, U1 at its end |
+| Middle | data in (U2 with dividers and references), audio send stage (U4, Q5) |
+| Top middle | ES8311 with its decoupling and the receive path, close to the D1 Mini's pins |
+| Top right | D1 Mini on its sockets, antenna at the top edge |
+| Right edge | setup button SW1 and LED D50, 5 V parts (JP1, D2, J2) |
+
+- **Heights, for the case:** the lying 2200 µF capacitors are the tallest parts at about 16 mm. The D1 Mini sits on
+  8.5 mm sockets, so its top ends up around 15 mm above the board (to be measured, the footprint has the sockets'
+  3D models but none for the module). U1 stands about 10 mm. The rest is SMD.
+- **USB:** the D1 Mini's USB port points down the board. Keep the strip below it (x 70–84 mm) free of tall parts,
+  so a cable can reach it through the case.
+- **Antenna:** a rule area keeps copper (tracks, vias, pads, the ground pour) out from under the antenna end on
+  both layers.
+- **Ground:** a GND pour on both layers. The D1 Mini's GND pins connect solidly: the socket rows leave no room for
+  thermal spokes, so solder them with a bit more heat.
+- **Net classes** (in the project file, matched on net names): *Power*, 0.5 mm tracks and 0.3 mm clearance, for
+  the bus input, the gyrator, the 5 V path, BUS, +5V and GND; *PullDown*, 0.8 mm, for the pull-down collectors
+  CARRIER_C and BIT_C; *Default*, 0.25 mm and 0.2 mm. Design rules stay inside JLCPCB's standard 2-layer process
+  (0.15 mm tracks and clearances, 0.3 mm drills).
+- **C2 and C3** use a project footprint for a capacitor lying on the board (`CP_Radial_D16.0mm_P7.50mm_Lying`):
+  the leads are bent by 90° at the body, and the courtyard covers the body.
+
+Next: route (by hand, or with Freerouting, which needs Java), tidy the silkscreen, measure the D1 Mini and check
+its footprint, then a review of the layout before any order.
 
 Assembly
 ----
