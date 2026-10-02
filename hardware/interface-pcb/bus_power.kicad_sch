@@ -4120,6 +4120,36 @@
 		)
 		(uuid "6827a02d-0c73-5ff9-9904-1fcd3d4cfb3b")
 	)
+	(label "TA"
+		(at 43.18 86.36 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "553ec853-4699-4c4f-8480-2b9df999a0d0")
+	)
+	(label "+5V_BUS"
+		(at 336.55 86.36 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "0596f433-d803-46a4-b7c1-0ecd47cf4034")
+	)
+	(label "5V_SEL"
+		(at 357.87 86.36 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "fb3533a4-867a-4ef4-a997-03bc019e963d")
+	)
 	(label "GYR_D"
 		(at 124.46 86.36 0)
 		(effects

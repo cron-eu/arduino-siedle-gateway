@@ -1891,6 +1891,26 @@
 		)
 		(uuid "39564ab0-6467-53f5-a2c8-360953340e04")
 	)
+	(label "CARRIER_C"
+		(at 91.44 219.71 90)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "6c8f1da3-6b48-4c1c-9902-2ca9bf848f51")
+	)
+	(label "BIT_C"
+		(at 231.14 219.71 90)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "2c318559-8547-42eb-84e2-8f9d28b79fe9")
+	)
 	(label "BUS_SENSE"
 		(at 93.98 111.76 0)
 		(effects
