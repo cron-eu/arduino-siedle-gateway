@@ -114,8 +114,10 @@ Hardware
 ESP32-WROOM-32 module (ESP32-D0WD-V3), 4 MB flash, no PSRAM, CP2104 USB serial chip, 5 V input with an onboard
 3.3 V regulator, D1 Mini form factor. The firmware already targets this chip and flash size.
 
-- **No PSRAM:** start with push-to-talk. Full duplex echo cancellation with ESP-SR needs an ESP32-S3, a lighter
-  echo canceller (speexdsp) may fit later.
+- **No PSRAM:** start with push-to-talk. Full duplex needs echo cancellation, and ESP-SR's
+  [audio front end](https://docs.espressif.com/projects/esp-sr/en/latest/esp32/audio_front_end/README.html), which
+  does it, needs PSRAM (Espressif gives about 1.1 MB). It runs on the classic ESP32 with PSRAM, and faster on the
+  ESP32-S3 with its vector instructions. A lighter echo canceller (speexdsp) may fit without PSRAM.
 - **Probably no BOOT button** (the board follows the MH-ET LIVE MiniKit design, which only has a reset button). The
   Wi-Fi reset and admin hotspot need a button on the interface board. For development, a push button between
   GPIO0 and GND works, as long as it isn't held during a reset.
