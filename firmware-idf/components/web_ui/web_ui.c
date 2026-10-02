@@ -8,6 +8,8 @@
 #include "esp_http_server.h"
 #include "esp_log.h"
 #include "esp_netif.h"
+#include "lwip/inet.h"
+#include "lwip/sockets.h"
 #include "siedle_log.h"
 #include "wifi_mgr.h"
 
@@ -43,6 +45,29 @@ static esp_err_t send_error(httpd_req_t *req, const char *status, const char *me
     return send_json(req, json);
 }
 
+// Whether the request came in through the setup hotspot. The station can be connected while the hotspot is open,
+// and the setup endpoints must not be reachable from the regular network.
+static bool via_hotspot(httpd_req_t *req)
+{
+    esp_netif_ip_info_t ap_ip;
+    esp_netif_t *ap = esp_netif_get_handle_from_ifkey("WIFI_AP_DEF");
+    if (ap == NULL || esp_netif_get_ip_info(ap, &ap_ip) != ESP_OK) {
+        return false;
+    }
+    struct sockaddr_storage local;
+    socklen_t len = sizeof(local);
+    if (getsockname(httpd_req_to_sockfd(req), (struct sockaddr *)&local, &len) != 0) {
+        return false;
+    }
+    if (local.ss_family == AF_INET) {
+        return ((struct sockaddr_in *)&local)->sin_addr.s_addr == ap_ip.ip.addr;
+    }
+    // the server socket is dual stack, IPv4 clients show up as ::ffff:a.b.c.d
+    const struct sockaddr_in6 *local6 = (struct sockaddr_in6 *)&local;
+    return local.ss_family == AF_INET6 && IN6_IS_ADDR_V4MAPPED(&local6->sin6_addr)
+           && local6->sin6_addr.un.u32_addr[3] == ap_ip.ip.addr;
+}
+
 static esp_err_t index_handler(httpd_req_t *req)
 {
     httpd_resp_set_type(req, "text/html; charset=utf-8");
@@ -52,7 +77,12 @@ static esp_err_t index_handler(httpd_req_t *req)
 
 static esp_err_t status_handler(httpd_req_t *req)
 {
-    return send_json(req, s_cfg.build_status());
+    cJSON *status = s_cfg.build_status();
+    if (status) {
+        // tells the page whether to offer the setup
+        cJSON_AddBoolToObject(status, "via_hotspot", via_hotspot(req));
+    }
+    return send_json(req, status);
 }
 
 static esp_err_t log_handler(httpd_req_t *req)
@@ -86,7 +116,7 @@ static esp_err_t log_handler(httpd_req_t *req)
 
 static bool require_portal(httpd_req_t *req)
 {
-    if (wifi_mgr_portal_active()) {
+    if (wifi_mgr_portal_active() && via_hotspot(req)) {
         return true;
     }
     send_error(req, "403 Forbidden", "Wi-Fi setup is only available on the setup hotspot");
@@ -161,10 +191,10 @@ static esp_err_t wifi_connect_handler(httpd_req_t *req)
     return send_json(req, cJSON_CreateObject());
 }
 
-// Captive portal: while the hotspot is open, send every unknown URL (OS connectivity checks) to the setup page
+// Captive portal: send every unknown URL from hotspot clients (OS connectivity checks) to the setup page
 static esp_err_t not_found_handler(httpd_req_t *req, httpd_err_code_t code)
 {
-    if (!wifi_mgr_portal_active()) {
+    if (!wifi_mgr_portal_active() || !via_hotspot(req)) {
         return httpd_resp_send_err(req, HTTPD_404_NOT_FOUND, "not found");
     }
 

@@ -81,6 +81,7 @@ def status():
                 "connects": 3, "published": 128, "received": 4, "dropped": 0,
             },
             "bus": {"available": False},
+            "via_hotspot": state["portal"],
         }
 
 
