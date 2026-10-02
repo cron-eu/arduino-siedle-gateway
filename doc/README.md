@@ -15,6 +15,7 @@ ESP32 gateway
 | [Bus-Measurements.md](Bus-Measurements.md) | Checklist for measuring the bus with the oscilloscope |
 | [ReverseEngineering.md](ReverseEngineering.md) | Siedle 1+n and In-Home bus: protocol, levels and findings from other projects, with links |
 | [firmware-idf/README.md](../firmware-idf/README.md) | Firmware: development setup, device setup, MQTT topics, OTA updates |
+| [firmware-idf/docs/aws-iot.md](../firmware-idf/docs/aws-iot.md) | Setting up a gateway's AWS IoT identity on its setup page, with the AWS IoT console |
 
 Arduino firmware (being replaced)
 ----
