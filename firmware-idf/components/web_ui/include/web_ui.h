@@ -7,8 +7,10 @@
  *   GET  /api/wifi/scan    available networks          (setup hotspot only)
  *   POST /api/wifi         {"ssid":..,"password":..}   (setup hotspot only)
  *
- * The Wi-Fi endpoints are only available while the setup hotspot is open, so changing the network requires
- * physical access to the device (setup button) once it is installed.
+ * The Wi-Fi endpoints are only available to clients of the setup hotspot, so changing the network requires
+ * physical access to the device (setup button) once it is installed. The station may be connected while the
+ * hotspot is open, so it is the interface a request comes in through that counts, not only whether the hotspot is
+ * open. /api/status tells the page with "via_hotspot".
  */
 #pragma once
 

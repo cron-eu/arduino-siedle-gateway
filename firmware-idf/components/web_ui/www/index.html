@@ -204,7 +204,7 @@ function renderStatus(s) {
   $("status").replaceWith(dl);
   $("host").textContent = d.hostname + ".local";
   $("footer").textContent = "Firmware " + d.version + " · ESP-IDF " + d.idf + " · " + d.chip;
-  $("wifi-hint").hidden = w.portal;
+  $("wifi-hint").hidden = w.portal && s.via_hotspot;
   updateSetup(s);
 }
 
@@ -323,12 +323,13 @@ function checkPending(s) {
 }
 
 function updateSetup(s) {
-  if (s.wifi.portal && !setupOpen) {
+  const here = s.wifi.portal && s.via_hotspot; // on the regular network the page stays read-only
+  if (here && !setupOpen) {
     setupOpen = true;
     $("setup").hidden = false;
     showStep("pick");
     scan();
-  } else if (!s.wifi.portal && setupOpen && !pending) {
+  } else if (!here && setupOpen && !pending) {
     setupOpen = false;
     $("setup").hidden = true;
   }
