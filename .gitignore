@@ -1,1 +1,4 @@
 .DS_Store
+
+# local settings written by the ESP-IDF VS Code extension
+/.vscode/settings.json

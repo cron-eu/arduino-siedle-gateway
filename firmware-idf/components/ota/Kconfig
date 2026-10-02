@@ -1,0 +1,11 @@
+menu "OTA updates"
+
+    config OTA_CONFIRM_TIMEOUT_SEC
+        int "Roll back an unconfirmed new firmware after (seconds)"
+        range 60 3600
+        default 600
+        help
+            A freshly installed firmware confirms itself once it reached the cloud. If that does not happen in
+            time, the device reboots into the previous firmware.
+
+endmenu

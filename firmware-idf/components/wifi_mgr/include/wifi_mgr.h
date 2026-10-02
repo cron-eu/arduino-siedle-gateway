@@ -1,0 +1,112 @@
+/*
+ * Wi-Fi station management with a captive portal setup hotspot.
+ *
+ * - Credentials are kept in the "wifi" NVS namespace, only after they were proven to work.
+ * - Without credentials, or when the station could not connect for CONFIG_WIFI_MGR_PORTAL_FALLBACK_SEC, the
+ *   setup hotspot ("<prefix>-XXXX") is started next to the station interface. A DNS server answers every query
+ *   with the hotspot address so phones and laptops pop up the setup page automatically.
+ * - wifi_mgr_open_portal() opens the hotspot on request (setup button) and keeps the configured network. It closes
+ *   again after CONFIG_WIFI_MGR_PORTAL_IDLE_SEC without clients.
+ * - Once the station is connected, the hotspot is shut down after CONFIG_WIFI_MGR_PORTAL_LINGER_SEC, giving the
+ *   setup page time to show the result. A hotspot opened on request only closes this way if it was used to change
+ *   the network.
+ *
+ * Other components can rely on the regular IP_EVENT_STA_GOT_IP / WIFI_EVENT_STA_DISCONNECTED events.
+ */
+#pragma once
+
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
+#include "esp_err.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct {
+    const char *hostname;    /**< DHCP hostname of the station interface */
+    const char *ap_password; /**< setup hotspot WPA2 password (8-64 chars), NULL or empty for an open hotspot */
+} wifi_mgr_config_t;
+
+typedef enum {
+    WIFI_MGR_STA_UNCONFIGURED,
+    WIFI_MGR_STA_CONNECTING,
+    WIFI_MGR_STA_CONNECTED,
+    WIFI_MGR_STA_DISCONNECTED, /**< connection lost or failed, retrying with backoff */
+} wifi_mgr_sta_state_t;
+
+/** Why the setup hotspot is open */
+typedef enum {
+    WIFI_MGR_PORTAL_OFF,
+    WIFI_MGR_PORTAL_UNCONFIGURED, /**< no network configured: first setup, or after wifi_mgr_forget() */
+    WIFI_MGR_PORTAL_MANUAL,       /**< opened with wifi_mgr_open_portal() */
+    WIFI_MGR_PORTAL_FALLBACK,     /**< opened automatically, the station was offline for too long */
+} wifi_mgr_portal_t;
+
+/** Outcome of the last wifi_mgr_connect() call */
+typedef enum {
+    WIFI_MGR_TRIAL_NONE,
+    WIFI_MGR_TRIAL_PENDING,
+    WIFI_MGR_TRIAL_OK,
+    WIFI_MGR_TRIAL_FAILED,
+} wifi_mgr_trial_t;
+
+typedef struct {
+    wifi_mgr_sta_state_t sta_state;
+    char ssid[33];        /**< configured network, empty if unconfigured */
+    char ip[16];          /**< station IPv4 address, empty if not connected */
+    int8_t rssi;          /**< dBm, 0 if not connected */
+    uint8_t last_reason;  /**< last wifi_err_reason_t of a disconnect */
+    wifi_mgr_portal_t portal;
+    char ap_ssid[33];
+    bool ap_secured;      /**< the hotspot uses a password (while open), or will use one */
+    wifi_mgr_trial_t trial;
+} wifi_mgr_status_t;
+
+typedef struct {
+    char ssid[33];
+    int8_t rssi;
+    bool secured;
+} wifi_mgr_ap_t;
+
+/** Initialize Wi-Fi (esp_netif and the default event loop must exist) and start connecting. */
+esp_err_t wifi_mgr_start(const wifi_mgr_config_t *cfg);
+
+void wifi_mgr_get_status(wifi_mgr_status_t *out);
+
+bool wifi_mgr_portal_active(void);
+
+/** Whether the setup hotspot is open, and why */
+wifi_mgr_portal_t wifi_mgr_portal_mode(void);
+
+/**
+ * Scan for networks (blocking, ~2-3 s). Results are de-duplicated by SSID and sorted by signal strength.
+ */
+esp_err_t wifi_mgr_scan(wifi_mgr_ap_t *out, size_t max, size_t *found);
+
+/**
+ * Try to connect to a network. Returns immediately, the outcome is reported via wifi_mgr_status_t.trial.
+ * The credentials are stored only after the connection succeeded, on failure the previous ones are restored.
+ */
+esp_err_t wifi_mgr_connect(const char *ssid, const char *password);
+
+/** Erase the stored credentials and open the setup hotspot, with the current hotspot password. */
+esp_err_t wifi_mgr_forget(void);
+
+/**
+ * Open the setup hotspot and stay on the configured network. The hotspot closes again after
+ * CONFIG_WIFI_MGR_PORTAL_IDLE_SEC without clients, or once a new network was set up through it.
+ */
+esp_err_t wifi_mgr_open_portal(void);
+
+/** Change the hostname, it is used from the next DHCP request on. */
+esp_err_t wifi_mgr_set_hostname(const char *hostname);
+
+/** Change the setup hotspot password (8-64 chars, NULL or empty for none), used the next time the hotspot opens. */
+esp_err_t wifi_mgr_set_ap_password(const char *password);
+
+#ifdef __cplusplus
+}
+#endif

@@ -1,0 +1,78 @@
+/*
+ * MQTT connection to AWS IoT Core (mutual TLS).
+ *
+ * Topics (prefix = CONFIG_CLOUD_TOPIC_PREFIX), the first three are unchanged from the Arduino firmware so the
+ * Lambda functions keep working:
+ *
+ *   <prefix>/received               publish   {"ts":<unix time>,"cmd":<uint32>} for every frame received
+ *   <prefix>/sent                   publish   same format, for every frame sent and acknowledged
+ *   <prefix>/send                   subscribe decimal uint32 command to put on the bus
+ *   <prefix>/<client_id>/status     publish   retained device status JSON, {"online":false} as last will
+ *   <prefix>/<client_id>/ota        subscribe {"url":"https://..."} to start a firmware update
+ *
+ * The identity (endpoint, client id, certificate, key) can be replaced at runtime, see cloud_configure().
+ */
+#pragma once
+
+#include <stdbool.h>
+#include <stdint.h>
+#include <time.h>
+
+#include "cJSON.h"
+#include "esp_err.h"
+#include "siedle_proto.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum {
+    CLOUD_BUS_RECEIVED,
+    CLOUD_BUS_SENT,
+} cloud_bus_event_t;
+
+typedef struct {
+    /** Called from the MQTT task for every command received on <prefix>/send */
+    void (*on_send_request)(siedle_cmd_t cmd);
+    /** Returns a new JSON object describing the device, published as status (ownership is transferred) */
+    cJSON *(*build_status)(void);
+} cloud_callbacks_t;
+
+typedef struct {
+    const char *uri;          /**< mqtts://<endpoint>:8883 */
+    const char *client_id;
+    const char *client_cert;  /**< PEM */
+    const char *client_key;   /**< PEM */
+} cloud_config_t;
+
+typedef struct {
+    bool configured;
+    bool connected;
+    char client_id[129];
+    char error[64];           /**< why the last connection attempt failed, empty once connected */
+    uint32_t connects;
+    uint32_t published;
+    uint32_t dropped;
+    uint32_t received;
+} cloud_status_t;
+
+/** Call once, before the other functions. */
+esp_err_t cloud_init(const cloud_callbacks_t *callbacks);
+
+/**
+ * Use this identity, replacing the current one and its connection. The strings are copied, NULL disconnects and
+ * forgets the identity. Blocks until the previous connection is closed, which can take a few seconds.
+ */
+esp_err_t cloud_configure(const cloud_config_t *cfg);
+
+/** Allow connecting, call once the system time is valid (needed to check certificate validity). */
+esp_err_t cloud_start(void);
+
+/** Queued while offline, dropped without an identity. */
+void cloud_publish_bus_event(cloud_bus_event_t event, siedle_cmd_t cmd, time_t timestamp);
+
+void cloud_get_status(cloud_status_t *out);
+
+#ifdef __cplusplus
+}
+#endif

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="270" viewBox="0 0 680 270" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <title>ESP32 current with Wi-Fi bursts versus the steady current drawn from the bus</title>
+  <rect x="0.5" y="0.5" width="679" height="269" rx="12" fill="#FFFFFF" stroke="#D3D1C7"/>
+  <g font-size="14" font-weight="500" fill="#2C2C2A">
+    <text x="60" y="38">ESP32 current at 3.3 V</text>
+    <text x="60" y="162">Current from the 28 V bus</text>
+  </g>
+  <g font-size="12" fill="#5F5E5A">
+    <text x="60" y="56">Wi-Fi bursts, peaks over 300 mA</text>
+    <text x="60" y="180">steady, about 30 mA (simulated)</text>
+  </g>
+  <g fill="none" stroke-width="2" stroke-linejoin="round">
+    <path d="M60 122 H130 V74 H138 V122 H230 V74 H236 V122 H300 V82 H330 V122 H410 V74 H418 V122 H500 V74 H506 V122 H580 V78 H600 V122 H620" stroke="#BA7517"/>
+    <path d="M60 214 H620" stroke="#888780"/>
+  </g>
+  <text x="340" y="248" font-size="12" fill="#5F5E5A" text-anchor="middle">The buffer capacitor delivers the bursts, the gyrator refills it slowly</text>
+</svg>

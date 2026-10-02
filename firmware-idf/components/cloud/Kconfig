@@ -1,0 +1,14 @@
+menu "Cloud (AWS IoT)"
+
+    config CLOUD_TOPIC_PREFIX
+        string "MQTT topic prefix"
+        default "siedle"
+        help
+            <prefix>/received, <prefix>/sent and <prefix>/send are shared with the Lambda functions.
+
+    config CLOUD_STATUS_INTERVAL_SEC
+        int "Publish the device status every (seconds)"
+        range 10 3600
+        default 60
+
+endmenu

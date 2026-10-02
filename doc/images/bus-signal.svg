@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="290" viewBox="0 0 680 290" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <title>Siedle bus voltage over time: idle DC, a data frame, speech during a call</title>
+  <rect x="0.5" y="0.5" width="679" height="289" rx="12" fill="#FFFFFF" stroke="#D3D1C7"/>
+  <g font-size="14" font-weight="500" fill="#2C2C2A" text-anchor="middle">
+    <text x="100" y="40">Idle</text>
+    <text x="255" y="40">Data frame</text>
+    <text x="515" y="40">Call</text>
+  </g>
+  <g font-size="12" fill="#5F5E5A" text-anchor="middle">
+    <text x="100" y="60">DC powers stations</text>
+    <text x="255" y="60">0 bits ~2 V, 1 bits 7–8 V</text>
+    <text x="515" y="60">speech rides on the DC</text>
+  </g>
+  <line x1="60" y1="76" x2="60" y2="232" stroke="#B4B2A9" stroke-width="1"/>
+  <line x1="60" y1="232" x2="624" y2="232" stroke="#B4B2A9" stroke-width="1"/>
+  <g font-size="12" fill="#5F5E5A" text-anchor="end">
+    <text x="52" y="94">28 V</text>
+    <text x="52" y="232">0 V</text>
+    <text x="618" y="198">4.5 V data threshold</text>
+  </g>
+  <line x1="60" y1="208" x2="620" y2="208" stroke="#888780" stroke-width="0.75" stroke-dasharray="4 3"/>
+  <g fill="none" stroke-width="2" stroke-linejoin="round">
+    <path d="M60 90 H155" stroke="#888780"/>
+    <path d="M155 90 V220 H165 V192 H175 V220 H205 V192 H215 V220 H235 V192 H245 V220 H265 V192 H295 V220 H305 V192 H315 V220 H345 V192 H355 V84 H362 V90" stroke="#7F77DD"/>
+    <path d="M362 90 H410" stroke="#888780"/>
+    <path d="M410 90 Q415 80 420 90 T430 90 T440 90 T450 90 T460 90 T470 90 T480 90 T490 90 T500 90 T510 90 T520 90 T530 90 T540 90 T550 90 T560 90 T570 90 T580 90 T590 90 T600 90 T610 90 H620" stroke="#D85A30"/>
+  </g>
+  <text x="340" y="264" font-size="12" fill="#5F5E5A" text-anchor="middle">Not to scale: a frame lasts 64 ms, speech is about 50–200 mV</text>
+</svg>

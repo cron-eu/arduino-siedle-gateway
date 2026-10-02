@@ -1,0 +1,12 @@
+# build output
+/build/
+/build-*/
+/sdkconfig
+/sdkconfig.old
+/managed_components/
+
+# machine specific settings written by the ESP-IDF VS Code extension (port, ESP-IDF install)
+/.vscode/settings.json
+
+# python bytecode (tools/)
+__pycache__/

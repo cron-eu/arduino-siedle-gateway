@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="440" viewBox="0 0 680 440" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <title>Gyrator power stage: protection, backflow diode, MOSFET with slow gate filter, current limit and two-stage output filter</title>
+  <rect x="0.5" y="0.5" width="679" height="439" rx="12" fill="#FFFFFF" stroke="#D3D1C7"/>
+
+  <g fill="none" stroke="#2C2C2A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M74 80 H100 M140 80 H205 M221 80 H466 V174"/>
+    <path d="M74 400 H646"/>
+    <rect x="100" y="73" width="40" height="14"/>
+    <path d="M96 93 L106 93 L134 67"/>
+    <path d="M170 80 V228 M170 248 V400"/>
+    <path d="M158 228 H182 M158 228 L154 223 M182 228 L186 233"/>
+    <path d="M221 71 V89"/>
+    <path d="M260 80 V105 M260 155 V295"/>
+    <rect x="252" y="105" width="16" height="50"/>
+    <path d="M247 295 H273 M247 304 H273 M260 304 V400"/>
+    <path d="M260 190 H430"/>
+    <path d="M430 172 V208"/>
+    <path d="M438 166 V214" stroke-width="2.5"/>
+    <path d="M438 174 H466 M438 206 H466 V254 M449 190 H466 V206"/>
+    <path d="M410 190 V206 M410 224 V262 M398 206 H422 M398 206 L394 201 M422 206 L426 211 M410 244 H466 M360 262 H410"/>
+    <rect x="458" y="254" width="16" height="40"/>
+    <path d="M466 294 V316 H490"/>
+    <path d="M360 246 V278" stroke-width="2.5"/>
+    <path d="M360 254 L332 236 V190 M360 270 L332 288 V316 H466"/>
+    <rect x="490" y="309" width="30" height="14"/>
+    <path d="M520 316 H565 M545 316 V340 M533 340 H557 M533 348 H557 M545 348 V400"/>
+    <rect x="565" y="309" width="30" height="14"/>
+    <path d="M595 316 H646 M615 316 V340 M603 340 H627 M603 348 H627 M615 348 V400"/>
+  </g>
+
+  <g fill="#2C2C2A">
+    <polygon points="170,228 160,248 180,248"/>
+    <polygon points="205,71 205,89 221,80"/>
+    <polygon points="410,206 401,224 419,224"/>
+    <polygon points="440,190 450,185.5 450,194.5"/>
+    <polygon points="337.3,284.7 341.4,276.8 345.0,282.3"/>
+    <circle cx="170" cy="80" r="3"/>
+    <circle cx="260" cy="80" r="3"/>
+    <circle cx="260" cy="190" r="3"/>
+    <circle cx="332" cy="190" r="3"/>
+    <circle cx="410" cy="190" r="3"/>
+    <circle cx="410" cy="244" r="3"/>
+    <circle cx="466" cy="244" r="3"/>
+    <circle cx="466" cy="316" r="3"/>
+    <circle cx="545" cy="316" r="3"/>
+    <circle cx="615" cy="316" r="3"/>
+    <circle cx="170" cy="400" r="3"/>
+    <circle cx="260" cy="400" r="3"/>
+    <circle cx="545" cy="400" r="3"/>
+    <circle cx="615" cy="400" r="3"/>
+  </g>
+  <g fill="#FFFFFF" stroke="#2C2C2A" stroke-width="1.5">
+    <circle cx="70" cy="80" r="4"/>
+    <circle cx="70" cy="400" r="4"/>
+    <circle cx="650" cy="316" r="4"/>
+    <circle cx="650" cy="400" r="4"/>
+  </g>
+
+  <g font-size="13" font-weight="500" fill="#2C2C2A">
+    <text x="120" y="62" text-anchor="middle">F1</text>
+    <text x="213" y="62" text-anchor="middle">D1</text>
+    <text x="190" y="243">TVS1</text>
+    <text x="244" y="135" text-anchor="end">R1</text>
+    <text x="244" y="304" text-anchor="end">C1</text>
+    <text x="482" y="195">Q1</text>
+    <text x="420" y="236">DZ1</text>
+    <text x="320" y="266" text-anchor="end">Q2</text>
+    <text x="482" y="279">R2</text>
+    <text x="505" y="300" text-anchor="middle">R3</text>
+    <text x="580" y="300" text-anchor="middle">R4</text>
+    <text x="529" y="352" text-anchor="end">C2</text>
+    <text x="599" y="352" text-anchor="end">C3</text>
+  </g>
+  <g font-size="12" fill="#5F5E5A">
+    <text x="70" y="62">Bus +</text>
+    <text x="70" y="426">Bus −</text>
+    <text x="650" y="300" text-anchor="middle">VOUT</text>
+    <text x="650" y="426" text-anchor="middle">GND</text>
+    <text x="276" y="72">node A</text>
+    <text x="276" y="182">gate</text>
+    <text x="561" y="337">+</text>
+    <text x="631" y="337">+</text>
+  </g>
+</svg>

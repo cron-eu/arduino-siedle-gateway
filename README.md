@@ -8,12 +8,17 @@ Abstract
 
 This repository holds the documentation and software needed to build a Slack interface to our Siedle Doorbell-System, using an Arduino MKR 1010 WiFi board and some electronics.
 
+The gateway is being migrated to ESP32 / ESP-IDF (`firmware-idf/`), which will also add audio support. Until the new firmware runs in production, the Arduino firmware stays in `firmware/`.
+
 
 Project Folder Structure
 ---
 
+* `firmware-idf/**` New firmware for ESP32 / ESP32-S3 boards (ESP-IDF, C), see [firmware-idf/README.md](firmware-idf/README.md)
 * `firmware/**` Firmware for the Arduino MKR1010 WiFi Board (C++)
-* `doc/*` Documentation Files (Markdown)
+* `lambda/**` AWS Lambda functions (Slack integration)
+* `hardware/**` Schematics (Eagle)
+* `doc/**` Documentation, see [doc/README.md](doc/README.md)
 
 
 Author
