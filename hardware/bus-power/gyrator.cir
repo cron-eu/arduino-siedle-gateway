@@ -1,0 +1,75 @@
+* Siedle bus power stage (gyrator), see doc/Bus-Power.md
+*
+* Run with: ngspice -b gyrator.cir
+*
+* Bus:  27 V behind 10 Ohm, switched on at 10 ms. At t = 9 s a 40 ms data frame pulls it to 3 V.
+* Load: buck converter + ESP32 as a constant power load that starts at 7 V (buck minimum input):
+*       0.29 W while booting, Wi-Fi adds 0.30 W once VOUT is above 14 V (the firmware waits for it).
+* The models are generic approximations, good for the behaviour, not for exact values.
+
+.model D1N4148 D(IS=4.352n N=1.906 BV=110 IBV=0.0001 RS=0.6458 CJO=7.048p VJ=0.869 M=0.03 FC=0.5 TT=3.48n)
+.model BC547B NPN(IS=2.39E-14 NF=1.008 ISE=3.545E-15 NE=1.541 BF=294.3 IKF=0.1357 VAF=63.2 NR=1.004
++ ISC=6.272E-14 NC=1.243 BR=7.946 IKR=0.1144 VAR=25.9 RB=1 IRB=1E-06 RBM=1 RE=0.4683 RC=0.85
++ CJE=1.358E-11 VJE=0.65 MJE=0.3279 TF=4.391E-10 ITF=0.1 VTF=10 XTF=1 CJC=3.728E-12 VJC=0.3997 MJC=0.2955 FC=0.5)
+* IRF540N approximated as a level 1 MOSFET (threshold 3.5 V)
+.model IRF540L1 NMOS(LEVEL=1 VTO=3.5 KP=20 LAMBDA=0.003 CGSO=1n CGDO=0.2n)
+.model DZ12 D(BV=12 IBV=1m IS=1e-14)
+* Wi-Fi start: on above 14 V, off below 8 V
+.model SWWIFI SW(VT=11 VH=3 RON=1 ROFF=1e9)
+
+* bus (DC value for the AC analysis, PWL for the transient)
+Vbus bus_raw 0 DC 27 PWL(0 0 10m 0 11m 27 9.0 27 9.00005 3 9.04 3 9.04005 27 20 27) AC 1
+Rsrc bus_raw busp 10
+
+* protection: TVS1 as its capacitance, F1 (PTC, a few Ohm) omitted
+Ctvs busp 0 1n
+D1 busp nodeA D1N4148
+
+* gyrator: slow gate filter, MOSFET source follower, gate protection, current limit
+R1 nodeA gate 1Meg
+C1 gate 0 2.2u
+M1 nodeA gate src src IRF540L1 W=1 L=1
+DZ1 src gate DZ12
+R2 src nodeS 10
+Q2 gate src nodeS BC547B
+
+* two-stage output filter
+R3 nodeS mid 15
+C2 mid 0 2200u
+R4 mid vout 18
+C3 vout 0 2200u
+
+* VOUT monitor divider for the ESP32 ADC (100 kOhm + 10 kOhm)
+Rmon vout 0 110k
+
+* load: buck converter + ESP32
+Venload enload 0 DC 1
+Vone one 0 DC 1
+Sw one wifi vout 0 SWWIFI
+Rw wifi 0 1k
+Bload vout 0 I = V(enload) * (0.29 + 0.30 * V(wifi)) / max(V(vout), 1) / (1 + exp(-(V(vout) - 7) * 8))
+Rload vout 0 1G
+
+.control
+tran 1m 9.5 0 1m uic
+echo "--- startup and steady state (source current is negative in SPICE)"
+meas tran t_wifi WHEN v(wifi)=0.5 RISE=1
+meas tran vout_steady FIND v(vout) AT=8.9
+meas tran ibus_steady FIND i(vbus) AT=8.9
+meas tran ibus_peak MIN i(vbus) FROM=0 TO=8.9
+echo "--- data frame at 9 s (positive current would flow back into the bus)"
+meas tran ibus_frame MAX i(vbus) FROM=9.001 TO=9.039
+meas tran vout_frame_min MIN v(vout) FROM=9.0 TO=9.2
+
+* small signal impedance seen by the bus, load as a resistor
+alter Venload dc=0
+alter Rload = 750
+ac dec 10 100 10k
+let zbus = abs(v(busp) / (0 - i(vbus)))
+echo "--- impedance toward the bus"
+meas ac z_300 FIND zbus AT=300
+meas ac z_1k FIND zbus AT=1k
+meas ac z_3k FIND zbus AT=3k
+quit
+.endc
+.end

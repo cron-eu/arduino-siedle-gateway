@@ -1,0 +1,114 @@
+Bus Power Stage (Gyrator)
+====
+
+How the ESP32 gateway takes its power from the Siedle bus without damping the speech of the whole building, and
+how to build it on a breadboard. Background: [Audio.md](Audio.md).
+
+**Status:** designed and simulated with generic component models ([hardware/bus-power/gyrator.cir](../hardware/bus-power/gyrator.cir)), not built yet. Bring it up on a bench supply before connecting it to the bus.
+
+Why a gyrator
+----
+
+The bus carries speech as a small AC voltage on top of its 28 V DC. A plain rectifier with a large capacitor, like
+the Arduino prototype's input, has an impedance of about 2 Ω at speech frequencies: it short-circuits the speech
+of every call in the building. The gateway also draws its current in Wi-Fi bursts. Passed on to the bus, those
+bursts become a buzz in every call.
+
+So the power stage has to draw a steady current, whatever the ESP32 does:
+
+![ESP32 current with Wi-Fi bursts versus the steady current from the bus](images/bus-current.svg)
+
+Circuit
+----
+
+![Gyrator power stage schematic](images/gyrator.svg)
+
+- **D1** keeps the stage from feeding back into the bus while a data frame pulls the bus low, and blocks reverse
+  polarity.
+- **R1 and C1** filter the gate voltage with a time constant of about 2 s. **Q1** follows that filtered voltage, so
+  its current cannot follow anything faster than the filter: not the speech on the bus and not the load bursts.
+  Seen from the bus, the stage looks like a large inductor.
+- **Q2 with R2** limits the current to about 55 mA: during startup (soft start) and if anything behind the stage
+  fails. **DZ1** protects the gate of Q1.
+- **R3, C2, R4, C3** form a two-stage filter. The capacitors deliver the Wi-Fi bursts and bridge data frames,
+  the resistors keep the bursts away from Q1.
+- **VOUT** (about 20 V) feeds a 5 V buck converter for the D1 Mini.
+
+Parts list
+----
+
+| Ref | Part | Value / type | Notes |
+|---|---|---|---|
+| F1 | Resettable fuse (PTC) | 60 V, hold ≥ 100 mA, e.g. Bourns MF-R010 | protects the building's bus from faults on our side |
+| TVS1 | TVS diode | P6KE36A, cathode to bus + | clamps surges |
+| D1 | Diode | 1N4148 (or BAT46) | |
+| R1 | Resistor | 1 MΩ | |
+| C1 | Film capacitor | 2.2 µF, ≥ 63 V (MKS / MKT) | not electrolytic: its leakage current would pull the gate voltage down |
+| Q1 | N-channel MOSFET | IRF540N (IRF520N, IRF530N work too) | 100 V, TO-220, gate threshold ≤ 4 V; small clip-on heatsink for the startup |
+| DZ1 | Zener diode | 12 V, 0.5 W (BZX55C12, BZX79C12) | cathode to the gate |
+| Q2 | NPN transistor | BC547B (or BC546B) | |
+| R2 | Resistor | 10 Ω, 0.25 W | current limit ≈ 0.55 V / 10 Ω |
+| R3 | Resistor | 15 Ω, 0.25 W | |
+| C2 | Electrolytic capacitor | 2200 µF, 35 V (50 V is better) | |
+| R4 | Resistor | 18 Ω, 0.25 W | |
+| C3 | Electrolytic capacitor | 2200 µF, 35 V (50 V is better) | |
+| U1 | 5 V buck module | Traco TSR 0.5-2450 (6.5–36 V in, 5 V / 0.5 A) | not a Mini-360 (23 V max) or MP1584 module (28 V max): too close to the bus voltage |
+| R5, R6, C4 | VOUT monitor | 100 kΩ, 10 kΩ, 100 nF | VOUT / 11 to GPIO36 (ADC1), see [firmware requirement](#firmware-requirement) |
+| | Test load | 47 Ω, 1 W | on the 5 V output, draws about 0.53 W like the ESP32 with Wi-Fi |
+
+Simulation results
+----
+
+ngspice with generic models, bus at 27 V, ESP32 modelled as 0.29 W while booting plus 0.30 W once Wi-Fi runs:
+
+| | Result |
+|---|---|
+| Startup | current limited to about 50 mA, VOUT reaches 14 V after 3.3 s |
+| Steady state | VOUT ≈ 20.3 V, about 31 mA from the bus |
+| Data frame (bus at 3 V for 40 ms) | VOUT dips by 0.17 V, about 5 µA flows back into the bus |
+| Wi-Fi bursts during a call (1.5 W for 1 ms every 20 ms) | strongest remaining tone in the 300–3400 Hz band: 0.6 µA (single filter stage: 17 µA, no filter: about 1 mA) |
+| Impedance toward the bus | about 100 kΩ at 300 Hz–1 kHz, 44 kΩ at 3 kHz (TVS1's capacitance); the old capacitor input: about 2 Ω |
+
+To rerun: `ngspice -b hardware/bus-power/gyrator.cir`.
+
+Firmware requirement
+----
+
+If the ESP32 starts Wi-Fi as soon as the buck converter runs (from 6.5 V), the stage never gets past about 7 V: at
+low input voltage the converter needs more current than the current limit allows, and the two settle into a stall.
+The simulation shows exactly that.
+
+So the firmware has to **wait with Wi-Fi until VOUT is above about 14 V**, measured through R5/R6 on GPIO36. Before
+Wi-Fi the ESP32 needs little enough power to start up from the current-limited stage. The threshold leaves margin if
+the real bus voltage turns out lower than 27 V.
+
+Bring-up
+----
+
+1. **Bench supply, no load.** 27 V, current limit about 100 mA if the supply has one. Over about 5 s VOUT rises to
+   about 22 V and the input current peaks at no more than 55 mA, then drops below 1 mA.
+2. **Short circuit.** Short VOUT for a moment: the current stays at about 55 mA. Keep it short, Q1 heats up.
+3. **Load.** Connect U1 and the 47 Ω test load **after** VOUT has settled: about 25–30 mA from the supply,
+   VOUT about 20 V. Connected from the start, the test load stalls the stage at about 7 V, as described above.
+4. **On the bus**, outside office hours. Measure the bus with the scope AC-coupled during a call, with and
+   without the stage connected: the speech level must not change. Listen for a buzz.
+5. **ESP32 from the stage.** Only with the firmware that waits for 14 V. Until then, connect the D1 Mini after
+   VOUT has settled, or power it over USB.
+
+Safety
+----
+
+- The bus is a safety extra-low voltage, but the whole building's intercom depends on it. F1 and the current
+  limit protect it from mistakes on our side; still, don't short it.
+- C2 and C3 hold about 0.5 J each. Discharge them through a resistor before rewiring.
+- While the stage is connected to the bus, its ground is the bus minus. A laptop on the D1 Mini's USB port ties
+  the bus to the laptop's ground. Do the first tests on the bench supply, and on the bus run the ESP32 without
+  USB or through a USB isolator.
+
+Open points
+----
+
+- The current budget of the Siedle bus power supply (system manual, plus a measurement under load).
+- Real speech level and bus impedance, to judge the remaining Wi-Fi noise ([Bus-Measurements.md](Bus-Measurements.md)).
+- Feeding 3.3 V directly into the D1 Mini instead of 5 V would save about a third of the current, but conflicts
+  with plugging in USB.
