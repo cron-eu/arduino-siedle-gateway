@@ -11,6 +11,7 @@ checklist for one measuring session.
 | Audio level, DC level and bandwidth during a call | codec input gain, coupling capacitor, transformer       |
 | Whether audio is present *before* off-hook         | if "listen before answering" is possible at all         |
 | How the bus behaves while the audio path is open  | how much current our device may draw and modulate       |
+| Voltage drop under load, longest low time         | current budget and buffer of the power stage            |
 
 Safety first
 ----
@@ -50,6 +51,7 @@ Trigger, one after the other: a door ring, the door opener button on an indoor s
 - [ ] Low level voltage during a 0 bit, high level during a 1 bit inside the frame
 - [ ] Bit time: cursors across 10 bits, divided by 10
 - [ ] Rise and fall time: zoom into one edge (*Measure* → Rise/Fall time)
+- [ ] Longest continuous low time inside a frame (cursors): the [power stage](Bus-Power.md) has to bridge it
 - [ ] **Acknowledge:** the old firmware expects the bus master to raise the voltage above ~12 V within 3 bit times
   after a frame. Capture 20 ms after the frame end (trigger as above, set the trigger position to the left edge).
 
@@ -70,7 +72,16 @@ Trigger, one after the other: a door ring, the door opener button on an indoor s
    AC-coupled:
    - [ ] Is there any audio on the bus before pick-up? (yes/no, Vpp)
 
-### 4. Call sequence
+### 4. Power budget
+
+The gateway will draw about 30 mA from the bus ([Bus-Power.md](Bus-Power.md)).
+
+- [ ] Current of the old Arduino gateway, which is already powered from the bus (multimeter in series with its bus
+  connection)
+- [ ] Bus voltage with and without a load: outside a call, put a 1 kΩ / 2 W resistor across the bus for a few
+  seconds (about 28 mA) and measure the DC voltage with CH1 or a multimeter
+
+### 5. Call sequence
 
 Optional, the old gateway logs the frames anyway: note which frames show up in `siedle/received` for a complete
 call (ring → off-hook → door open → on-hook) and how much time passes between them.
