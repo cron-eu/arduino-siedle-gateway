@@ -13,7 +13,8 @@ Decisions so far
 
 - **Board:** AZ-Delivery ESP32 D1 Mini (classic ESP32, 4 MB flash, no PSRAM).
 - **Power:** from the bus through a gyrator, see [Bus-Power.md](Bus-Power.md). An external 5 V supply is the fallback.
-- **Audio:** ES8311 codec, transformer coupling to the bus, push-to-talk first.
+- **Audio:** ES8311 codec for both directions, a coupling capacitor to receive, a transistor current sink to send,
+  push-to-talk first.
 - **Web page:** served by the gateway behind the Odroid, which terminates TLS and handles the login. The gateway
   itself stays plain HTTP on the LAN.
 - **Phones outside the office:** later, through a VPN into the office network.
@@ -127,7 +128,7 @@ flowchart LR
     bus["Siedle bus (Ta/Tb)"]
     esp["ESP32 D1 Mini"]
     bus -->|"data in"| cmp["Comparator"] --> esp
-    bus <-->|"speech"| tr["Capacitor + transformer"] <--> hyb["Hybrid + ES8311 codec"] <--> esp
+    bus <-->|"speech"| fe["Coupling + current sink"] <--> codec["ES8311 codec"] <--> esp
     bus -->|"power"| pwr["Gyrator + 5 V buck"] --> esp
     bus ---|"data out"| pd["Pull-down stage"] --- esp
 ```
@@ -137,15 +138,70 @@ flowchart LR
   A second comparator at about 12 V detects the end of a telegram, when the bus returns to idle. The Arduino
   firmware checks that with the ADC and calls it "acknowledged".
 - **Data out:** the existing transistor stage that pulls the bus down.
-- **Speech:** a film capacitor blocks the DC, an op-amp hybrid splits send and receive, and an ES8311 codec
-  digitizes (ADC) and produces (DAC) the audio on I2S. To receive, the speech (about 50–200 mV) is amplified into the
-  codec's input range. To send, a transistor current sink modulated by the codec output is the likely way, as the
-  [Comelit Simplebus projects](https://github.com/vvigilante/comelit-simplebus1) do on their 2-wire bus. A small
-  600 Ω audio transformer remains an option for galvanic isolation.
+- **Speech:** see [Audio front end](#audio-front-end).
 - **Power:** [Bus-Power.md](Bus-Power.md).
 - **Protection:** PTC fuse and TVS diode at the bus terminals.
 
 This is a concept. Component values follow from the measurements.
+
+### Audio front end
+
+The ES8311 is a codec: an ADC and a DAC in one chip, both running at the same time on one I2S connection (one data
+line per direction, shared clocks). Key figures from its
+[datasheet](https://dl.espressif.com/dl/schematics/Audio_ES8311.pdf), at 3.3 V:
+
+| | ES8311 |
+|---|---|
+| Converters | delta-sigma ADC and DAC, 24 bit, 8–96 kHz |
+| ADC | 100 dB SNR, full scale 1 Vrms, input impedance 6 kΩ, amplifier (PGA) 0–30 dB in 3 dB steps, automatic level control |
+| DAC | 110 dB SNR, full scale 1 Vrms, differential output |
+| Clocks | master clock from the MCLK pin or from the I2S bit clock |
+| Supply | 1.8–3.3 V, about 8 mA |
+
+**Receive**
+
+- A film capacitor (100 nF, at least 100 V) blocks the bus's DC and passes the speech. With the resistors it forms a
+  high-pass filter around 150 Hz.
+- A 4.7 kΩ series resistor and two clamp diodes to the codec's supply rails catch the ~26 V steps the bus makes at
+  every telegram. The firmware mutes the audio during telegrams anyway.
+- No extra amplifier: the resistor and the 6 kΩ input divide the speech by about 0.56. Loud speech (300 mV)
+  arrives at about 170 mV, quiet speech (50 mV) still ends up about 65 dB above the codec's noise floor. The PGA and
+  its automatic level control set the gain.
+- The signal goes to MIC1P, with MIC1N connected to ground through a capacitor (single-ended use).
+
+**Sampling:** 16 kHz, 16 bit. The delta-sigma ADC oversamples internally, and its digital filter passes up to
+0.42 × the sample rate and suppresses everything from 0.58 × by 70 dB. At 16 kHz that keeps speech up to about
+6.7 kHz, and a simple RC filter in front is enough to keep out radio frequencies.
+
+**Send**
+
+- A transistor current sink between the bus wires: the current through it follows the DAC voltage divided by its
+  emitter resistor. As a current source it has a high impedance and does not damp the speech of others. The
+  [Comelit Simplebus projects](https://github.com/vvigilante/comelit-simplebus1) send this way on their 2-wire bus.
+- The bus turns the current change into speech voltage through its own impedance. For 200 mV at an assumed
+  500 Ω that is 0.4 mA, so about 0.4 V from the DAC with a 1 kΩ emitter resistor. The bus impedance comes from the
+  measurement, so these values are provisional.
+- The speech rides on a small DC bias of 2–3 mA. It is only switched on during a call and ramped up slowly to avoid
+  a click.
+- A 600 Ω audio transformer remains an option if the gateway ever needs galvanic isolation from the bus.
+
+**Echo:** the gateway hears its own sending at full strength. Push-to-talk mutes the receive direction while
+sending. Full duplex later needs subtraction: an analog hybrid, or echo cancellation in the firmware, which knows
+exactly what it sent.
+
+**The ESP32's own ADC and DAC** exist on the classic ESP32 only, the S3 has no DAC:
+
+| | ES8311 | ESP32 internal |
+|---|---|---|
+| Send | 24 bit, 110 dB SNR | 8 bit, about 50 dB at best: hiss in quiet passages |
+| Receive | 100 dB SNR, gain built in | 12 bit, effectively about 9–10 bits and noisy |
+| 50–200 mV of speech | goes straight in | needs an op-amp to use the ADC's ~3 V range |
+| Filters | none extra | anti-alias filter before the ADC, smoothing filter after the DAC |
+| Both directions at once | yes | no: on the classic ESP32 both streaming drivers need the same internal I2S unit |
+
+So the ES8311 is for the real thing and the internal converters are for quick experiments: the DAC's cosine
+generator can feed a test tone into the current sink (does it come out of the door loudspeaker?), and the ADC with
+an op-amp can answer "do we hear the door at all?".
 
 ### Draft pin plan
 
@@ -157,13 +213,12 @@ This is a concept. Component values follow from the measurements.
 | Data out, carrier | 16, 17 | free on WROOM modules, no boot role |
 | Codec control (I2C SDA, SCL) | 21, 22 | the D1 Mini's usual I2C pins |
 | Codec audio (I2S BCLK, WS, DOUT, DIN) | 26, 25, 27, 32 | no boot role |
-| Codec MCLK, if needed | 0 | only GPIO 0, 1 or 3 can output it on the classic ESP32 |
 | Wi-Fi / admin button | 33 | internal pull-up, no boot role |
 | Status LED | 2 | the board's blue LED |
 
 Constraints behind it: GPIO 34–39 are input-only, only ADC1 works while Wi-Fi runs, and the strapping pins (0, 2, 5,
-12, 15) must not disturb booting, GPIO 12 in particular has to be low at boot. Whether the ES8311 can run off the
-I2S bit clock instead of MCLK, freeing GPIO0, still has to be checked in its driver.
+12, 15) must not disturb booting, GPIO 12 in particular has to be low at boot. The ES8311 takes its master clock
+from the I2S bit clock, so no MCLK pin is needed and GPIO0 stays free.
 
 Firmware
 ----
@@ -267,12 +322,12 @@ Plan
 2. Build the power stage on a breadboard ([Bus-Power.md](Bus-Power.md)).
 3. Software spike: call page and WebSocket audio on the dev board with a test tone and a loopback instead of the
    bus, served through the Odroid. Proves the HTTPS microphone path, the latency and the protocol.
-4. Listen-only audio front end on the breadboard (amplifier, ES8311 module): hear the door in the browser. An
-   even quicker first test is the ESP32's own ADC at 8 kHz, as the Comelit Simplebus 1 project does, though with a
-   different pin plan.
-5. Push-to-talk and call control (answer, open door, hang up), plus the link in the Slack message.
-6. Interface PCB as a carrier board for the D1 Mini (KiCad).
-7. Later: full duplex, Home Assistant integration, VPN for phones.
+4. Audio experiments without a codec: a test tone from the ESP32 DAC's cosine generator through the current sink,
+   and listen-only through the internal ADC with an op-amp.
+5. Listen-only with the ES8311 module (coupling capacitor, clamp diodes): hear the door in the browser.
+6. Push-to-talk and call control (answer, open door, hang up), plus the link in the Slack message.
+7. Interface PCB as a carrier board for the D1 Mini (KiCad).
+8. Later: full duplex, Home Assistant integration, VPN for phones.
 
 Open questions
 ----
@@ -282,7 +337,5 @@ Open questions
 - Our door ring arrives as signal 2, while others publish INCOMING_RING as 12 (`110001`): which call types exist
   in our installation?
 - Which bus address the gateway answers with, and what happens when a real handset picks up at the same time.
-- The current budget of the bus power supply.
 - Board details: is there a BOOT button, and a diode on the USB 5 V line?
-- Can the ES8311 run off the I2S bit clock, or does it need MCLK on GPIO0?
 - Login method on the proxy: access list or single sign-on.
