@@ -58,7 +58,7 @@ Parts list
 | C2 | Electrolytic capacitor | 2200 µF, 50 V | VOUT reaches about 28 V without load while the bus rings |
 | R4 | Resistor | 18 Ω, 0.25 W | |
 | C3 | Electrolytic capacitor | 2200 µF, 50 V | |
-| U1 | 5 V buck module | Traco TSR 0.5-2450 (6.5–36 V in, 5 V / 0.5 A) | not a Mini-360 (23 V max) or MP1584 module (28 V max): too close to the bus voltage |
+| U1 | 5 V buck module | Recom R-78CK5.0-0.5 (6.5–40 V in, 5 V / 0.5 A, SIP-3 with the 7805 pinout) | not a Traco TSR 0.5-2450 (32 V max), MP1584 module (28 V max) or Mini-360 (23 V max): too close to the bus voltage |
 | R5, R6, C4 | VOUT monitor | 100 kΩ, 10 kΩ, 100 nF | VOUT / 11 to GPIO36 (ADC1), see [firmware requirement](#firmware-requirement) |
 | | Test load | 47 Ω, 1 W | on the 5 V output, draws about 0.53 W like the ESP32 with Wi-Fi |
 
@@ -108,6 +108,8 @@ Bring-up
 2. **Short circuit.** Short VOUT for a moment: the current stays at about 55 mA. Keep it short, Q1 heats up.
 3. **Load.** Connect U1 and the 47 Ω test load **after** VOUT has settled: about 25–30 mA from the supply,
    VOUT about 20 V. Connected from the start, the test load stalls the stage at about 7 V, as described above.
+   Plug U1 in right next to C3: Recom asks for an electrolytic directly at the input when the converter is
+   plugged in live above 18 V.
 4. **On the bus**, outside office hours. Measure the bus with the scope AC-coupled during a call, with and
    without the stage connected: the speech level must not change. Listen for a buzz.
 5. **ESP32 from the stage.** Only with the firmware that waits for 14 V. Until then, connect the D1 Mini after
