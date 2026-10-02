@@ -37,7 +37,7 @@ Captures
 
 CH1 DC-coupled, 5 V/div, 1 ms/div, *Measure* → Vavg and Vpp.
 
-- [ ] Idle DC voltage, and the ripple/noise in Vpp
+- [ ] Idle DC voltage, and the ripple/noise in Vpp (expected: 26–29 V, up to 32 V while ringing)
 - [ ] Screenshot
 
 ### 2. Data frame
@@ -48,7 +48,7 @@ the idle voltage**, mode *Single*. Memory depth *Auto* or 12 Mpts.
 Trigger, one after the other: a door ring, the door opener button on an indoor station, the light button.
 
 - [ ] Screenshot plus CSV of each frame
-- [ ] Low level voltage during a 0 bit, high level during a 1 bit inside the frame
+- [ ] Low level voltage during a 0 bit, high level during a 1 bit inside the frame (expected: about 2 V and 7–8 V)
 - [ ] Bit time: cursors across 10 bits, divided by 10
 - [ ] Rise and fall time: zoom into one edge (*Measure* → Rise/Fall time)
 - [ ] Longest continuous low time inside a frame (cursors): the [power stage](Bus-Power.md) has to bridge it
@@ -61,7 +61,7 @@ Trigger, one after the other: a door ring, the door opener button on an indoor s
 2. During the call, CH1 **DC-coupled**, 5 V/div: does the bus voltage change once the audio path is open?
    - [ ] DC level during the call compared to idle
 3. CH1 **AC-coupled**, 20–50 mV/div, 1 ms/div, *Auto* trigger:
-   - [ ] Vpp while someone talks at the door (speech, a whistle, clapping)
+   - [ ] Vpp while someone talks at the door (speech, a whistle, clapping; others report 50–200 mV)
    - [ ] Vpp while it is silent (noise floor)
    - [ ] Vpp while someone talks into the indoor handset (the other direction, as seen from our connection point)
    - [ ] CSV of about 1 s of speech: 100 ms/div with memory depth 1.2 Mpts gives 1 MSa/s, plenty for audio and
@@ -76,6 +76,8 @@ Trigger, one after the other: a door ring, the door opener button on an indoor s
 
 The gateway will draw about 30 mA from the bus ([Bus-Power.md](Bus-Power.md)).
 
+- [ ] Model of the bus power supply (label on the DIN rail unit, e.g. BNG 650 or BVNG 650) and the number of indoor
+  stations in the building
 - [ ] Current of the old Arduino gateway, which is already powered from the bus (multimeter in series with its bus
   connection)
 - [ ] Bus voltage with and without a load: outside a call, put a 1 kΩ / 2 W resistor across the bus for a few
