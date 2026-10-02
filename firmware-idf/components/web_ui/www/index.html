@@ -43,11 +43,22 @@ button:disabled{opacity:.6;cursor:default}
 label{display:block;margin:0 0 12px}
 label>span{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
 .hint{display:block;font-size:12px;color:var(--muted);margin-top:4px}
-input[type=text],input[type=password]{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg)}
-input[readonly]{color:var(--muted)}
-input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+input[type=text],input[type=password],textarea{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg)}
+textarea{font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;resize:vertical}
+input[type=file]{display:block;max-width:100%;font-size:13px;margin-bottom:8px}
+input[readonly],textarea[readonly]{color:var(--muted)}
+input:focus-visible,button:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .check{display:flex;align-items:center;gap:8px;font-size:14px}
 .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.field{margin:0 0 12px}
+.field>.label{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
+.field textarea{margin-top:8px}
+.info{margin-bottom:16px}
+.mono{font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--muted)}
+button.danger{color:var(--err)}
+details{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
+summary{cursor:pointer;color:var(--muted);font-size:14px}
+details p{margin:8px 0 12px}
 .notice{border-radius:10px;padding:12px 14px;margin:0 0 12px;background:var(--chip);border-left:4px solid var(--accent)}
 .notice.ok{border-left-color:var(--ok)}.notice.err{border-left-color:var(--err)}
 .notice p{margin:0}.notice p+p{margin-top:6px}
@@ -98,6 +109,60 @@ input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline
     </form>
   </section>
 
+  <section id="cloud" class="card" aria-labelledby="cloud-title" hidden>
+    <h2 id="cloud-title">Cloud (AWS IoT)</h2>
+    <div id="cloud-notice" class="notice" role="status" aria-live="polite" hidden></div>
+    <p id="cloud-locked" class="muted small">The cloud and gateway settings are locked because this hotspot opened by itself while the gateway was offline. To unlock them, hold the gateway's BOOT button for 3 seconds.</p>
+    <form id="cloud-form" autocomplete="off" hidden>
+      <dl class="info">
+        <dt>Connection</dt><dd id="cloud-connection">&ndash;</dd>
+        <dt>Certificate</dt><dd id="cloud-cert">&ndash;</dd>
+        <dt>Device key</dt><dd id="cloud-key">&ndash;</dd>
+      </dl>
+      <label><span>Endpoint</span><input id="endpoint" type="text" maxlength="253" autocapitalize="none" spellcheck="false" placeholder="xxxxxxxxxxxxxx-ats.iot.eu-central-1.amazonaws.com" aria-describedby="endpoint-hint"><small id="endpoint-hint" class="hint">AWS IoT console, Settings, Device data endpoint</small></label>
+      <label><span>Thing name</span><input id="thing" type="text" maxlength="128" autocapitalize="none" spellcheck="false" placeholder="SiedleGateway" aria-describedby="thing-hint"><small id="thing-hint" class="hint">Letters, digits, - _ and :, also the MQTT client ID</small></label>
+      <div class="field">
+        <span class="label">Certificate signing request</span>
+        <div class="actions">
+          <button id="csr-get" class="secondary" type="button">Download CSR</button>
+        </div>
+        <div id="csr-box" hidden>
+          <textarea id="csr-text" rows="8" readonly aria-label="Certificate signing request"></textarea>
+          <small class="hint">If the download didn't start, open http://192.168.4.1/ in your browser, or copy this text into a file named <span id="csr-name">thing.csr</span>.</small>
+        </div>
+        <small class="hint">Create the certificate from it in AWS IoT, the key stays on the gateway.</small>
+      </div>
+      <div class="field">
+        <span class="label">Certificate</span>
+        <input id="cert-file" type="file" accept=".crt,.pem,.cer,.txt" aria-label="Certificate file">
+        <textarea id="cert-text" rows="5" spellcheck="false" placeholder="&hellip; or paste it: -----BEGIN CERTIFICATE-----" aria-label="Certificate" aria-describedby="cert-hint"></textarea>
+        <small id="cert-hint" class="hint">The device certificate from AWS IoT (&hellip;-certificate.pem.crt). Leave empty to keep the current one.</small>
+      </div>
+      <div class="actions">
+        <button id="cloud-save" type="submit">Save</button>
+      </div>
+      <details>
+        <summary>Device key</summary>
+        <p class="small muted">The gateway created its key itself, it never leaves the device. A new key makes the current certificate useless: AWS IoT then needs a certificate for the new CSR.</p>
+        <button id="new-key" class="secondary danger" type="button">Create a new key&hellip;</button>
+      </details>
+    </form>
+  </section>
+
+  <section id="gateway" class="card" aria-labelledby="gateway-title" hidden>
+    <h2 id="gateway-title">Gateway</h2>
+    <div id="gateway-notice" class="notice" role="status" aria-live="polite" hidden></div>
+    <form id="gateway-form" autocomplete="off">
+      <label><span>Name</span><input id="hostname" type="text" maxlength="63" autocapitalize="none" spellcheck="false" aria-describedby="hostname-hint"><small id="hostname-hint" class="hint">The web UI is at http://&lt;name&gt;.local/ on your network. Letters, digits and hyphens, empty for the default.</small></label>
+      <label><span>Hotspot password</span><input id="ap-password" type="password" minlength="8" maxlength="63" autocapitalize="none" spellcheck="false" aria-describedby="ap-password-hint"><small id="ap-password-hint" class="hint"></small></label>
+      <label class="check"><input id="show-ap-password" type="checkbox"> Show password</label>
+      <div class="actions">
+        <button id="gateway-save" type="submit">Save</button>
+        <button id="ap-password-remove" class="link" type="button" hidden>Remove the hotspot password</button>
+      </div>
+    </form>
+  </section>
+
   <section class="card" aria-labelledby="status-title">
     <h2 id="status-title">Status</h2>
     <dl id="status"><dt>Loading&hellip;</dt><dd></dd></dl>
@@ -109,7 +174,7 @@ input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline
     <p id="log-empty" class="muted small">No bus events yet.</p>
   </section>
 
-  <p id="wifi-hint" class="muted small" hidden>To move the gateway to another Wi-Fi network, hold its BOOT button for 3 seconds and join its setup hotspot. The gateway stays on the current network until you pick another one.</p>
+  <p id="wifi-hint" class="muted small" hidden>To change the Wi-Fi network or the cloud settings, hold the gateway's BOOT button for 3 seconds and join its setup hotspot. The gateway stays on its current network meanwhile.</p>
 </main>
 <footer id="footer"></footer>
 
@@ -133,12 +198,17 @@ async function api(path, options = {}) {
   const timer = setTimeout(() => ctrl.abort(), options.timeout || 8000);
   try {
     const res = await fetch(path, Object.assign({ cache: "no-store" }, options, { signal: ctrl.signal }));
+    if (res.ok && options.text) return await res.text();
     const body = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(body.error || "HTTP " + res.status);
     return body;
   } finally {
     clearTimeout(timer);
   }
+}
+
+function postJSON(path, body, timeout) {
+  return api(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), timeout });
 }
 
 function duration(s) {
@@ -227,8 +297,7 @@ function renderLog(entries) {
 
 /* ---- Wi-Fi setup ----------------------------------------------------------------------------------------- */
 
-function notice(kind, ...content) {
-  const box = $("setup-notice");
+function showNotice(box, kind, ...content) {
   box.className = "notice" + (kind ? " " + kind : "");
   box.replaceChildren(...content.map(c => {
     if (typeof c !== "string") return c;
@@ -236,6 +305,14 @@ function notice(kind, ...content) {
   }));
   box.hidden = content.length === 0;
 }
+
+function busy(text) {
+  const p = el("p", null, text);
+  p.prepend(spinner());
+  return p;
+}
+
+const notice = (kind, ...content) => showNotice($("setup-notice"), kind, ...content);
 
 function showStep(step) {
   $("step-pick").hidden = step !== "pick";
@@ -324,6 +401,7 @@ function checkPending(s) {
 
 function updateSetup(s) {
   const here = s.wifi.portal && s.via_hotspot; // on the regular network the page stays read-only
+  updateSettings(s, here);
   if (here && !setupOpen) {
     setupOpen = true;
     $("setup").hidden = false;
@@ -361,6 +439,195 @@ $("step-credentials").addEventListener("submit", async ev => {
     $("connect").disabled = false;
   }
 });
+
+/* ---- cloud and gateway settings -------------------------------------------------------------------------- */
+
+const THING_NAME = /^[A-Za-z0-9_:-]{1,128}$/;
+const CERT_MAX = 7000; // the gateway takes 8 KB of JSON at most, a certificate is 1.2-2 KB
+const CERT_TOO_LARGE = "That's too large for a certificate. Use only the device certificate from AWS IoT.";
+const cloudNotice = (kind, ...content) => showNotice($("cloud-notice"), kind, ...content);
+const gatewayNotice = (kind, ...content) => showNotice($("gateway-notice"), kind, ...content);
+let settingsOpen = false;
+
+function setDd(id, state, ...content) {
+  const dd = $(id);
+  dd.replaceChildren(...content);
+  if (state) dd.prepend(el("span", "dot " + state));
+}
+
+// Only the hotspot opened with the BOOT button, or the one of a gateway without Wi-Fi, unlocks these settings
+function updateSettings(s, here) {
+  const unlocked = here && s.wifi.portal_mode !== "fallback";
+  $("cloud").hidden = !here;
+  $("cloud-locked").hidden = unlocked;
+  $("cloud-form").hidden = !unlocked;
+  $("gateway").hidden = !unlocked;
+  if (unlocked && !settingsOpen) {
+    settingsOpen = true;
+    loadSettings();
+  } else if (!unlocked) {
+    settingsOpen = false;
+  }
+  if (unlocked) renderConnection(s);
+}
+
+async function loadSettings() {
+  try {
+    const [cloud, device] = await Promise.all([api("/api/cloud"), api("/api/device")]);
+    renderCloud(cloud);
+    renderGateway(device);
+  } catch (e) {
+    cloudNotice("err", "Loading the settings failed: " + e.message);
+  }
+}
+
+function renderConnection(s) {
+  const c = s.cloud;
+  if (c.connected) setDd("cloud-connection", "ok", "Connected as " + c.client_id);
+  else if (!c.configured) setDd("cloud-connection", "warn", "Not set up yet");
+  else if (s.wifi.state !== "connected") setDd("cloud-connection", "warn", "Connects once the gateway is on Wi-Fi");
+  else if (c.error) setDd("cloud-connection", "err", c.error);
+  else if (!s.device.time_synced) setDd("cloud-connection", "warn", "Waiting for the clock");
+  else setDd("cloud-connection", "warn", "Connecting…");
+}
+
+// "OU=Amazon Web Services, O=Amazon.com Inc., ..." -> "Amazon Web Services"
+function dnName(dn) {
+  for (const key of ["CN", "OU", "O"]) {
+    const match = new RegExp("(?:^|, )" + key + "=([^,]+)").exec(dn);
+    if (match) return match[1];
+  }
+  return dn;
+}
+
+function renderCloud(doc) {
+  $("endpoint").value = doc.endpoint;
+  $("thing").value = doc.thing_name;
+  const cert = doc.certificate;
+  if (cert) {
+    const until = new Date(cert.not_after);
+    const expired = until < new Date();
+    const date = until.toLocaleDateString(undefined, { timeZone: "UTC" });
+    setDd("cloud-cert", expired ? "err" : "ok", cert.subject + " · " + (expired ? "expired on " : "valid until ") + date,
+          el("div", "muted small", "Issued by " + dnName(cert.issuer)), el("div", "mono", "ID " + cert.fingerprint));
+  } else {
+    setDd("cloud-cert", "warn", "None yet");
+  }
+  setDd("cloud-key", doc.key ? "ok" : "warn", doc.key ? "EC P-256, created on the gateway" : "Not created yet");
+}
+
+$("csr-get").addEventListener("click", async () => {
+  const thing = $("thing").value.trim();
+  if (!THING_NAME.test(thing)) {
+    cloudNotice("err", "Enter the thing name first.");
+    $("thing").focus();
+    return;
+  }
+  $("csr-get").disabled = true;
+  try {
+    // thing names need no URL encoding, and the gateway doesn't decode
+    const pem = await api("/api/cloud/csr?thing_name=" + thing, { text: true, timeout: 15000 });
+    $("csr-text").value = pem;
+    $("csr-name").textContent = thing + ".csr";
+    $("csr-box").hidden = false;
+    const link = el("a");
+    link.href = URL.createObjectURL(new Blob([pem], { type: "application/pkcs10" }));
+    link.download = thing + ".csr";
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(link.href), 10000);
+    cloudNotice(null);
+  } catch (e) {
+    cloudNotice("err", "Creating the CSR failed: " + e.message);
+  } finally {
+    $("csr-get").disabled = false;
+  }
+});
+
+$("cert-file").addEventListener("change", async ev => {
+  const file = ev.target.files[0];
+  if (!file) return;
+  if (file.size > CERT_MAX) {
+    cloudNotice("err", CERT_TOO_LARGE);
+    return;
+  }
+  $("cert-text").value = await file.text();
+});
+
+$("cloud-form").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const body = { endpoint: $("endpoint").value.trim(), thing_name: $("thing").value.trim() };
+  const cert = $("cert-text").value.trim();
+  if (cert.length > CERT_MAX) {
+    cloudNotice("err", CERT_TOO_LARGE);
+    return;
+  }
+  if (cert) body.certificate = cert;
+  $("cloud-save").disabled = true;
+  cloudNotice("", busy(cert ? "Checking the certificate…" : "Saving…"));
+  try {
+    renderCloud(await postJSON("/api/cloud", body, 20000));
+    $("cert-text").value = "";
+    $("cert-file").value = "";
+    cloudNotice("ok", cert ? "Saved. The gateway connects to AWS IoT with the new certificate, see Connection above." : "Saved.");
+  } catch (e) {
+    cloudNotice("err", e.message);
+  } finally {
+    $("cloud-save").disabled = false;
+  }
+});
+
+$("new-key").addEventListener("click", async () => {
+  if (!confirm("Create a new device key?\n\nThe current certificate stops working right away. AWS IoT then needs a new certificate for the new CSR.")) return;
+  $("new-key").disabled = true;
+  cloudNotice("", busy("Creating the key…"));
+  try {
+    renderCloud(await postJSON("/api/cloud/key", {}, 20000));
+    $("csr-box").hidden = true;
+    cloudNotice("ok", "New key created. Download the new CSR and create a certificate for it in AWS IoT.");
+  } catch (e) {
+    cloudNotice("err", e.message);
+  } finally {
+    $("new-key").disabled = false;
+  }
+});
+
+function renderGateway(doc) {
+  $("hostname").value = doc.hostname;
+  $("ap-password").value = "";
+  $("ap-password-hint").textContent = doc.ap_password
+    ? "A password is set, leave empty to keep it. A new one applies the next time the hotspot opens."
+    : "The hotspot is open. At least 8 characters, applies the next time the hotspot opens.";
+  $("ap-password-remove").hidden = !doc.ap_password;
+}
+
+async function saveGateway(body, done) {
+  $("gateway-save").disabled = true;
+  try {
+    renderGateway(await postJSON("/api/device", body));
+    gatewayNotice("ok", done);
+  } catch (e) {
+    gatewayNotice("err", e.message);
+  } finally {
+    $("gateway-save").disabled = false;
+  }
+}
+
+$("gateway-form").addEventListener("submit", ev => {
+  ev.preventDefault();
+  const body = { hostname: $("hostname").value.trim() };
+  const password = $("ap-password").value;
+  if (password) body.ap_password = password;
+  saveGateway(body, password ? "Saved. The new hotspot password applies the next time the hotspot opens." : "Saved.");
+});
+
+$("ap-password-remove").addEventListener("click", () => {
+  if (!confirm("Remove the hotspot password? While the hotspot is on, anyone nearby can then join it.")) return;
+  saveGateway({ ap_password: "" }, "Password removed, the hotspot is open the next time it opens.");
+});
+
+$("show-ap-password").addEventListener("change", e => { $("ap-password").type = e.target.checked ? "text" : "password"; });
 
 /* ---- polling --------------------------------------------------------------------------------------------- */
 
