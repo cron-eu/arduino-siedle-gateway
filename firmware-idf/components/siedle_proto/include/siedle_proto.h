@@ -1,18 +1,18 @@
 /*
  * Siedle In-Home bus frame format, hardware independent.
  *
- * A frame is 32 bits, transmitted MSB first with a fixed bit time of 2 ms. A logical 1 is the idle bus level
- * (high, ~28 V), a logical 0 pulls the bus low. Bit 31 is always 0, so every frame starts with a falling edge.
+ * A frame is 32 bits, transmitted MSB first with a fixed bit time of 2 ms. During a frame a logical 1 sits at about
+ * 7-8 V and a logical 0 at about 2 V, the idle bus is at about 28 V. Bit 31 is always 0, so every frame starts with a
+ * falling edge.
  *
- * Field layout (bit 31 = MSB), see also lambda/siedle-lib.js:
+ * Field layout (bit 31 = MSB), see also lambda/siedle-lib.js and doc/ReverseEngineering.md:
  *
  *   31..29  fixed 0b010
- *   28..25  signal (ring, door open, ...)
- *   24..23  unknown (usually 0b00)
- *   22..14  destination address
+ *   28..23  6-bit command; its upper 4 bits (28..25) are the "signal" used here and in lambda/siedle.json
+ *   22..14  destination: 5-bit address (22..18) and 4-bit line (17..14)
  *   13..11  fixed 0b010
- *   10..2   source address
- *    1..0   unknown (usually 0b00)
+ *   10..2   source: 5-bit address (10..6) and 4-bit line (5..2)
+ *    1..0   fixed 0b00
  *
  * This component has no ESP-IDF dependencies so it can be unit tested on the host (see test/host).
  */
