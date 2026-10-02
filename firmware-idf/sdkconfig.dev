@@ -1,0 +1,8 @@
+# Development build, applied on top of sdkconfig.defaults (see "Development" in README.md):
+#
+#   idf.py -B build-dev -D SDKCONFIG=build-dev/sdkconfig -D SDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.dev" build
+#
+# Never install such a build: anyone on the gateway's network can change its cloud settings.
+
+# Cloud and gateway settings without the setup button and the setup hotspot
+CONFIG_WEB_UI_SETTINGS_FROM_NETWORK=y

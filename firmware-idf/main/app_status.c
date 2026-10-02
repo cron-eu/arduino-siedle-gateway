@@ -100,6 +100,10 @@ cJSON *app_status_build(void)
     cJSON_AddStringToObject(device, "reset_reason", reset_reason_name(esp_reset_reason()));
     cJSON_AddNumberToObject(device, "heap_free", esp_get_free_heap_size());
     cJSON_AddNumberToObject(device, "heap_min", esp_get_minimum_free_heap_size());
+#if CONFIG_WEB_UI_SETTINGS_FROM_NETWORK
+    // a development build, it must not end up installed
+    cJSON_AddBoolToObject(device, "settings_from_network", true);
+#endif
     bool synced = app_status_time_synced();
     cJSON_AddBoolToObject(device, "time_synced", synced);
     if (synced) {

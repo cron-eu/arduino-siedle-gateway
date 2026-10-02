@@ -1,0 +1,17 @@
+menu "Web UI"
+
+    config WEB_UI_SETTINGS_FROM_NETWORK
+        bool "Allow changing the cloud and gateway settings from the network (development only)"
+        default n
+        depends on !SECURE_BOOT && !SECURE_FLASH_ENC_ENABLED
+        help
+            Makes the cloud and gateway settings of the setup page (AWS IoT endpoint, thing name, certificate,
+            device key, hostname, hotspot password) available from the regular network, without the setup
+            button and the setup hotspot. Handy on a development board to swap certificates, sdkconfig.dev
+            turns it on.
+
+            Never install such a build: anyone on the gateway's network could point it at their own AWS IoT
+            account and send it commands, including the one that opens the door. Release builds leave it off,
+            and it is not available together with secure boot or flash encryption.
+
+endmenu
