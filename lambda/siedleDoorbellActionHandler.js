@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const AWS = require('aws-sdk')
+const { IoTDataPlaneClient, PublishCommand } = require('@aws-sdk/client-iot-data-plane')
 const querystring = require('querystring');
 // const timeout = ms => new Promise(res => setTimeout(res, ms));
 
@@ -24,21 +24,16 @@ const verifySlackSignature = (event) => {
 };
 
 const sendSiedleCommand = async (command) => {
-  const iotdata = new AWS.IotData({endpoint: process.env.MQTT_BROKER})
+  // SDK v3 needs a full URL, v2 also accepted a bare hostname here
+  const broker = process.env.MQTT_BROKER;
+  const iotdata = new IoTDataPlaneClient({endpoint: broker.includes('://') ? broker : `https://${broker}`})
   const params = {
     topic: 'siedle/send',
     payload: String(command),
     qos: 0
   }
 
-  const publish$ = new Promise( (resolve, reject) => {
-    iotdata.publish(params, function(err, data) {
-      if (err) { return reject(err) }
-      resolve(data);
-    });
-  });
-
-  await publish$;
+  await iotdata.send(new PublishCommand(params));
 }
 
 // This will decode the payload JSON encoded data from the www-urlencoded body..
