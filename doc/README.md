@@ -12,6 +12,7 @@ ESP32 gateway
 |---|---|
 | [Audio.md](Audio.md) | Answering the door from a web page: how the bus carries speech, architecture, hardware and firmware design, decisions, plan, open questions |
 | [Bus-Power.md](Bus-Power.md) | Powering the gateway from the bus without damping the speech: gyrator schematic, parts list, simulation, breadboard bring-up |
+| [PCB.md](PCB.md) | The interface board: revisions, what is settled, schematic outline, mechanics for the case, assembly and cost |
 | [Bus-Measurements.md](Bus-Measurements.md) | Checklist for measuring the bus with the oscilloscope |
 | [ReverseEngineering.md](ReverseEngineering.md) | Siedle 1+n and In-Home bus: protocol, levels and findings from other projects, with links |
 | [firmware-idf/README.md](../firmware-idf/README.md) | Firmware: development setup, device setup, MQTT topics, OTA updates |
