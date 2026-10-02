@@ -111,6 +111,7 @@ details p{margin:8px 0 12px}
 
   <section id="cloud" class="card" aria-labelledby="cloud-title" hidden>
     <h2 id="cloud-title">Cloud (AWS IoT)</h2>
+    <div id="cloud-dev" class="notice err" hidden><p>Development build: anyone on the gateway's network can change these settings. Never install it.</p></div>
     <div id="cloud-notice" class="notice" role="status" aria-live="polite" hidden></div>
     <p id="cloud-locked" class="muted small">The cloud and gateway settings are locked because this hotspot opened by itself while the gateway was offline. To unlock them, hold the gateway's BOOT button for 3 seconds.</p>
     <form id="cloud-form" autocomplete="off" hidden>
@@ -455,10 +456,12 @@ function setDd(id, state, ...content) {
   if (state) dd.prepend(el("span", "dot " + state));
 }
 
-// Only the hotspot opened with the BOOT button, or the one of a gateway without Wi-Fi, unlocks these settings
+// The gateway decides: the hotspot opened with the BOOT button, or the one of a gateway without Wi-Fi, unlocks these
+// settings (and in development builds the regular network does as well)
 function updateSettings(s, here) {
-  const unlocked = here && s.wifi.portal_mode !== "fallback";
-  $("cloud").hidden = !here;
+  const unlocked = s.settings_unlocked;
+  $("cloud").hidden = !here && !unlocked;
+  $("cloud-dev").hidden = !s.device.settings_from_network;
   $("cloud-locked").hidden = unlocked;
   $("cloud-form").hidden = !unlocked;
   $("gateway").hidden = !unlocked;

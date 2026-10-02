@@ -101,6 +101,39 @@ static bool via_hotspot(httpd_req_t *req)
            && local6->sin6_addr.un.u32_addr[3] == ap_ip.ip.addr;
 }
 
+// The cloud and device settings control the door (siedle/send can open it), so they need someone on site: the
+// hotspot must have been opened with the setup button, or be open because no network is configured. The hotspot
+// that opens by itself after the gateway was offline is not enough, jamming the Wi-Fi for a few minutes opens it.
+static bool admin_allowed(httpd_req_t *req, const char **why)
+{
+#if CONFIG_WEB_UI_SETTINGS_FROM_NETWORK
+    *why = NULL;
+    return true; // development builds only, see Kconfig
+#else
+    wifi_mgr_portal_t mode = wifi_mgr_portal_mode();
+    if (!via_hotspot(req) || mode == WIFI_MGR_PORTAL_OFF) {
+        *why = "Only available on the setup hotspot";
+        return false;
+    }
+    if (mode == WIFI_MGR_PORTAL_FALLBACK) {
+        *why = "Locked, this hotspot opened by itself. Open it with the setup button.";
+        return false;
+    }
+    *why = NULL;
+    return true;
+#endif
+}
+
+bool web_ui_require_admin(httpd_req_t *req)
+{
+    const char *why;
+    if (admin_allowed(req, &why)) {
+        return true;
+    }
+    web_ui_send_error(req, "403 Forbidden", why);
+    return false;
+}
+
 static esp_err_t index_handler(httpd_req_t *req)
 {
     httpd_resp_set_type(req, "text/html; charset=utf-8");
@@ -112,8 +145,10 @@ static esp_err_t status_handler(httpd_req_t *req)
 {
     cJSON *status = s_cfg.build_status();
     if (status) {
-        // tells the page whether to offer the setup
+        // tells the page what to offer
+        const char *why;
         cJSON_AddBoolToObject(status, "via_hotspot", via_hotspot(req));
+        cJSON_AddBoolToObject(status, "settings_unlocked", admin_allowed(req, &why));
     }
     return web_ui_send_json(req, status);
 }
@@ -154,23 +189,6 @@ static bool require_portal(httpd_req_t *req)
     }
     web_ui_send_error(req, "403 Forbidden", "Wi-Fi setup is only available on the setup hotspot");
     return false;
-}
-
-// The cloud and device settings control the door (siedle/send can open it), so they need someone on site: the
-// hotspot must have been opened with the setup button, or be open because no network is configured. The hotspot
-// that opens by itself after the gateway was offline is not enough, jamming the Wi-Fi for a few minutes opens it.
-bool web_ui_require_admin(httpd_req_t *req)
-{
-    wifi_mgr_portal_t mode = wifi_mgr_portal_mode();
-    if (!via_hotspot(req) || mode == WIFI_MGR_PORTAL_OFF) {
-        web_ui_send_error(req, "403 Forbidden", "Only available on the setup hotspot");
-        return false;
-    }
-    if (mode == WIFI_MGR_PORTAL_FALLBACK) {
-        web_ui_send_error(req, "403 Forbidden", "Locked, this hotspot opened by itself. Open it with the setup button.");
-        return false;
-    }
-    return true;
 }
 
 static esp_err_t wifi_scan_handler(httpd_req_t *req)
@@ -278,5 +296,8 @@ esp_err_t web_ui_start(const web_ui_config_t *cfg)
     ESP_RETURN_ON_ERROR(httpd_register_err_handler(server, HTTPD_404_NOT_FOUND, not_found_handler), TAG, "404");
 
     ESP_LOGI(TAG, "web UI started on port %d", config.server_port);
+#if CONFIG_WEB_UI_SETTINGS_FROM_NETWORK
+    ESP_LOGW(TAG, "development build: anyone on the network can change the cloud and gateway settings");
+#endif
     return ESP_OK;
 }

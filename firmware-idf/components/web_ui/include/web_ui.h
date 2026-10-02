@@ -24,7 +24,8 @@
  *
  * The cloud and device settings control the door (siedle/send can open it), so they also need the hotspot to be
  * opened on site: with the setup button, or because no network is configured. The hotspot that opens by itself
- * after the gateway was offline for a while is not enough.
+ * after the gateway was offline for a while is not enough. /api/status tells the page with "settings_unlocked".
+ * Development builds can unlock them from the network as well (CONFIG_WEB_UI_SETTINGS_FROM_NETWORK).
  *
  * POST bodies must be sent as application/json, which keeps other web sites from posting here.
  */

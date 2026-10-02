@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Serve the web UI with a simulated device API, to work on components/web_ui/www without flashing.
 
-    python3 tools/mock_server.py [--port 8080] [--portal [unconfigured|manual|fallback]]
+    python3 tools/mock_server.py [--port 8080] [--portal [unconfigured|manual|fallback]] [--settings-from-network]
 
 --portal starts in setup hotspot mode: "unconfigured" (the default) like a new device, "manual" as if opened with
 the BOOT button, "fallback" as if it opened by itself while the gateway was offline (cloud settings locked).
+--settings-from-network acts like a development build that unlocks the cloud settings on the regular network.
 
 In the Wi-Fi setup, a password starting with "wrong" (e.g. "wrongpass") simulates a rejected password. In the cloud
 settings, a certificate containing "wrong" is rejected as belonging to another key, and an endpoint starting with
@@ -52,6 +53,7 @@ state = {
     "cloud_since": 0.0,  # connecting takes a few seconds after a change
     "hostname": "",
     "ap_password": True,
+    "settings_from_network": False,
 }
 
 
@@ -97,12 +99,13 @@ def status():
         connected = state["sta"] == "connected"
         shown_ssid = state["trial_ssid"] if state["trial"] == "pending" else state["ssid"]
         portal = state["portal"] != "off"
+        device_extra = {"settings_from_network": True} if state["settings_from_network"] else {}
         return {
             "device": {
                 "hostname": state["hostname"] or "siedle", "version": "v0.1.0-mock", "idf": "v6.1", "chip": "esp32",
                 "uptime_s": int(time.time() - STARTED) + 3 * 86400 + 5 * 3600,
                 "reset_reason": "power on", "heap_free": 182340, "heap_min": 151200,
-                "time_synced": connected, "time": int(time.time()),
+                "time_synced": connected, "time": int(time.time()), **device_extra,
             },
             "wifi": {
                 "state": "connecting" if state["trial"] == "pending" else state["sta"],
@@ -114,7 +117,12 @@ def status():
             "cloud": cloud_status(connected),
             "bus": {"available": False},
             "via_hotspot": portal,  # the mock's browser is always on the hotspot while it is open
+            "settings_unlocked": settings_unlocked(),
         }
+
+
+def settings_unlocked():
+    return state["settings_from_network"] or state["portal"] in ("unconfigured", "manual")
 
 
 def cloud_doc():
@@ -162,13 +170,13 @@ class Handler(BaseHTTPRequestHandler):
         return True
 
     def require_admin(self):
+        if settings_unlocked():
+            return True
         if state["portal"] == "off":
             self.send_json(403, {"error": "Only available on the setup hotspot"})
             return False
-        if state["portal"] == "fallback":
-            self.send_json(403, {"error": "Locked, this hotspot opened by itself. Open it with the setup button."})
-            return False
-        return True
+        self.send_json(403, {"error": "Locked, this hotspot opened by itself. Open it with the setup button."})
+        return False
 
     def read_json(self):
         """The body, None after answering 400 (like the device, only application/json is accepted)."""
@@ -308,7 +316,10 @@ def main():
     parser.add_argument("--port", type=int, default=8080)
     parser.add_argument("--portal", nargs="?", const="unconfigured", choices=["unconfigured", "manual", "fallback"],
                         help="start in setup hotspot mode")
+    parser.add_argument("--settings-from-network", action="store_true",
+                        help="like a development build, the cloud settings are unlocked without the hotspot")
     args = parser.parse_args()
+    state["settings_from_network"] = args.settings_from_network
     if args.portal == "unconfigured":
         # a new device: no Wi-Fi, no cloud identity yet, an open hotspot
         state.update(portal="unconfigured", sta="unconfigured", ssid="", endpoint="", thing="", cert=None,
