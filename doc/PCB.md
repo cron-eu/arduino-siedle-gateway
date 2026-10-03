@@ -159,7 +159,8 @@ Floorplan, seen from the top with the bus terminal on the left:
   bring-up; routing and copper area do not replace the power-stage measurements.
 - **Net classes** are matched by name in the project. Nominal widths/clearances: *Power* 0.5/0.3 mm,
   *PullDown* 0.8/0.3 mm, *Default* 0.2/0.18 mm, *Codec* 0.15/0.18 mm, *Ground* 0.25/0.18 mm. Codec includes
-  the fine-pitch signals and 3.3 V distribution; some analog routes also use 0.15 mm tracks. The board minimum
+  the fine-pitch signals and 3.3 V distribution; some analog routes also use 0.15 mm tracks. The 3.3 V rail,
+  shared with the ESP32, runs at 0.4 mm where clearances allow and narrows only near fine-pitch pins. The board minimum
   is 0.15 mm width and clearance, with 0.6/0.3 mm vias normally used. A local rule in
   [interface-pcb.kicad_dru](../hardware/interface-pcb/interface-pcb.kicad_dru) allows 0.15 mm ground-neck clearance
   at the ES8311's corner pads; it does not relax the rest of the board.
