@@ -5,3 +5,4 @@ fp-info-cache
 *.lck
 _autosave-*
 ~*
+.history/
