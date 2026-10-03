@@ -141,8 +141,8 @@ Floorplan, seen from the top with the bus terminal on the left:
 | Right edge and lower right | setup button SW1 and LED D50; U1, JP1, D2 and the optional J2 supply connector |
 
 - **Heights, for the case:** the lying 2200 µF capacitors are the tallest parts at about 16 mm. The D1 Mini sits on
-  8.5 mm sockets, so its top ends up around 15 mm above the board (to be measured, the footprint has the sockets'
-  3D models but none for the module). U1 stands about 10 mm. The rest is SMD.
+  8.5 mm sockets, so its top ends up around 15 mm above the board (to be measured; the 3D model MK1 assumes
+  about 15.3 mm). U1 stands about 10 mm. The rest is SMD.
 - **USB:** the D1 Mini's USB port points down the board. Keep the strip below it (x 59–73 mm) free of tall parts,
   so a cable can reach it through the case.
 - **Antenna:** a rule area keeps copper (tracks, vias, pads, the ground pour) out from under the antenna end on
@@ -188,8 +188,27 @@ x increasing right and y increasing down. The KiCad drawing origin for that corn
 | Setup button SW1 | footprint center (83.5, 46) |
 | LED D50 | footprint center (78, 51) |
 
-The socket 3D models have been aligned to both pad rows. The preview has no D1 Mini module model. Use measured parts for the
-final case height, USB opening, button actuator and connector access.
+The socket 3D models have been aligned to both pad rows. Use measured parts for the final case height, USB opening,
+button actuator and connector access.
+
+### The D1 Mini in the 3D view
+
+MK1 is a mechanical footprint (`gateway:D1_Mini_ESP32_Module_3D`), locked on U5's position, that carries only the
+3D model of the AZ-Delivery ESP32 D1 Mini. It has no pads and is not in the schematic, the BOM or the position
+files, so JLCPCB never sees it; its footprint type is Unspecified.
+
+- **Show or hide it:** in the 3D viewer, the switch for Unspecified (virtual) models shows the board with or
+  without the D1 Mini. Two saved viewer presets, for example "assembled" and "bare", make it one click.
+- **STEP for the case:** `kicad-cli pcb export step` includes the D1 Mini; with `--no-unspecified` it leaves it out.
+- **The model** comes from [tools/d1_mini_model.py](../hardware/interface-pcb/tools/d1_mini_model.py): the board,
+  the ESP32-WROOM-32 with its antenna at the board edge, the micro-USB connector, the reset button, the CP2104 and
+  the male headers. Nominal dimensions from AZ-Delivery's product page and photos: 39 × 31.5 × 1.2 mm, its
+  underside 11 mm above our board (8.5 mm sockets plus the headers' 2.5 mm spacer), its top at about 15.3 mm.
+- **To measure, then rerun the script:** the board's width and thickness, where the WROOM sits and whether its
+  antenna overhangs the edge, how far the USB connector sticks out, the reset button's position and the headers'
+  spacer height.
+- **Headers:** the D1 Mini needs male headers on all four pin rows, because the pin plan uses the outer rows too.
+  AZ-Delivery ships only two 1 × 10 male strips (and two female ones): order two more, or 2 × 10 strips.
 
 Next: bus measurements, bench bring-up, check the D1 Mini and R-78CK footprints against the real parts, and a
 review of the analog behavior and ratings before any order. The current layout is a prototype draft.

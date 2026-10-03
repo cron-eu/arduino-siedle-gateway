@@ -18,14 +18,8 @@ from OCP.BRepPrimAPI import BRepPrimAPI_MakeCylinder, BRepPrimAPI_MakePrism
 from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeFace, BRepBuilderAPI_MakePolygon
 from OCP.GC import GC_MakeArcOfCircle
 from OCP.gp import gp_Ax2, gp_Circ, gp_Dir, gp_Pnt, gp_Vec
-from OCP.IFSelect import IFSelect_RetDone
-from OCP.Quantity import Quantity_Color, Quantity_TOC_sRGB
-from OCP.STEPCAFControl import STEPCAFControl_Writer
-from OCP.STEPControl import STEPControl_AsIs
-from OCP.TCollection import TCollection_ExtendedString
-from OCP.TDocStd import TDocStd_Document
-from OCP.XCAFDoc import XCAFDoc_ColorSurf, XCAFDoc_DocumentTool
-from OCP.Interface import Interface_Static
+
+from step_util import write_step
 
 
 def body(d, length, gap, y_axis):
@@ -92,20 +86,7 @@ def main():
         (lead(y_minus, z, a.gap, a.wire, bend_r, below), (0.75, 0.75, 0.75)),
     ]
 
-    doc = TDocStd_Document(TCollection_ExtendedString('XmlOcaf'))
-    shapes = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
-    colors = XCAFDoc_DocumentTool.ColorTool_s(doc.Main())
-    for shape, rgb in parts:
-        label = shapes.AddShape(shape, False)
-        colors.SetColor(label, Quantity_Color(*rgb, Quantity_TOC_sRGB), XCAFDoc_ColorSurf)
-
-    Interface_Static.SetCVal_s('write.step.unit', 'MM')
-    writer = STEPCAFControl_Writer()
-    writer.SetColorMode(True)
-    writer.Transfer(doc, STEPControl_AsIs)
-    if writer.Write(a.output) != IFSelect_RetDone:
-        raise SystemExit('writing %s failed' % a.output)
-    print('wrote', a.output)
+    write_step(parts, a.output)
 
 
 if __name__ == '__main__':
