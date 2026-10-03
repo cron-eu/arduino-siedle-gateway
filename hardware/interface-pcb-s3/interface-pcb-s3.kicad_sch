@@ -3448,38 +3448,6 @@
 		)
 		(uuid "a4696412-d5a0-41ee-ba9b-363b3c4feb6a")
 	)
-	(wire
-		(pts
-			(xy 121.92 96.52) (xy 119.38 96.52)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "02f8595d-18b5-46ee-a9c0-e391b1648c59")
-	)
-	(global_label "VMON"
-		(shape bidirectional)
-		(at 119.38 96.52 180)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right)
-		)
-		(uuid "f722dcc1-b7c2-4624-bef3-f9ccf92b4548")
-		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 119.38 96.52 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
-				(hide yes)
-			)
-		)
-	)
 	(no_connect
 		(at 121.92 99.06)
 		(uuid "5dec9852-e896-4b8e-b1cb-ed8ce594efa5")
@@ -3594,7 +3562,7 @@
 		)
 		(uuid "1445d64f-8075-43a0-9378-d71bd7c2f415")
 	)
-	(global_label "TX_BIT"
+	(global_label "VMON"
 		(shape bidirectional)
 		(at 119.38 111.76 180)
 		(fields_autoplaced yes)
@@ -3872,10 +3840,6 @@
 			)
 		)
 	)
-	(no_connect
-		(at 121.92 134.62)
-		(uuid "cc252e09-d2f7-416b-b6ff-8a11daf69ed9")
-	)
 	(wire
 		(pts
 			(xy 121.92 88.9) (xy 119.38 88.9)
@@ -3935,26 +3899,6 @@
 			(justify left bottom)
 		)
 		(uuid "246358d1-469c-4c97-8aa2-b0578b5379ad")
-	)
-	(wire
-		(pts
-			(xy 152.4 93.98) (xy 154.94 93.98)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "95971cc2-79ff-41c5-b44a-02a82246870a")
-	)
-	(label "LED"
-		(at 154.94 93.98 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "dfb71337-ab66-41dd-85d3-ac67c1b54ebb")
 	)
 	(no_connect
 		(at 152.4 96.52)
@@ -4189,10 +4133,6 @@
 	(no_connect
 		(at 152.4 111.76)
 		(uuid "f2ced0b4-500c-44dc-b6b6-6c084369b498")
-	)
-	(no_connect
-		(at 152.4 114.3)
-		(uuid "533931a3-147e-4baa-87df-bfc3f39dd9de")
 	)
 	(no_connect
 		(at 152.4 116.84)
@@ -6469,6 +6409,66 @@
 		)
 		(uuid "bd76f8a9-ebaf-4b31-93c3-37177033268d")
 	)
+	(no_connect
+		(at 121.92 96.52)
+		(uuid "d6ab8d7e-cd85-4b0e-9704-385b090b8f17")
+	)
+	(wire
+		(pts
+			(xy 121.92 134.62) (xy 119.38 134.62)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c80e5e65-60f7-47c6-bce9-49b016297227")
+	)
+	(global_label "TX_BIT"
+		(shape bidirectional)
+		(at 119.38 134.62 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "59cdb407-cc6c-429c-9818-4ecbc2b790b0")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 119.38 134.62 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+				(hide yes)
+			)
+		)
+	)
+	(no_connect
+		(at 152.4 93.98)
+		(uuid "f94f7059-b4c5-49d4-b276-e280dbba3dba")
+	)
+	(wire
+		(pts
+			(xy 152.4 114.3) (xy 154.94 114.3)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "2f912be1-0eb6-40b6-9e87-c4d6d5fc82a8")
+	)
+	(label "LED"
+		(at 154.94 114.3 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "913ced1e-5fec-4d94-92b1-5586a9e67333")
+	)
 	(sheet_instances
 		(path "/"
 			(page "1")
@@ -7461,7 +7461,7 @@
 			)
 		)
 	)
-	(text "GPIO17 / active high"
+	(text "GPIO38 / active high"
 		(exclude_from_sim no)
 		(at 345.44 149.86 0)
 		(effects

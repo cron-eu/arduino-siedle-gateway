@@ -59,21 +59,25 @@ Pin plan
 | Function | GPIO | Why this pin |
 |---|---|---|
 | Setup button SW1 (BOOT) | 0 | the BOOT strapping pin: setup hotspot and download mode in one button |
-| VOUT monitor (VMON) | 1 | ADC1: works while Wi-Fi runs |
 | Data in (DATA_IN) | 4 | RMT receive, any pin |
 | Acknowledge (ACK_IN) | 5 | |
 | Data out, carrier (TX_CARRIER) | 6 | |
-| Data out, 0 bits (TX_BIT) | 7 | |
+| VOUT monitor (VMON) | 7 | ADC1: works while Wi-Fi runs |
 | Codec I2C (SDA, SCL) | 8, 9 | |
 | Codec MCLK (optional, R31) | 10 | the S3 routes MCLK to any pin |
 | Codec I2S (BCLK, WS, DOUT, DIN) | 11, 12, 13, 14 | |
 | Send stage enable (TX_EN) | 15 | |
-| Status LED | 17 | no strapping role |
+| Data out, 0 bits (TX_BIT) | 16 | |
+| Status LED | 38 | next to the button on the module's right side |
 | USB D−, D+ | 19, 20 | the S3's native USB |
 | UART0 TXD0, RXD0 | 43, 44 | test points only |
 
-Unused on purpose: GPIO3, 45 and 46 (strapping pins), GPIO35–37 (taken by the octal PSRAM). Free for later: GPIO2,
-16, 18, 21, 38–42, 47, 48.
+The bus, data and supply pins sit on the module's left side, facing the bus circuits; the I2S and I2C pins on its
+bottom side, facing the codec; the button, the LED and the UART test points on its right side, along the board
+edge.
+
+Unused on purpose: GPIO3, 45 and 46 (strapping pins), GPIO35–37 (taken by the octal PSRAM). Free for later: GPIO1,
+2, 17, 18, 21, 39–42, 47, 48.
 
 Mechanics
 ----
