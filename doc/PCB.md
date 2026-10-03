@@ -149,6 +149,9 @@ Floorplan, seen from the top with the bus terminal on the left:
   both layers. The codec is about 50 mm from the center of this antenna area. Audio circuits occupy the lower
   part of the board, separated from the radio and the regulator; this reduces coupling risk but needs a noise
   measurement with Wi-Fi active.
+- **Codec area:** the high-impedance receive node (RX_IN, after R34) stays on the top layer within about 15 mm,
+  without vias: the bias resistors R35/R36 sit next to the clamp diodes D30 and the coupling capacitor C39. The VMID
+  capacitor C34 sits 2.3 mm from its pin; ADCVREF's C35 at 5 mm is the farthest of the codec's capacitors.
 - **Ground:** GND pours on both layers, joined by 63 stitching vias, including local returns around the audio
   section. SMD ground pads connect solidly. U3's exposed pad connects to ground pins 5, 10 and 20 through short
   front-layer necks, with ground vias outside its solder pad. The D1 Mini's GND pins also connect solidly:
