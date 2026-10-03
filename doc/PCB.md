@@ -154,7 +154,8 @@ Floorplan, seen from the top with the bus terminal on the left:
   front-layer necks, with ground vias outside its solder pad. The D1 Mini's GND pins also connect solidly:
   the socket rows leave no room for thermal spokes, so solder them with a bit more heat.
 - **Power:** wider bus/supply routing, a front-layer copper area on Q1's drain to spread heat, and C3's positive
-  lead facing the regulator. Check Q1 temperature during startup and the waveform at U1's input pins during
+  lead facing the regulator. U1 sits about 30 mm from C3, so C6 (2.2 µF / 100 V ceramic, the same part as C1)
+  decouples its input right at its pins. Check Q1 temperature during startup and the waveform at U1's input pins during
   bring-up; routing and copper area do not replace the power-stage measurements.
 - **Net classes** are matched by name in the project. Nominal widths/clearances: *Power* 0.5/0.3 mm,
   *PullDown* 0.8/0.3 mm, *Default* 0.2/0.18 mm, *Codec* 0.15/0.18 mm, *Ground* 0.25/0.18 mm. Codec includes

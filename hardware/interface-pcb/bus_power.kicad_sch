@@ -2989,6 +2989,186 @@
 		(uuid "626c6453-8347-557d-a91a-76de9c84978b")
 	)
 	(symbol
+		(lib_id "Device:C")
+		(at 297.18 111.76 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "aaebf5f9-4ed8-4e01-b520-d810a7362f98")
+		(property "Reference" "C6"
+			(at 300.99 110.109 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "2.2u 100V"
+			(at 300.99 113.411 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Capacitor_SMD:C_1210_3225Metric"
+			(at 297.18 111.76 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 297.18 111.76 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Unpolarized capacitor"
+			(at 297.18 111.76 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C153036"
+			(at 297.18 111.76 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Note" "U1 input, next to its pins; same part as C1"
+			(at 297.18 111.76 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "0af8a062-3f57-42ad-9424-673adf53a4d4")
+		)
+		(pin "2"
+			(uuid "b9278722-082f-4f4b-8694-877c6fc2e8c6")
+		)
+		(instances
+			(project "interface-pcb"
+				(path "/10653c94-f447-5f87-9187-3dc11d9ab931/c68f7d0d-f82b-5cdc-80ee-9955238d066b"
+					(reference "C6")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 297.18 127 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board no)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "0b8f5627-061d-4714-8683-531a92e3ea51")
+		(property "Reference" "#PWR0217"
+			(at 297.18 127 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 297.18 130.81 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.02 1.02)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 297.18 127 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 297.18 127 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 297.18 127 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "31b85454-f8d9-4c46-b87a-70c190aa48c5")
+		)
+		(instances
+			(project "interface-pcb"
+				(path "/10653c94-f447-5f87-9187-3dc11d9ab931/c68f7d0d-f82b-5cdc-80ee-9955238d066b"
+					(reference "#PWR0217")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Connector:Screw_Terminal_01x02")
 		(at 25.4 86.36 0)
 		(unit 1)
@@ -5905,13 +6085,46 @@
 	(wire
 		(pts
 			(xy 287.02 86.36)
+			(xy 297.18 86.36)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c275b89a-5175-40e3-aae0-c3b6cde88f5a")
+	)
+	(wire
+		(pts
+			(xy 297.18 86.36)
 			(xy 304.8 86.36)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "4f498d0f-d116-5be4-86ef-819ee0ff8339")
+		(uuid "bc662204-6778-4126-9589-f4896bc2bdf6")
+	)
+	(wire
+		(pts
+			(xy 297.18 86.36)
+			(xy 297.18 107.95)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "fc5bedbd-4a03-4054-8e7d-7833f1e56d12")
+	)
+	(wire
+		(pts
+			(xy 297.18 115.57)
+			(xy 297.18 127)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f88005c7-f629-4273-8484-b21900ed9856")
 	)
 	(wire
 		(pts
@@ -7575,6 +7788,12 @@
 			(justify left top)
 		)
 		(uuid "d12e70e8-9e32-5512-8626-e4816c6ce8e5")
+	)
+	(junction
+		(at 297.18 86.36)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "fd0106ad-c991-4210-b30a-115db49a6b06")
 	)
 	(junction
 		(at 40.64 241.3)
