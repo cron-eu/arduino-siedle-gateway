@@ -82,8 +82,8 @@ Mechanics
   D1 Mini.
 - **USB-C at a board edge,** pointing outwards, so the case can have an opening and the board can be flashed and
   read without opening the case.
-- **Flatter:** no D1 Mini on sockets (about 15 mm). The tallest parts are the lying capacitors C2/C3, and they may
-  get smaller after the measurements ([Bus-Power.md](Bus-Power.md#smaller-c2-and-c3-decide-after-the-measurements)).
+- **Flatter:** no D1 Mini on sockets (about 15 mm). The tallest parts are the lying capacitors C2/C3 at 13 mm
+  ([Bus-Power.md](Bus-Power.md#c2-and-c3-at-35-v)).
 - **Buttons:** SW1 (setup/BOOT) reachable through the case; SW2 (reset) may sit inside.
 
 Cost

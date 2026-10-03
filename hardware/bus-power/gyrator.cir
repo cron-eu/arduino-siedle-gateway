@@ -35,10 +35,10 @@ R2 src nodeS 10
 Q2 gate src nodeS BC547B
 
 * two-stage output filter
-R3 nodeS mid 15
-C2 mid 0 2200u
-R4 mid vout 18
-C3 vout 0 2200u
+R3 nodeS mid 33
+C2 mid 0 1000u
+R4 mid vout 39
+C3 vout 0 1000u
 
 * VOUT monitor divider for the ESP32 ADC (100 kOhm + 10 kOhm)
 Rmon vout 0 110k

@@ -4973,7 +4973,7 @@
 				)
 			)
 		)
-		(property "Value" "15"
+		(property "Value" "33"
 			(at 220.98 83.312 90)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5016,7 +5016,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C17480"
+		(property "LCSC" "C17634"
 			(at 220.98 86.36 0)
 			(hide yes)
 			(show_name no)
@@ -5075,7 +5075,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "2200u 50V"
+		(property "Value" "1000u 35V"
 			(at 242.57 121.031 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5086,7 +5086,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "gateway:CP_Radial_D16.0mm_P7.50mm_Lying"
+		(property "Footprint" "gateway:CP_Radial_D13.0mm_P5.00mm_Lying"
 			(at 238.76 119.38 0)
 			(hide yes)
 			(show_name no)
@@ -5119,7 +5119,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C13917"
+		(property "LCSC" "C10749"
 			(at 238.76 119.38 0)
 			(hide yes)
 			(show_name no)
@@ -5130,7 +5130,7 @@
 				)
 			)
 		)
-		(property "Note" "16 x 30 mm, lay down; hand-soldered"
+		(property "Note" "13 x 20 mm, lying; hand-soldered"
 			(at 238.76 119.38 0)
 			(hide yes)
 			(show_name no)
@@ -5287,7 +5287,7 @@
 				)
 			)
 		)
-		(property "Value" "18"
+		(property "Value" "39"
 			(at 256.54 83.312 90)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5330,7 +5330,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C17507"
+		(property "LCSC" ""
 			(at 256.54 86.36 0)
 			(hide yes)
 			(show_name no)
@@ -5399,7 +5399,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "2200u 50V"
+		(property "Value" "1000u 35V"
 			(at 280.67 121.031 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5410,7 +5410,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "gateway:CP_Radial_D16.0mm_P7.50mm_Lying"
+		(property "Footprint" "gateway:CP_Radial_D13.0mm_P5.00mm_Lying"
 			(at 276.86 119.38 0)
 			(hide yes)
 			(show_name no)
@@ -5443,7 +5443,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C13917"
+		(property "LCSC" "C10749"
 			(at 276.86 119.38 0)
 			(hide yes)
 			(show_name no)
