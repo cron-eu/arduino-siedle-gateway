@@ -148,3 +148,41 @@ Open points
 - Feeding 3.3 V directly into the D1 Mini instead of 5 V would save about a third of the current, but conflicts
   with plugging in USB. PCB revision 2, with the ESP32 module on the board, gets the saving from a 3.3 V U1
   (R-78CK3.3-0.5, 5–40 V in), see [Audio.md](Audio.md#plan).
+
+### Smaller C2 and C3 (decide after the measurements)
+
+The 2200 µF / 50 V capacitors are the tallest parts of the board (16 mm, lying). Both their voltage and their
+capacitance can probably come down; decide once the bus voltage at our terminal is measured.
+
+**Voltage.** C2 and C3 sit one MOSFET threshold plus D1 below the bus, and highest without load. Simulated without
+load: 24 V at a 28 V bus, 28 V at 32 V (ringing), 30 V at 34 V; with the ESP32 running about 19–23 V. A real
+IRFR120N's lower threshold can add 1–2 V. Short surges never reach them: the gate filter cannot follow, and TVS1
+clamps at the input. So 35 V parts are enough if the bus stays at or below 32 V while ringing; 25 V parts are not.
+
+**Capacitance.** The burst filtering depends on R3 × C2 and R4 × C3. Smaller capacitors with larger resistors filter
+as well as today. Simulated with 1.5 W Wi-Fi bursts (1 ms every 20 ms), the strongest remaining tone toward the bus
+in the speech band:
+
+| C2, C3 | R3 / R4 | Tone on the bus | VOUT | Dip during a frame | Startup to 14 V |
+|---|---|---|---|---|---|
+| 2200 µF (now) | 15 / 18 Ω | 1.05 µA | 19.1 V | 0.28 V | 3.6 s |
+| 1000 µF | 15 / 18 Ω | 1.75 µA | 19.7 V | 0.85 V | 3.2 s |
+| 1500 µF | 22 / 27 Ω | 0.69 µA | 18.9 V | 0.48 V | 3.6 s |
+| 1000 µF | 33 / 39 Ω | 0.69 µA | 18.1 V | 0.83 V | 4.1 s |
+
+The frame dip stays far above the 14 V Wi-Fi threshold. Larger resistors cost VOUT, so the bus needs a little more
+voltage at our terminal (about 22 V instead of 21 V with 33 / 39 Ω).
+
+**Proposal:** 1500 µF / 35 V with 22 / 27 Ω, or 1000 µF / 35 V with 33 / 39 Ω if the bus voltage leaves the margin.
+Typical sizes are 10–12.5 mm diameter and 20–25 mm length, so the board gets 3.5–6 mm flatter; check the actual LCSC
+parts. The new resistor values also replace the Extended 18 Ω part.
+
+**Prerequisites:**
+
+- The highest bus voltage while ringing ([Bus-Measurements.md](Bus-Measurements.md#1-idle-bus)): at most 32 V for
+  35 V parts.
+- The bus voltage under load ([Bus-Measurements.md](Bus-Measurements.md#4-power-budget)): enough for the extra
+  resistor drop.
+
+**Then:** change C2, C3, R3 and R4 in the schematic, the parts list above and [gyrator.cir](../hardware/bus-power/gyrator.cir),
+rerun the simulation, and give C2/C3 a smaller lying footprint in the layout.

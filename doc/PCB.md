@@ -270,5 +270,7 @@ Open questions
 - The items in [What is settled](#what-is-settled).
 - Whether the D1 Mini's 3.3 V regulator copes with the ES8311 and the comparators on top of the ESP32 (it should:
   together about 10 mA).
+- Smaller and flatter C2/C3 (35 V, 1000–1500 µF, with larger R3/R4), once the bus voltage is measured: see
+  [Bus-Power.md](Bus-Power.md#smaller-c2-and-c3-decide-after-the-measurements).
 - The R-78CK footprint: the draft uses KiCad's R-78E footprint (same SIP-3 pinout), to be checked against the R-78CK
   drawing.
