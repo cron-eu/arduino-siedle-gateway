@@ -5,8 +5,9 @@ The board to order: the interface board of [PCB.md](PCB.md) with an ESP32-S3-WRO
 instead of the plug-in D1 Mini. The D1 Mini variant in [hardware/interface-pcb](../hardware/interface-pcb) stays for
 development; this variant lives in [hardware/interface-pcb-s3](../hardware/interface-pcb-s3).
 
-**Status:** schematic done, ERC without violations. The layout is still the D1 Mini's: it needs the module, the
-USB-C connector and the new parts (see [Next](#next)). The firmware still targets the classic ESP32.
+**Status:** schematic done, ERC without violations. Layout routed, DRC with schematic parity clean apart from
+silkscreen that crosses the board edge on purpose ([Layout](#layout)). The analog values stay provisional until the
+bus measurements and bench bring-up. The firmware still targets the classic ESP32.
 
 Why the S3, and one board
 ----
@@ -83,13 +84,47 @@ Unused on purpose: GPIO3, 45 and 46 (strapping pins), GPIO35–37 (taken by the 
 Mechanics
 ----
 
-- **Antenna:** the module's antenna end at a board edge, with copper and parts kept clear on both layers, as for the
-  D1 Mini.
-- **USB-C at a board edge,** pointing outwards, so the case can have an opening and the board can be flashed and
-  read without opening the case.
+Coordinates in mm from the board's top-left corner, x to the right, y down, as seen from the component side.
+
+- **Board:** 90 × 65 mm, two layers, all parts on top except the I2S test points TP10–TP13.
+- **Mounting holes:** four M3 holes (3.2 mm) at (4, 4), (86, 53), (28, 61.5) and (86, 61). The top-right corner
+  belongs to the antenna, so it has no hole.
+- **Antenna:** the module sits in the top-right corner with its antenna flush with the top edge (x 66–85). Copper and
+  parts stay clear of the module's keep-out on both layers; no case screw or metal near it.
+- **USB-C (J3) on the right edge** at y 44, opening outwards, so the case can have an opening and the board can be
+  flashed and read without opening the case. The receptacle's front is flush with the edge.
+- **Bus terminal (J1)** on the left edge at y 22, the wires leave to the left. J2 (external supply, not fitted) at
+  the bottom-left.
+- **Buttons:** SW1 (setup/BOOT) at (83.5, 30.5) next to the right edge, reachable through the case; SW2 (reset) at
+  (76, 56.5) may sit inside. The status LED D50 at (87.5, 35.5) next to SW1.
 - **Flatter:** no D1 Mini on sockets (about 15 mm). The tallest parts are the lying capacitors C2/C3 at 13 mm
-  ([Bus-Power.md](Bus-Power.md#c2-and-c3-at-35-v)).
-- **Buttons:** SW1 (setup/BOOT) reachable through the case; SW2 (reset) may sit inside.
+  ([Bus-Power.md](Bus-Power.md#c2-and-c3-at-35-v)): C2 at the left, C3 lying over the middle of the board.
+
+Layout
+----
+
+Placement follows the signal flow: bus input, gyrator and pull-downs on the left; the comparators and the 3.3 V
+regulator U1 in the middle top; the module top-right; the audio section along the bottom, away from the antenna and
+from U1. Routing is hybrid: the important connections are routed by hand, the rest by Freerouting, then checked and
+finished in KiCad.
+
+- **By hand:** the bus input and BUS trunk, the gyrator, VFILT and VOUT (0.5 mm), the pull-down collectors (0.8 mm),
+  3.3 V from U1 to the module and its decoupling (0.6 mm), the 3.3 V feed of the audio side under the module, the
+  codec's escapes with its ground necks, the I2S bundle, I2C, TX_BIT and USB VBUS.
+- **I2S bundle:** DOUT, WS, DIN, BCLK and MCLK leave the module's bottom row side by side and run at 45° to the
+  codec's top, 1.27 mm apart, without vias. TP10–TP13 are pads on the bottom side with a via in their line, since C3
+  lies over the bundle on top. MCLK's series resistor R31 sits where the bundle ends.
+- **Ground:** both layers poured with ground and stitched with vias. Under the receive stage, the codec's analog side
+  and the send stage the bottom layer allows no tracks (two rule areas named "audio ground"), so these see an
+  unbroken ground. The ES8311's exposed pad connects to its ground pins 5, 10 and 20 through short necks, and from pin 10 to a
+  ground via.
+- **Autorouted:** the remaining digital lines, USB D+/D−, and the analog connections inside the blocks. These are
+  functional rather than pretty; a fully autorouted variant was tried for comparison and gave a less tidy power and
+  I2S routing.
+
+DRC with schematic parity: no errors, no unconnected items. Five silkscreen warnings remain, all at the board edge on
+purpose: the USB-C receptacle's outline at the right edge and the module's outline at the top edge. DRC does not
+validate the analog behavior; that needs the bench bring-up.
 
 Cost
 ----
@@ -102,9 +137,8 @@ the same.
 Next
 ----
 
-1. Review the schematic.
-2. Layout: place U5 with its antenna at an edge, J3 at an edge reachable through the case, the new parts; remove the
-   D1 Mini sockets and MK1. Then DRC with schematic parity (today it reports the layout as out of date, which is
-   expected).
+1. Review the schematic and the layout.
+2. After the bus measurements: adjust the analog values, check the layout against them, then the JLCPCB files
+   (Gerbers, BOM, placement) and the case.
 3. Firmware: `idf.py set-target esp32s3`, the pin plan above, PSRAM, the console on USB, and the partition table for
    16 MB. Develop on an ESP32-S3-DevKitC-1 (N16R8) on the desk until the board exists.
