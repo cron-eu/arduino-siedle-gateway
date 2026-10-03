@@ -33,12 +33,13 @@ Everything on the bus side, the data sheet and the audio sheet stays as it is, a
 |---|---|---|
 | U1 | R-78CK5.0-0.5 → 5 V → D1 Mini's linear regulator → 3.3 V | R-78CK3.3-0.5 → 3.3 V for everything |
 | MCP6002 (audio send) | 5 V | 3.3 V: the current sink needs at most about 2.4 V at the base |
-| JP1, D2 | cut the bus supply, block USB from feeding back into U1 | JP1 removed; D2 now feeds J2 into VOUT |
-| J2 (not fitted) | external 5 V on the 5 V rail | external 9–24 V DC into VOUT through D2, ahead of U1 |
+| JP1, D2 | cut the bus supply, block USB from feeding back into U1 | JP1 removed; D2 now feeds J2 into VFILT |
+| J2 (not fitted) | external 5 V on the 5 V rail | external 9–24 V DC into VFILT (C2) through D2, ahead of R4, C3 and U1 |
 | USB | powers the D1 Mini | data only, VBUS does not power the board |
 
-- **J2:** an isolated adapter only, since board ground is the bus minus (Tb). Above about 20 V on VOUT the gyrator
-  stops delivering by itself, so no jumper is needed to separate the two supplies. Stay at or below 24 V for C2/C3.
+- **J2:** an isolated adapter only, since board ground is the bus minus (Tb). Above about 20 V on VFILT the gyrator
+  stops delivering by itself, so no jumper is needed to separate the two supplies. R4 and C3 also filter the
+  adapter; R4 costs 1–2 V, irrelevant at 9–24 V. Stay at or below 24 V for C2/C3.
 - **Bench supply:** power the board through J1 from the bench supply, as in the bring-up in
   [Bus-Power.md](Bus-Power.md#bring-up), or through J2. USB alone does not power it.
 

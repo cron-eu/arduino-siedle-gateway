@@ -7223,7 +7223,7 @@
 			)
 		)
 	)
-	(text "J2 not fitted by default: 9-24 V DC into VOUT\nthrough D2, if the bus cannot power the gateway.\nIsolated adapter only: board GND is Tb."
+	(text "J2 not fitted by default: 9-24 V DC into VFILT\nthrough D2, ahead of R4 and C3, if the bus cannot\npower the gateway. Isolated adapter only: GND is Tb."
 		(exclude_from_sim no)
 		(at 269.24 226.06 0)
 		(effects
@@ -7478,7 +7478,7 @@
 		)
 		(uuid "cd42c1cd-b20e-499e-979b-ac2e82283cb6")
 	)
-	(label "VOUT"
+	(label "VFILT"
 		(at 256.54 226.06 90)
 		(effects
 			(font
