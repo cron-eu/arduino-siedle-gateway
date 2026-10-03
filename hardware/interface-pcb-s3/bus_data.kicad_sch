@@ -3952,7 +3952,7 @@
 		)
 		(uuid "3aebc0ae-d865-57cd-8428-e8c945de6c67")
 	)
-	(text "TP5 / GPIO34\nThreshold about 5.5 V rising, 4.5 V falling.\nMeasure both edges to set hysteresis."
+	(text "TP5 / GPIO4\nThreshold about 5.5 V rising, 4.5 V falling.\nMeasure both edges to set hysteresis."
 		(exclude_from_sim no)
 		(at 121.92 160.02 0)
 		(effects
@@ -3963,7 +3963,7 @@
 		)
 		(uuid "d73190fe-f770-5154-94b3-3047432233ab")
 	)
-	(text "TP6 / GPIO35\nThreshold about 13.1 V rising, 12.1 V falling.\nCapture the end of the telegram."
+	(text "TP6 / GPIO5\nThreshold about 13.1 V rising, 12.1 V falling.\nCapture the end of the telegram."
 		(exclude_from_sim no)
 		(at 256.54 160.02 0)
 		(effects
@@ -5726,7 +5726,7 @@
 			)
 		)
 	)
-	(text "GPIO16: carrier for the whole telegram.\nGPIO17: additional pull-down for each zero bit.\nValues and transistor stress need load measurements."
+	(text "GPIO6: carrier for the whole telegram.\nGPIO7: additional pull-down for each zero bit.\nValues and transistor stress need load measurements."
 		(exclude_from_sim no)
 		(at 17.78 266.7 0)
 		(effects
