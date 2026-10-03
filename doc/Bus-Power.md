@@ -177,12 +177,27 @@ voltage at our terminal (about 22 V instead of 21 V with 33 / 39 Ω).
 Typical sizes are 10–12.5 mm diameter and 20–25 mm length, so the board gets 3.5–6 mm flatter; check the actual LCSC
 parts. The new resistor values also replace the Extended 18 Ω part.
 
+**Mounting.** Decide in the same step. C2 and C3 are radial electrolytics lying on the board today, which keeps them
+at their diameter in height:
+
+| Mounting | Height with 1000–1500 µF / 35 V | Soldered by |
+|---|---|---|
+| radial, lying (today) | ~12.5–16 mm | us (bent leads, project footprint) |
+| radial, standing | ~22–27 mm | us or JLCPCB (stock footprint) |
+| SMD electrolytic | ~13.5–16.5 mm | JLCPCB (one Extended part fee) |
+
+Standing radials make the case taller than the D1 Mini on its sockets (about 15 mm) to save little board area. SMD
+electrolytics, which exist only at the smaller 35 V values, stay about as tall as the D1 Mini and remove two
+hand-soldered parts per board. Take them if the D1 Mini measures about 15 mm or more; keep the lying radials if the
+case should be as flat as possible. Check LCSC stock for 35 V SMD parts at 1000–1500 µF.
+
 **Prerequisites:**
 
+- The D1 Mini's height on its sockets, measured with calipers, for the mounting choice.
 - The highest bus voltage while ringing ([Bus-Measurements.md](Bus-Measurements.md#1-idle-bus)): at most 32 V for
   35 V parts.
 - The bus voltage under load ([Bus-Measurements.md](Bus-Measurements.md#4-power-budget)): enough for the extra
   resistor drop.
 
 **Then:** change C2, C3, R3 and R4 in the schematic, the parts list above and [gyrator.cir](../hardware/bus-power/gyrator.cir),
-rerun the simulation, and give C2/C3 a smaller lying footprint in the layout.
+rerun the simulation, and give C2/C3 their new footprint in the layout (smaller lying, or SMD).
