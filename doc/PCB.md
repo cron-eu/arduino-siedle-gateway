@@ -9,14 +9,14 @@ complete, many component values are not: they follow from the bus measurements a
 [layout](#layout) is a fully routed draft with clean connectivity and DRC checks. Don't order before the values,
 footprints and analog behavior are confirmed on the bench.
 
-Revisions
+Variants
 ----
 
-1. **Revision 1, carrier board.** The D1 Mini plugs into female headers, so it can be swapped or pulled for
-   flashing. The same footprint takes the D1 Mini soldered in directly, with plain pin headers, once the board is
-   settled: no separate revision needed for that.
-2. **Revision 2, module on the board.** An Espressif module instead of the D1 Mini and a 3.3 V U1, see
-   [Audio.md](Audio.md#plan). Not planned in detail here.
+1. **D1 Mini variant** (this document, [hardware/interface-pcb](../hardware/interface-pcb)): the D1 Mini plugs into
+   female headers, so it can be swapped or pulled for flashing. It stays for development.
+2. **ESP32-S3 variant** ([PCB-S3.md](PCB-S3.md), [hardware/interface-pcb-s3](../hardware/interface-pcb-s3)): an
+   ESP32-S3-WROOM-1-N16R8 module on the board and a 3.3 V U1. This is the board to order; it replaces the planned
+   second revision. Bus, data and audio circuits are the same in both variants: change them in both projects.
 
 What is settled
 ----

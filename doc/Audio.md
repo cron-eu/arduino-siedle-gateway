@@ -11,15 +11,17 @@ session described in [Bus-Measurements.md](Bus-Measurements.md).
 Decisions so far
 ----
 
-- **Board:** AZ-Delivery ESP32 D1 Mini (classic ESP32, 4 MB flash, no PSRAM).
+- **Board:** an ESP32-S3-WROOM-1-N16R8 module on the interface board (8 MB PSRAM), see [PCB-S3.md](PCB-S3.md).
+  Development runs on the AZ-Delivery ESP32 D1 Mini (classic ESP32, 4 MB flash, no PSRAM) and an
+  ESP32-S3-DevKitC-1.
 - **Power:** from the bus through a gyrator, see [Bus-Power.md](Bus-Power.md). An external 5 V supply is the fallback.
 - **Audio:** ES8311 codec for both directions, a coupling capacitor to receive, a transistor current sink to send,
   push-to-talk first.
 - **Web page:** served by the gateway behind the Odroid, which terminates TLS and handles the login. The gateway
   itself stays plain HTTP on the LAN.
 - **Phones outside the office:** later, through a VPN into the office network.
-- **PCB:** later, with KiCad, in two revisions: first a carrier for the D1 Mini, then an Espressif module soldered
-  onto the board (not the bare chip), see [Plan](#plan).
+- **PCB:** KiCad, one board with the ESP32-S3 module ([PCB-S3.md](PCB-S3.md)); a D1 Mini variant stays for
+  development ([PCB.md](PCB.md)).
 
 How the Siedle In-Home bus carries speech
 ----
@@ -209,6 +211,8 @@ an op-amp can answer "do we hear the door at all?".
 
 ### Draft pin plan
 
+For the D1 Mini variant. The pin plan of the ESP32-S3 board is in [PCB-S3.md](PCB-S3.md#pin-plan).
+
 | Function | GPIO | Why this pin |
 |---|---|---|
 | Data in (comparator) | 34 | input-only, RMT receive |
@@ -330,13 +334,11 @@ Plan
    and listen-only through the internal ADC with an op-amp.
 5. Listen-only with the ES8311 module (coupling capacitor, clamp diodes): hear the door in the browser.
 6. Push-to-talk and call control (answer, open door, hang up), plus the link in the Slack message.
-7. Interface PCB, revision 1 (KiCad): a carrier board for the D1 Mini. The board house places the ES8311 and the
-   other SMD parts (JLCPCB, for example, stocks the ES8311 as C962342); the large through-hole parts are soldered by
-   hand.
-8. Interface PCB, revision 2: an Espressif module on the board instead of the D1 Mini, once the current budget and the
-   chip are settled. U1 then delivers 3.3 V directly (R-78CK3.3-0.5), about a third less current than feeding 5 V
-   into the D1 Mini.
-9. Later: full duplex, Home Assistant integration, VPN for phones.
+7. Interface PCB (KiCad) with the ESP32-S3-WROOM-1-N16R8 on the board ([PCB-S3.md](PCB-S3.md)). The board house
+   places the module, the ES8311 and the other SMD parts; the large through-hole parts are soldered by hand. U1
+   delivers 3.3 V directly (R-78CK3.3-0.5), about a third less current than feeding 5 V into a D1 Mini. The D1 Mini
+   variant ([PCB.md](PCB.md)) stays for development.
+8. Later: full duplex, Home Assistant integration, VPN for phones.
 
 Open questions
 ----
@@ -347,8 +349,4 @@ Open questions
   in our installation?
 - Which bus address the gateway answers with, and what happens when a real handset picks up at the same time.
 - Board details: is there a BOOT button, and a diode on the USB 5 V line?
-- The module for PCB revision 2: ESP32-WROOM-32E (the current chip, so firmware and pin plan carry over, no PSRAM) or
-  ESP32-S3-WROOM-1-N16R8 (8 MB PSRAM and USB built in, faster echo cancellation, but no DAC and a new pin plan). Full
-  duplex decides it. Either way the board needs a way to flash it (a USB serial chip or a header for the classic
-  ESP32, a USB connector for the S3), a BOOT button, and the module's antenna at the board edge.
 - Login method on the proxy: access list or single sign-on.
