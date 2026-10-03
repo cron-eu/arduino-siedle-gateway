@@ -65,8 +65,8 @@ Pin plan
 | Data out, carrier (TX_CARRIER) | 6 | |
 | VOUT monitor (VMON) | 7 | ADC1: works while Wi-Fi runs |
 | Codec I2C (SDA, SCL) | 8, 9 | |
-| Codec MCLK (optional, R31) | 10 | the S3 routes MCLK to any pin |
-| Codec I2S (BCLK, WS, DOUT, DIN) | 11, 12, 13, 14 | |
+| Codec I2S (DOUT, WS, DIN, BCLK) | 10, 11, 12, 13 | in the order of the codec's pins, so the lines run to it without crossing |
+| Codec MCLK (optional, R31) | 14 | the S3 routes MCLK to any pin |
 | Send stage enable (TX_EN) | 15 | |
 | Data out, 0 bits (TX_BIT) | 16 | |
 | Status LED | 38 | next to the button on the module's right side |

@@ -3658,7 +3658,7 @@
 		)
 		(uuid "d1e6c019-4e44-4a41-842f-b2bf9b778aa2")
 	)
-	(global_label "I2S_MCLK"
+	(global_label "I2S_DOUT"
 		(shape bidirectional)
 		(at 119.38 119.38 180)
 		(fields_autoplaced yes)
@@ -3690,7 +3690,7 @@
 		)
 		(uuid "01e72b4b-36d6-47f0-867b-663fae91bb7f")
 	)
-	(global_label "I2S_BCLK"
+	(global_label "I2S_WS"
 		(shape bidirectional)
 		(at 119.38 121.92 180)
 		(fields_autoplaced yes)
@@ -3722,7 +3722,7 @@
 		)
 		(uuid "e1e7487d-3de1-467d-96c4-b9e3716869dc")
 	)
-	(global_label "I2S_WS"
+	(global_label "I2S_DIN"
 		(shape bidirectional)
 		(at 119.38 124.46 180)
 		(fields_autoplaced yes)
@@ -3754,7 +3754,7 @@
 		)
 		(uuid "65e5f746-1be5-4f30-9164-d36ccfa48ea3")
 	)
-	(global_label "I2S_DOUT"
+	(global_label "I2S_BCLK"
 		(shape bidirectional)
 		(at 119.38 127 180)
 		(fields_autoplaced yes)
@@ -3786,7 +3786,7 @@
 		)
 		(uuid "e8d63aa6-13d9-4002-9d98-8b7c8f3c834d")
 	)
-	(global_label "I2S_DIN"
+	(global_label "I2S_MCLK"
 		(shape bidirectional)
 		(at 119.38 129.54 180)
 		(fields_autoplaced yes)
