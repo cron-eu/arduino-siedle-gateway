@@ -206,15 +206,15 @@
 		(uuid "db384a4e-28da-4aa8-bd1f-2e6b09cf3136")
 	)
 	(embedded_fonts no)
-	(model "${KICAD10_3DMODEL_DIR}/Capacitor_THT.3dshapes/CP_Radial_D16.0mm_P7.50mm.step"
+	(model "${KIPRJMOD}/gateway.3dshapes/CP_Radial_D16.0mm_L30.0mm_P7.50mm_Lying.step"
 		(offset
-			(xyz 1.5 -3.75 11.75)
+			(xyz 0 0 0)
 		)
 		(scale
-			(xyz 1 1 1.9)
+			(xyz 1 1 1)
 		)
 		(rotate
-			(xyz 0 -90 0)
+			(xyz 0 0 0)
 		)
 	)
 )

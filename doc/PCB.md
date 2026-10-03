@@ -168,7 +168,9 @@ Floorplan, seen from the top with the bus terminal on the left:
   [interface-pcb.kicad_dru](../hardware/interface-pcb/interface-pcb.kicad_dru) allows 0.15 mm ground-neck clearance
   at the ES8311's corner pads; it does not relax the rest of the board.
 - **C2 and C3** use a project footprint for a capacitor lying on the board (`CP_Radial_D16.0mm_P7.50mm_Lying`):
-  the leads are bent by 90° at the body, and the courtyard covers the body.
+  the leads are bent by 90° at the body, and the courtyard covers the body. Their 3D model (16 × 30 mm, the ordered
+  part, with bent leads) comes from [tools/lying_cap_model.py](../hardware/interface-pcb/tools/lying_cap_model.py);
+  rerun it with the new size if C2/C3 change.
 
 ### Dimensions for the case
 
@@ -186,8 +188,7 @@ x increasing right and y increasing down. The KiCad drawing origin for that corn
 | Setup button SW1 | footprint center (83.5, 46) |
 | LED D50 | footprint center (78, 51) |
 
-The socket 3D models have been aligned to both pad rows. The preview has no D1 Mini module model, and the lying
-capacitors use approximate rotated body models rather than accurately bent leads. Use measured parts for the
+The socket 3D models have been aligned to both pad rows. The preview has no D1 Mini module model. Use measured parts for the
 final case height, USB opening, button actuator and connector access.
 
 Next: bus measurements, bench bring-up, check the D1 Mini and R-78CK footprints against the real parts, and a

@@ -14257,15 +14257,15 @@
 			(uuid "9bc6d454-8bdf-46f6-a995-f53a970e6230")
 		)
 		(embedded_fonts no)
-		(model "${KICAD10_3DMODEL_DIR}/Capacitor_THT.3dshapes/CP_Radial_D16.0mm_P7.50mm.step"
+		(model "${KIPRJMOD}/gateway.3dshapes/CP_Radial_D16.0mm_L30.0mm_P7.50mm_Lying.step"
 			(offset
-				(xyz 1.5 -3.75 11.75)
+				(xyz 0 0 0)
 			)
 			(scale
-				(xyz 1 1 1.9)
+				(xyz 1 1 1)
 			)
 			(rotate
-				(xyz 0 -90 0)
+				(xyz 0 0 0)
 			)
 		)
 	)
@@ -15833,15 +15833,15 @@
 			(uuid "905acf50-d34c-4268-a023-1e46fb567a24")
 		)
 		(embedded_fonts no)
-		(model "${KICAD10_3DMODEL_DIR}/Capacitor_THT.3dshapes/CP_Radial_D16.0mm_P7.50mm.step"
+		(model "${KIPRJMOD}/gateway.3dshapes/CP_Radial_D16.0mm_L30.0mm_P7.50mm_Lying.step"
 			(offset
-				(xyz 1.5 -3.75 11.75)
+				(xyz 0 0 0)
 			)
 			(scale
-				(xyz 1 1 1.9)
+				(xyz 1 1 1)
 			)
 			(rotate
-				(xyz 0 -90 0)
+				(xyz 0 0 0)
 			)
 		)
 	)
