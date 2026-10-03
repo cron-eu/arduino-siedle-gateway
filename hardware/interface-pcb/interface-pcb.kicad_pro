@@ -470,7 +470,7 @@
       },
       {
         "netclass": "Codec",
-        "pattern": "Net-(U3-MIC1N)"
+        "pattern": "/Audio/MIC1N"
       },
       {
         "netclass": "Codec",

@@ -4325,6 +4325,16 @@
 			)
 		)
 	)
+	(label "MIC1N"
+		(at 175.26 124.46 90)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "e777df13-0fc2-49c5-9a2b-936127309721")
+	)
 	(label "MCLK"
 		(at 68.58 106.68 0)
 		(effects

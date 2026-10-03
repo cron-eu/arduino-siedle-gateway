@@ -5816,7 +5816,7 @@
 			(size 1 1.45)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
-			(net "Net-(U3-MIC1N)")
+			(net "/Audio/MIC1N")
 			(uuid "29229fca-74f6-431c-9be0-e4a575a72730")
 		)
 		(pad "2" smd roundrect
@@ -12245,7 +12245,7 @@
 			(size 0.2 0.85)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
-			(net "Net-(U3-MIC1N)")
+			(net "/Audio/MIC1N")
 			(uuid "5cbab0e5-088c-4999-b365-1d1e39c8e164")
 		)
 		(pad "18" smd roundrect
@@ -23763,7 +23763,7 @@
 		(end 84.6 102.45)
 		(width 0.15)
 		(layer "F.Cu")
-		(net "Net-(U3-MIC1N)")
+		(net "/Audio/MIC1N")
 		(uuid "a98d9af8-01f7-4984-b845-40477eab1e69")
 	)
 	(segment
@@ -23771,7 +23771,7 @@
 		(end 84 103.05)
 		(width 0.15)
 		(layer "F.Cu")
-		(net "Net-(U3-MIC1N)")
+		(net "/Audio/MIC1N")
 		(uuid "bb14b037-44d3-44cf-96ad-7e92f070d03a")
 	)
 	(segment
