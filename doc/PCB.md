@@ -6,7 +6,8 @@ The board that connects the ESP32 to the Siedle bus: power, data in and out, and
 
 **Status:** schematic draft in [hardware/interface-pcb](../hardware/interface-pcb) (KiCad 10). The topology is
 complete, many component values are not: they follow from the bus measurements and the breadboard bring-up. The
-[layout](#layout) has its parts placed, nothing routed yet. Don't order before the values are confirmed.
+[layout](#layout) is a fully routed draft with clean connectivity and DRC checks. Don't order before the values,
+footprints and analog behavior are confirmed on the bench.
 
 Revisions
 ----
@@ -115,47 +116,77 @@ asks for a flat, compact, 3D-printed case. Its constraints can be fixed before t
   11 × 8 mm footprint, 10 mm high).
 - **Outside access:** the bus terminal at one edge, the button and an LED reachable or visible through the case,
   the D1 Mini's USB port reachable for flashing.
-- **Board size:** 100 × 80 mm, inside the cheapest PCB price class (up to 100 × 100 mm), four M3 mounting holes.
+- **Board size:** 90 × 75 mm, with four M3 mounting holes. This is about 16% less area than the first 100 × 80 mm
+  placement. The case can be designed around the dimensions below; check the real module and connectors first.
 
 Layout
 ----
 
 [hardware/interface-pcb/interface-pcb.kicad_pcb](../hardware/interface-pcb/interface-pcb.kicad_pcb): 2 layers,
-100 × 80 mm. The parts are placed by block, nothing is routed yet. The footprints carry their links to the
-schematic, so *Update PCB from Schematic* in KiCad keeps working (the DRC's schematic parity check finds no
-differences).
+90 × 75 mm, routed. All 101 components retain their values, footprint identifiers, pad nets, population flags,
+UUIDs and schematic links. *Update PCB from Schematic* therefore keeps working. The final KiCad 10.0.6 check
+reports **0 violations, 0 unconnected items and 0 schematic-parity issues**, with zones refilled.
 
 Floorplan, seen from the top with the bus terminal on the left:
 
 | Area | Parts |
 |---|---|
 | Left edge | J1 (bus terminal, wires enter from the left), F1, TVS1 |
-| Top left | gyrator (Q1, Q2, R1–R4, C1, DZ1, D1), below it the data out stage (Q3, Q4, R20–R25) |
+| Top left | gyrator (Q1, Q2, R1, R2, C1, DZ1, D1), below it the data out stage (Q3, Q4, R20–R25) and filter resistors |
 | Left side, lying | C2, along the left edge |
-| Bottom, lying | C3 along the bottom edge, U1 at its end |
-| Middle | data in (U2 with dividers and references), audio send stage (U4, Q5) |
-| Top middle | ES8311 with its decoupling and the receive path, close to the D1 Mini's pins |
+| Bottom, lying | C3 along the bottom edge, with its leads facing right toward the regulator |
+| Upper middle | data in (U2 with dividers and references), I2C pull-ups |
+| Lower left and middle | ES8311, its input/reference capacitors and receive path; U4/Q5 audio send stage to their right |
 | Top right | D1 Mini on its sockets, antenna at the top edge |
-| Right edge | setup button SW1 and LED D50, 5 V parts (JP1, D2, J2) |
+| Right edge and lower right | setup button SW1 and LED D50; U1, JP1, D2 and the optional J2 supply connector |
 
 - **Heights, for the case:** the lying 2200 µF capacitors are the tallest parts at about 16 mm. The D1 Mini sits on
   8.5 mm sockets, so its top ends up around 15 mm above the board (to be measured, the footprint has the sockets'
   3D models but none for the module). U1 stands about 10 mm. The rest is SMD.
-- **USB:** the D1 Mini's USB port points down the board. Keep the strip below it (x 70–84 mm) free of tall parts,
+- **USB:** the D1 Mini's USB port points down the board. Keep the strip below it (x 59–73 mm) free of tall parts,
   so a cable can reach it through the case.
 - **Antenna:** a rule area keeps copper (tracks, vias, pads, the ground pour) out from under the antenna end on
-  both layers.
-- **Ground:** a GND pour on both layers. The D1 Mini's GND pins connect solidly: the socket rows leave no room for
-  thermal spokes, so solder them with a bit more heat.
-- **Net classes** (in the project file, matched on net names): *Power*, 0.5 mm tracks and 0.3 mm clearance, for
-  the bus input, the gyrator, the 5 V path, BUS, +5V and GND; *PullDown*, 0.8 mm, for the pull-down collectors
-  CARRIER_C and BIT_C; *Default*, 0.25 mm and 0.2 mm. Design rules stay inside JLCPCB's standard 2-layer process
-  (0.15 mm tracks and clearances, 0.3 mm drills).
+  both layers. The codec is about 50 mm from the center of this antenna area. Audio circuits occupy the lower
+  part of the board, separated from the radio and the regulator; this reduces coupling risk but needs a noise
+  measurement with Wi-Fi active.
+- **Ground:** GND pours on both layers, joined by 63 stitching vias, including local returns around the audio
+  section. SMD ground pads connect solidly. U3's exposed pad connects to ground pins 5, 10 and 20 through short
+  front-layer necks, with ground vias outside its solder pad. The D1 Mini's GND pins also connect solidly:
+  the socket rows leave no room for thermal spokes, so solder them with a bit more heat.
+- **Power:** wider bus/supply routing, a front-layer copper area on Q1's drain to spread heat, and C3's positive
+  lead facing the regulator. Check Q1 temperature during startup and the waveform at U1's input pins during
+  bring-up; routing and copper area do not replace the power-stage measurements.
+- **Net classes** are matched by name in the project. Nominal widths/clearances: *Power* 0.5/0.3 mm,
+  *PullDown* 0.8/0.3 mm, *Default* 0.2/0.18 mm, *Codec* 0.15/0.18 mm, *Ground* 0.25/0.18 mm. Codec includes
+  the fine-pitch signals and 3.3 V distribution; some analog routes also use 0.15 mm tracks. The board minimum
+  is 0.15 mm width and clearance, with 0.6/0.3 mm vias normally used. A local rule in
+  [interface-pcb.kicad_dru](../hardware/interface-pcb/interface-pcb.kicad_dru) allows 0.15 mm ground-neck clearance
+  at the ES8311's corner pads; it does not relax the rest of the board.
 - **C2 and C3** use a project footprint for a capacitor lying on the board (`CP_Radial_D16.0mm_P7.50mm_Lying`):
   the leads are bent by 90° at the body, and the courtyard covers the body.
 
-Next: route (by hand, or with Freerouting, which needs Java), tidy the silkscreen, measure the D1 Mini and check
-its footprint, then a review of the layout before any order.
+### Dimensions for the case
+
+Coordinates below are in millimeters from the **top-left board corner**, viewed from the component side, with
+x increasing right and y increasing down. The KiCad drawing origin for that corner is (50, 50).
+
+| Item | Dimensions / position |
+|---|---|
+| Board | 90 × 75 mm, nominal thickness 1.6 mm |
+| Mounting holes | Ø 3.2 mm at (4, 4), (86, 4), (4, 71), (86, 71) |
+| Mounting-hole spacing | 82 × 67 mm |
+| Reserved D1 Mini footprint area | x 50–82, y 0.1–40.1; USB faces the bottom edge |
+| Antenna copper keepout | x 50–82, y 0–8.5, both layers |
+| Bus terminal J1 | left edge; pin 1 at (5.75, 22), pin 2 at (5.75, 27.08) |
+| Setup button SW1 | footprint center (83.5, 46) |
+| LED D50 | footprint center (78, 51) |
+
+The socket 3D models have been aligned to both pad rows. The preview has no D1 Mini module model, and the lying
+capacitors use approximate rotated body models rather than accurately bent leads. Use measured parts for the
+final case height, USB opening, button actuator and connector access.
+
+Next: bus measurements, bench bring-up, check the D1 Mini and R-78CK footprints against the real parts, and a
+review of the analog behavior and ratings before any order. The current layout is a prototype draft.
 
 Assembly
 ----
@@ -209,6 +240,12 @@ KiCad workflow
 
 - KiCad 10 (`brew install --cask kicad`), with `kicad-cli` for ERC, DRC and the fabrication outputs:
   `kicad-cli sch erc hardware/interface-pcb/interface-pcb.kicad_sch` reports no violations for the draft.
+- For the routed board, run
+  `kicad-cli pcb drc --schematic-parity --refill-zones --exit-code-violations -o /tmp/interface-pcb-drc.rpt hardware/interface-pcb/interface-pcb.kicad_pcb`.
+  Routing was completed with local Freerouting passes plus checked manual/geometry-assisted corrections in
+  KiCad. Its source geometry, rather than an autorouter completion message, is the final check.
+- `AGENTS.md` records the macOS scripting pitfalls. Use
+  `hardware/interface-pcb/tools/kicad-python script.py` to keep script diagnostics in a log.
 - Export the four sheets for review or printing with
   `kicad-cli sch export pdf --no-background-color -o interface-pcb.pdf hardware/interface-pcb/interface-pcb.kicad_sch`.
   A3 at 100% preserves the intended text size; the PDF remains sharp when zoomed. ERC checks connectivity rules,

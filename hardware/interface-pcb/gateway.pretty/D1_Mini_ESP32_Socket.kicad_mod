@@ -526,7 +526,7 @@
 	(embedded_fonts no)
 	(model "${KICAD10_3DMODEL_DIR}/Connector_PinSocket_2.54mm.3dshapes/PinSocket_2x10_P2.54mm_Vertical.step"
 		(offset
-			(xyz -13.97 11.43 0)
+			(xyz -11.43 11.43 0)
 		)
 		(scale
 			(xyz 1 1 1)
@@ -537,7 +537,7 @@
 	)
 	(model "${KICAD10_3DMODEL_DIR}/Connector_PinSocket_2.54mm.3dshapes/PinSocket_2x10_P2.54mm_Vertical.step"
 		(offset
-			(xyz 11.43 11.43 0)
+			(xyz 13.97 11.43 0)
 		)
 		(scale
 			(xyz 1 1 1)

@@ -1,0 +1,28 @@
+#!/bin/sh
+# Standalone macOS KiCad scripts: retain diagnostics without flooding the terminal.
+# This does not suppress macOS crash dialogs; see AGENTS.md for API pitfalls.
+set -u
+
+if [ "$#" -eq 0 ]; then
+    printf 'Usage: %s script.py [arguments ...]\n' "$0" >&2
+    exit 2
+fi
+
+kicad_python=${KICAD_PYTHON:-/Applications/KiCad/KiCad.app/Contents/Frameworks/Python.framework/Versions/3.9/bin/python3.9}
+if [ ! -x "$kicad_python" ]; then
+    printf 'KiCad Python was not found. Set KICAD_PYTHON to its executable.\n' >&2
+    exit 2
+fi
+
+log_dir=${KICAD_LOG_DIR:-$(mktemp -d "${TMPDIR:-/tmp}/kicad-python.XXXXXX")}
+mkdir -p "$log_dir" || exit 1
+log_file="$log_dir/$(basename "$1").log"
+
+if "$kicad_python" -X faulthandler "$@" >"$log_file" 2>&1; then
+    printf 'KiCad script completed. Log: %s\n' "$log_file"
+else
+    result=$?
+    printf 'KiCad script failed (exit %s). Log: %s\n' "$result" "$log_file" >&2
+    tail -n 15 "$log_file" >&2
+    exit "$result"
+fi
