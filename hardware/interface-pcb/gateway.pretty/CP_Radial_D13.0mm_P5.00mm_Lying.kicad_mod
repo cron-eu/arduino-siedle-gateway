@@ -1,0 +1,245 @@
+(footprint "CP_Radial_D13.0mm_P5.00mm_Lying"
+	(version 20260206)
+	(generator "pcbnew")
+	(generator_version "10.0")
+	(layer "F.Cu")
+	(descr "Radial electrolytic capacitor 13 mm diameter, up to 20 mm long, pin pitch 5 mm, lying on the board: leads bent 90 degrees at the body end. For a flat enclosure.")
+	(tags "CP Radial lying horizontal 13mm 5mm")
+	(property "Reference" "REF**"
+		(at 11.5 -5.5 0)
+		(layer "F.SilkS")
+		(uuid "7f5a2188-7aef-4f46-adcf-c44c15e898d8")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Value" "CP_Radial_D13.0mm_P5.00mm_Lying"
+		(at 11.5 2.5 0)
+		(layer "F.Fab")
+		(uuid "c1312d26-5fed-4772-ad62-ef3de1635788")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "2b96c43f-eb5c-4b20-8e64-cf7628779c70")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "6ee813a1-483e-4774-8067-c884f89d578e")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr through_hole)
+	(duplicate_pad_numbers_are_jumpers no)
+	(fp_line
+		(start -3 -1.5)
+		(end -1.6 -1.5)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "9946c697-ff41-488d-9065-580f3f55e0ce")
+	)
+	(fp_line
+		(start -2.3 -2.2)
+		(end -2.3 -0.8)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "5bc9bb7d-d1b3-4d56-892e-4b7a25d2af9a")
+	)
+	(fp_line
+		(start 1.5 -4.12)
+		(end 21.62 -4.12)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "d416cbb5-4864-48c5-88df-7bb2274d55d4")
+	)
+	(fp_line
+		(start 1.5 9.12)
+		(end 1.5 -4.12)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "73c698b9-64a0-48b4-be4e-3a428ade45ea")
+	)
+	(fp_line
+		(start 21.62 -4.12)
+		(end 21.62 9.12)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "abbf898a-53da-4161-b517-4b9b2bf3cb6c")
+	)
+	(fp_line
+		(start 21.62 9.12)
+		(end 1.5 9.12)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "0aaab3df-7a42-4e54-95bb-bd1ef295ac73")
+	)
+	(fp_line
+		(start -1.7 -4.5)
+		(end 22 -4.5)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "68385a0d-4ce0-42ee-9e51-a7ac21438e4d")
+	)
+	(fp_line
+		(start -1.7 9.5)
+		(end -1.7 -4.5)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "e68ce883-008d-4ba0-93f2-e59b34228b3a")
+	)
+	(fp_line
+		(start 22 -4.5)
+		(end 22 9.5)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "489abcf9-4839-4cf4-8bf3-89485deaaf0d")
+	)
+	(fp_line
+		(start 22 9.5)
+		(end -1.7 9.5)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "b650d29c-6e63-4b92-b080-1f3b8ec5365f")
+	)
+	(fp_line
+		(start 1.5 -4)
+		(end 21.5 -4)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "d1043dc0-d578-43fe-aa80-2c75eef72671")
+	)
+	(fp_line
+		(start 1.5 9)
+		(end 1.5 -4)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "9b3a239c-51cb-4048-826f-be7c57d2dcfa")
+	)
+	(fp_line
+		(start 2 0.75)
+		(end 4 0.75)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "722270c9-7973-4f61-ab6d-74515fd32d23")
+	)
+	(fp_line
+		(start 3 -0.25)
+		(end 3 1.75)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "9eb07d6c-0bb8-4417-b48d-a87659bd882d")
+	)
+	(fp_line
+		(start 21.5 -4)
+		(end 21.5 9)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "671dacb6-1503-4c3f-8d01-dd9a0a752b2d")
+	)
+	(fp_line
+		(start 21.5 9)
+		(end 1.5 9)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "8863db82-69d8-4f3e-bdcb-c831af4291bd")
+	)
+	(pad "1" thru_hole roundrect
+		(at 0 0)
+		(size 2 2)
+		(drill 1)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(roundrect_rratio 0.125)
+		(uuid "8dbb3635-57f9-4ce6-8860-f006e0e8193b")
+	)
+	(pad "2" thru_hole circle
+		(at 0 5)
+		(size 2 2)
+		(drill 1)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "ee2a75e6-60db-4760-9bc4-a4595debe7b5")
+	)
+	(embedded_fonts no)
+	(model "${KIPRJMOD}/gateway.3dshapes/CP_Radial_D13.0mm_L20.0mm_P5.00mm_Lying.step"
+		(offset
+			(xyz 0 0 0)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz 0 0 0)
+		)
+	)
+)

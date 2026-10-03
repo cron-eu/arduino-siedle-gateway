@@ -54,10 +54,10 @@ Parts list
 | DZ1 | Zener diode | 12 V, 0.5 W (BZX55C12, BZX79C12) | cathode to the gate |
 | Q2 | NPN transistor | BC547B (or BC546B) | |
 | R2 | Resistor | 10 Ω, 0.25 W | current limit ≈ 0.55 V / 10 Ω |
-| R3 | Resistor | 15 Ω, 0.25 W | |
-| C2 | Electrolytic capacitor | 2200 µF, 50 V | VOUT reaches about 28 V without load while the bus rings |
-| R4 | Resistor | 18 Ω, 0.25 W | |
-| C3 | Electrolytic capacitor | 2200 µF, 50 V | |
+| R3 | Resistor | 33 Ω, 0.25 W | |
+| C2 | Electrolytic capacitor | 1000 µF, 35 V | VOUT reaches about 28 V without load while the bus rings; see [C2 and C3 at 35 V](#c2-and-c3-at-35-v) |
+| R4 | Resistor | 39 Ω, 0.25 W | |
+| C3 | Electrolytic capacitor | 1000 µF, 35 V | |
 | U1 | 5 V buck module | Recom R-78CK5.0-0.5 (6.5–40 V in, 5 V / 0.5 A, SIP-3 with the 7805 pinout) | not a Traco TSR 0.5-2450 (32 V max), MP1584 module (28 V max) or Mini-360 (23 V max): too close to the bus voltage |
 | R5, R6, C4 | VOUT monitor | 100 kΩ, 10 kΩ, 100 nF | VOUT / 11 to GPIO36 (ADC1), see [firmware requirement](#firmware-requirement) |
 | | Test load | 47 Ω, 1 W | on the 5 V output, draws about 0.53 W like the ESP32 with Wi-Fi |
@@ -69,11 +69,11 @@ ngspice with generic models, bus at 27 V, ESP32 modelled as 0.29 W while booting
 
 | | Result |
 |---|---|
-| Startup | current limited to about 50 mA, VOUT reaches 14 V after 3.3 s |
-| Steady state | VOUT ≈ 20.3 V, about 31 mA from the bus |
-| Data frame (bus below 8 V for 65 ms) | VOUT dips by 0.32 V, about 4 µA flows back into the bus |
-| Wi-Fi bursts during a call (1.5 W for 1 ms every 20 ms) | strongest remaining tone in the 300–3400 Hz band: 0.6 µA (single filter stage: 17 µA, no filter: about 1 mA) |
-| Impedance toward the bus | about 100 kΩ at 300 Hz–1 kHz, 44 kΩ at 3 kHz (TVS1's capacitance); the old capacitor input: about 2 Ω |
+| Startup | current limited to about 50 mA, VOUT reaches 14 V after 3.2 s |
+| Steady state | VOUT ≈ 19.2 V, about 32 mA from the bus |
+| Data frame (bus below 8 V for 65 ms) | VOUT dips by 0.83 V, about 3 µA flows back into the bus |
+| Wi-Fi bursts during a call (1.5 W for 1 ms every 20 ms) | strongest remaining tone in the 300–3400 Hz band: about 0.7 µA (single filter stage: about 18 µA, no filter: about 1 mA) |
+| Impedance toward the bus | about 170 kΩ at 300 Hz, 130 kΩ at 1 kHz, 45 kΩ at 3 kHz (TVS1's capacitance); the old capacitor input: about 2 Ω |
 
 To rerun: `ngspice -b hardware/bus-power/gyrator.cir`.
 
@@ -120,7 +120,7 @@ Safety
 
 - The bus is a safety extra-low voltage, but the whole building's intercom depends on it. F1 and the current
   limit protect it from mistakes on our side; still, don't short it.
-- C2 and C3 hold about 0.5 J each. Discharge them through a resistor before rewiring.
+- C2 and C3 hold about 0.2 J each. Discharge them through a resistor before rewiring.
 - While the stage is connected to the bus, its ground is the bus minus. A laptop on the D1 Mini's USB port ties
   the bus to the laptop's ground. Do the first tests on the bench supply, and on the bus run the ESP32 without
   USB or through a USB isolator.
@@ -149,55 +149,38 @@ Open points
   with plugging in USB. PCB revision 2, with the ESP32 module on the board, gets the saving from a 3.3 V U1
   (R-78CK3.3-0.5, 5–40 V in), see [Audio.md](Audio.md#plan).
 
-### Smaller C2 and C3 (decide after the measurements)
+### C2 and C3 at 35 V
 
-The 2200 µF / 50 V capacitors are the tallest parts of the board (16 mm, lying). Both their voltage and their
-capacitance can probably come down; decide once the bus voltage at our terminal is measured.
+Decided on 2026-10-03, before the measurements: C2 and C3 are 1000 µF / 35 V (13 × 20 mm, LCSC C10749), R3 and R4
+33 Ω and 39 Ω. They replace 2200 µF / 50 V with 15 Ω and 18 Ω: the board gets 3 mm flatter (13 mm instead of 16 mm,
+lying) and filters as well.
 
 **Voltage.** C2 and C3 sit one MOSFET threshold plus D1 below the bus, and highest without load. Simulated without
 load: 24 V at a 28 V bus, 28 V at 32 V (ringing), 30 V at 34 V; with the ESP32 running about 19–23 V. A real
 IRFR120N's lower threshold can add 1–2 V. Short surges never reach them: the gate filter cannot follow, and TVS1
-clamps at the input. So 35 V parts are enough if the bus stays at or below 32 V while ringing; 25 V parts are not.
+clamps at the input. So 35 V parts are enough while the bus stays at or below 32 V while ringing; 25 V parts are not.
 
-**Capacitance.** The burst filtering depends on R3 × C2 and R4 × C3. Smaller capacitors with larger resistors filter
-as well as today. Simulated with 1.5 W Wi-Fi bursts (1 ms every 20 ms), the strongest remaining tone toward the bus
-in the speech band:
+**Capacitance.** The burst filtering depends on R3 × C2 and R4 × C3, so smaller capacitors with larger resistors
+filter as well. Simulated with 1.5 W Wi-Fi bursts (1 ms every 20 ms), the strongest remaining tone toward the bus in
+the speech band:
 
 | C2, C3 | R3 / R4 | Tone on the bus | VOUT | Dip during a frame | Startup to 14 V |
 |---|---|---|---|---|---|
-| 2200 µF (now) | 15 / 18 Ω | 1.05 µA | 19.1 V | 0.28 V | 3.6 s |
+| 2200 µF (before) | 15 / 18 Ω | 1.05 µA | 19.1 V | 0.28 V | 3.6 s |
 | 1000 µF | 15 / 18 Ω | 1.75 µA | 19.7 V | 0.85 V | 3.2 s |
 | 1500 µF | 22 / 27 Ω | 0.69 µA | 18.9 V | 0.48 V | 3.6 s |
-| 1000 µF | 33 / 39 Ω | 0.69 µA | 18.1 V | 0.83 V | 4.1 s |
+| **1000 µF (now)** | **33 / 39 Ω** | **0.69 µA** | **18.1 V** | **0.83 V** | **4.1 s** |
 
-The frame dip stays far above the 14 V Wi-Fi threshold. Larger resistors cost VOUT, so the bus needs a little more
-voltage at our terminal (about 22 V instead of 21 V with 33 / 39 Ω).
+(A variant of [gyrator.cir](../hardware/bus-power/gyrator.cir) with a burst load; the numbers compare the variants with
+each other.) The frame dip stays far above the 14 V Wi-Fi threshold. The larger resistors cost about 1 V of VOUT, so
+the bus needs about 22 V instead of 21 V at our terminal. The ESP32-S3 board draws less than the D1 Mini, which leaves
+more of that margin.
 
-**Proposal:** 1500 µF / 35 V with 22 / 27 Ω, or 1000 µF / 35 V with 33 / 39 Ω if the bus voltage leaves the margin.
-Typical sizes are 10–12.5 mm diameter and 20–25 mm length, so the board gets 3.5–6 mm flatter; check the actual LCSC
-parts. The new resistor values also replace the Extended 18 Ω part.
+**Back to 50 V parts** if the measurement shows more than 32 V while ringing, or too little voltage under load:
+2200 µF / 50 V with 15 Ω and 18 Ω, as before. The 16 mm lying footprint (`CP_Radial_D16.0mm_P7.50mm_Lying`) and its
+3D model stay in the project library for that. The breadboard can use the 2200 µF parts of the parts order with 15 Ω
+and 18 Ω either way.
 
-**Mounting.** Decide in the same step. C2 and C3 are radial electrolytics lying on the board today, which keeps them
-at their diameter in height:
-
-| Mounting | Height with 1000–1500 µF / 35 V | Soldered by |
-|---|---|---|
-| radial, lying (today) | ~12.5–16 mm | us (bent leads, project footprint) |
-| radial, standing | ~22–27 mm | us or JLCPCB (stock footprint) |
-| SMD electrolytic | ~13.5–16.5 mm | JLCPCB (one Extended part fee) |
-
-Standing radials make the case taller than the D1 Mini on its sockets (about 15 mm) to save little board area. SMD
-electrolytics, which exist only at the smaller 35 V values, stay about as tall as the D1 Mini and remove two
-hand-soldered parts per board. Take them if the D1 Mini measures about 15 mm or more; keep the lying radials if the
-case should be as flat as possible. Check LCSC stock for 35 V SMD parts at 1000–1500 µF.
-
-**Prerequisites:**
-
-- The D1 Mini's height on its sockets, measured with calipers, for the mounting choice.
-- The highest bus voltage while ringing ([Bus-Measurements.md](Bus-Measurements.md#1-idle-bus)): at most 32 V for
-  35 V parts.
-- The bus voltage under load ([Bus-Measurements.md](Bus-Measurements.md#4-power-budget)): enough for the extra
-  resistor drop.
-
-**Then:** change C2, C3, R3 and R4 in the schematic, the parts list above and [gyrator.cir](../hardware/bus-power/gyrator.cir),
-rerun the simulation, and give C2/C3 their new footprint in the layout (smaller lying, or SMD).
+**Mounting.** C2 and C3 stay radial electrolytics lying on the board (`CP_Radial_D13.0mm_P5.00mm_Lying`), soldered by
+hand. SMD electrolytics of the same value would be about as tall (13.5–16.5 mm) and placed by JLCPCB, at one more
+Extended part fee; standing radials would be about 22 mm tall.

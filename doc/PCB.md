@@ -9,14 +9,14 @@ complete, many component values are not: they follow from the bus measurements a
 [layout](#layout) is a fully routed draft with clean connectivity and DRC checks. Don't order before the values,
 footprints and analog behavior are confirmed on the bench.
 
-Revisions
+Variants
 ----
 
-1. **Revision 1, carrier board.** The D1 Mini plugs into female headers, so it can be swapped or pulled for
-   flashing. The same footprint takes the D1 Mini soldered in directly, with plain pin headers, once the board is
-   settled: no separate revision needed for that.
-2. **Revision 2, module on the board.** An Espressif module instead of the D1 Mini and a 3.3 V U1, see
-   [Audio.md](Audio.md#plan). Not planned in detail here.
+1. **D1 Mini variant** (this document, [hardware/interface-pcb](../hardware/interface-pcb)): the D1 Mini plugs into
+   female headers, so it can be swapped or pulled for flashing. It stays for development.
+2. **ESP32-S3 variant** ([PCB-S3.md](PCB-S3.md), [hardware/interface-pcb-s3](../hardware/interface-pcb-s3)): an
+   ESP32-S3-WROOM-1-N16R8 module on the board and a 3.3 V U1. This is the board to order; it replaces the planned
+   second revision. Bus, data and audio circuits are the same in both variants: change them in both projects.
 
 What is settled
 ----
@@ -104,15 +104,15 @@ asks for a flat, compact, 3D-printed case. Its constraints can be fixed before t
 - **Bus wires:** either from behind (through the wall box of the indoor station) or along the wall into the side of
   the case. A screw terminal at the board edge serves both, with a cable entry in the back and one in the side of
   the case.
-- **Flat:** lay the two 2200 µF capacitors down (bent leads, or a cut-out in the board) rather than standing them up,
+- **Flat:** lay the two 1000 µF capacitors down (bent leads, or a cut-out in the board) rather than standing them up,
   and keep the MOSFET in a DPAK on board copper instead of a TO-220 with a heat sink. Then the D1 Mini on its headers
-  and the lying capacitors (16 mm) are the tallest parts.
+  and the lying capacitors (13 mm) are the tallest parts.
 - **D1 Mini:** 39 × 31 mm, four rows of 10 pins (two 2 × 10 blocks). Female headers lift it by about 8.5 mm, so its
   top ends up roughly 15–20 mm above the board. Measure that and the row spacing on the real board with calipers
   before trusting any footprint: the clones differ.
 - **Antenna:** the D1 Mini's antenna end goes to the board edge, with no copper and no tall parts under or next to
   it, ideally overhanging the edge. No metal enclosure.
-- **Other large parts:** the two 2200 µF / 50 V capacitors (about 16 mm diameter, 25–31 mm long), U1 (SIP-3, about
+- **Other large parts:** the two 1000 µF / 35 V capacitors (13 mm diameter, 20 mm long), U1 (SIP-3, about
   11 × 8 mm footprint, 10 mm high).
 - **Outside access:** the bus terminal at one edge, the button and an LED reachable or visible through the case,
   the D1 Mini's USB port reachable for flashing.
@@ -140,9 +140,9 @@ Floorplan, seen from the top with the bus terminal on the left:
 | Top right | D1 Mini on its sockets, antenna at the top edge |
 | Right edge and lower right | setup button SW1 and LED D50; U1, JP1, D2 and the optional J2 supply connector |
 
-- **Heights, for the case:** the lying 2200 µF capacitors are the tallest parts at about 16 mm. The D1 Mini sits on
-  8.5 mm sockets, so its top ends up around 15 mm above the board (to be measured; the 3D model MK1 assumes
-  about 15.3 mm). U1 stands about 10 mm. The rest is SMD.
+- **Heights, for the case:** the D1 Mini is the tallest part: it sits on 8.5 mm sockets, so its top ends up around
+  15 mm above the board (to be measured; the 3D model MK1 assumes
+  about 15.3 mm). The lying 1000 µF capacitors are 13 mm high, U1 about 10 mm. The rest is SMD.
 - **USB:** the D1 Mini's USB port points down the board. Keep the strip below it (x 59–73 mm) free of tall parts,
   so a cable can reach it through the case.
 - **Antenna:** a rule area keeps copper (tracks, vias, pads, the ground pour) out from under the antenna end on
@@ -167,8 +167,8 @@ Floorplan, seen from the top with the bus terminal on the left:
   is 0.15 mm width and clearance, with 0.6/0.3 mm vias normally used. A local rule in
   [interface-pcb.kicad_dru](../hardware/interface-pcb/interface-pcb.kicad_dru) allows 0.15 mm ground-neck clearance
   at the ES8311's corner pads; it does not relax the rest of the board.
-- **C2 and C3** use a project footprint for a capacitor lying on the board (`CP_Radial_D16.0mm_P7.50mm_Lying`):
-  the leads are bent by 90° at the body, and the courtyard covers the body. Their 3D model (16 × 30 mm, the ordered
+- **C2 and C3** use a project footprint for a capacitor lying on the board (`CP_Radial_D13.0mm_P5.00mm_Lying`):
+  the leads are bent by 90° at the body, and the courtyard covers the body. Their 3D model (13 × 20 mm, the ordered
   part, with bent leads) comes from [tools/lying_cap_model.py](../hardware/interface-pcb/tools/lying_cap_model.py);
   rerun it with the new size if C2/C3 change.
 
@@ -230,7 +230,7 @@ from 2 October 2026, for 5 bare boards of which 2 are assembled (Economic PCBA, 
 | **JLCPCB order** | **~$75–80 (about €65–70)** |
 | DHL customs clearance fee | ≥ €15 |
 | Import VAT, 19 % (deductible, see below) | ~€13 |
-| Through-hole parts from Reichelt: 2 × R-78CK5.0-0.5, 4 × 2200 µF / 50 V, female headers (the 5.08 mm terminals are in stock) | ~€15–20 |
+| Through-hole parts from Reichelt: 2 × R-78CK5.0-0.5, 4 × 1000 µF / 35 V (LCSC C10749), female headers (the 5.08 mm terminals are in stock) | ~€15–20 |
 | **Two working boards** | **~€95–105 net** |
 
 - **Through-hole parts by hand:** per board two capacitors, U1, the bus terminal and the D1 Mini headers, about 50
@@ -290,7 +290,7 @@ Open questions
 - The items in [What is settled](#what-is-settled).
 - Whether the D1 Mini's 3.3 V regulator copes with the ES8311 and the comparators on top of the ESP32 (it should:
   together about 10 mA).
-- Smaller and flatter C2/C3 (35 V, 1000–1500 µF, with larger R3/R4), once the bus voltage is measured: see
-  [Bus-Power.md](Bus-Power.md#smaller-c2-and-c3-decide-after-the-measurements).
+- Whether C2/C3 can stay at 35 V: at most 32 V while ringing, see
+  [Bus-Power.md](Bus-Power.md#c2-and-c3-at-35-v).
 - The R-78CK footprint: the draft uses KiCad's R-78E footprint (same SIP-3 pinout), to be checked against the R-78CK
   drawing.

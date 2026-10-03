@@ -12,7 +12,8 @@ ESP32 gateway
 |---|---|
 | [Audio.md](Audio.md) | Answering the door from a web page: how the bus carries speech, architecture, hardware and firmware design, decisions, plan, open questions |
 | [Bus-Power.md](Bus-Power.md) | Powering the gateway from the bus without damping the speech: gyrator schematic, parts list, simulation, breadboard bring-up |
-| [PCB.md](PCB.md) | The interface board: revisions, what is settled, schematic outline, mechanics for the case, assembly and cost |
+| [PCB-S3.md](PCB-S3.md) | The board to order: the ESP32-S3 module variant, 3.3 V only, USB-C, pin plan, what changed against the D1 Mini variant |
+| [PCB.md](PCB.md) | The interface board, D1 Mini variant: variants, what is settled, schematic outline, mechanics for the case, assembly and cost |
 | [Bus-Measurements.md](Bus-Measurements.md) | Checklist for measuring the bus with the oscilloscope |
 | [ReverseEngineering.md](ReverseEngineering.md) | Siedle 1+n and In-Home bus: protocol, levels and findings from other projects, with links |
 | [firmware-idf/README.md](../firmware-idf/README.md) | Firmware: development setup, device setup, MQTT topics, OTA updates |
