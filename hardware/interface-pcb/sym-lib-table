@@ -1,0 +1,4 @@
+(sym_lib_table
+	(version 7)
+	(lib (name "gateway") (type "KiCad") (uri "${KIPRJMOD}/gateway.kicad_sym") (options "") (descr "Siedle gateway parts"))
+)

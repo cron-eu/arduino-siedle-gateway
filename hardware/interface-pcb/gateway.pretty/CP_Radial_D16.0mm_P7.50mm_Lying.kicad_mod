@@ -1,0 +1,220 @@
+(footprint "CP_Radial_D16.0mm_P7.50mm_Lying"
+	(version 20260206)
+	(generator "pcbnew")
+	(generator_version "10.0")
+	(layer "F.Cu")
+	(descr "Radial electrolytic capacitor 16 mm diameter, up to 31.5 mm long, pin pitch 7.5 mm, lying on the board: leads bent 90 degrees at the body end. For a flat enclosure.")
+	(tags "CP Radial lying horizontal 16mm 7.5mm")
+	(property "Reference" "REF**"
+		(at 17 -5.75 0)
+		(layer "F.SilkS")
+		(uuid "2aadddfe-8426-42e6-acb0-8259e0fffb3e")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Value" "CP_Radial_D16.0mm_P7.50mm_Lying"
+		(at 17 3.75 0)
+		(layer "F.Fab")
+		(uuid "b934c360-03ce-4ab6-aef7-09fc41600203")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr through_hole)
+	(fp_line
+		(start 1.5 -4.25)
+		(end 33.0 -4.25)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "baff0448-323c-4d22-aaba-bb5c5af46e7e")
+	)
+	(fp_line
+		(start 33.0 -4.25)
+		(end 33.0 11.75)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "cea52d24-a05c-4a32-a877-83fdede22d9d")
+	)
+	(fp_line
+		(start 33.0 11.75)
+		(end 1.5 11.75)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "e6301e26-0cd8-40c7-bb0d-495be89544f4")
+	)
+	(fp_line
+		(start 1.5 11.75)
+		(end 1.5 -4.25)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "0e609a6c-d95d-4041-b3c3-5101d6ea70c0")
+	)
+	(fp_line
+		(start 1.5 -4.37)
+		(end 33.12 -4.37)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "39e75069-86de-4d0f-9bfc-9c98591ecc2c")
+	)
+	(fp_line
+		(start 33.12 -4.37)
+		(end 33.12 11.87)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "1660f11b-fb87-4816-a2f4-79b508e1d6c0")
+	)
+	(fp_line
+		(start 33.12 11.87)
+		(end 1.5 11.87)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "c3dbc06e-e816-48fe-8c43-0bc69ba4e1a0")
+	)
+	(fp_line
+		(start 1.5 11.87)
+		(end 1.5 -4.37)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "ea88be23-ef5c-4f0c-bc3f-fcf3440ef976")
+	)
+	(fp_line
+		(start -3.0 -1.5)
+		(end -1.6 -1.5)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "90738634-97e6-41b8-a9a5-803aa15dbfc4")
+	)
+	(fp_line
+		(start -2.3 -2.2)
+		(end -2.3 -0.8)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "72b544ba-a357-41b7-a89c-9db5b6c7c950")
+	)
+	(fp_line
+		(start 3.0 -0.25)
+		(end 3.0 1.75)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "d94acd14-aeab-4ff0-b517-ab51f32bb2b5")
+	)
+	(fp_line
+		(start 2.0 0.75)
+		(end 4.0 0.75)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "e0e6e461-4a5b-4e32-9db5-06125bb758d6")
+	)
+	(fp_line
+		(start -1.7 -4.75)
+		(end 33.5 -4.75)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "9fd6e657-e183-4ecf-a4e1-5bd724bb326e")
+	)
+	(fp_line
+		(start 33.5 -4.75)
+		(end 33.5 12.25)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "7e59844b-f69f-46b0-a697-298719f44d83")
+	)
+	(fp_line
+		(start 33.5 12.25)
+		(end -1.7 12.25)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "fc5a9c87-f43b-4e48-ab6b-eb7ad1ab794c")
+	)
+	(fp_line
+		(start -1.7 12.25)
+		(end -1.7 -4.75)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "40a95d34-2651-469a-a53f-79f11f4e166a")
+	)
+	(pad "1" thru_hole roundrect
+		(at 0 0)
+		(size 2.4 2.4)
+		(drill 1.2)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(roundrect_rratio 0.104167)
+		(uuid "c627c5d6-71ed-4c68-a552-e45e3745c453")
+	)
+	(pad "2" thru_hole circle
+		(at 0 7.5)
+		(size 2.4 2.4)
+		(drill 1.2)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "db384a4e-28da-4aa8-bd1f-2e6b09cf3136")
+	)
+	(embedded_fonts no)
+	(model "${KIPRJMOD}/gateway.3dshapes/CP_Radial_D16.0mm_L30.0mm_P7.50mm_Lying.step"
+		(offset
+			(xyz 0 0 0)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz 0 0 0)
+		)
+	)
+)

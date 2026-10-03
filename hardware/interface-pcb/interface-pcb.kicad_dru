@@ -1,0 +1,9 @@
+(version 1)
+
+# 0.4 mm-pitch ES8311: 0.15 mm ground necks join the exposed pad to pins
+# 5, 10 and 20 without vias in the solder pad. The corner pads need a
+# local 0.15 mm clearance; general signals remain at 0.18 mm and power
+# nets at 0.30 mm. This stays within the board's 0.15 mm process minimum.
+(rule "ES8311 exposed-pad ground escape"
+  (condition "(A.memberOfFootprint('U3') || B.memberOfFootprint('U3')) && (A.NetName == 'GND' || B.NetName == 'GND')")
+  (constraint clearance (min 0.15mm)))

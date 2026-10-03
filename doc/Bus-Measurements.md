@@ -38,6 +38,8 @@ Captures
 CH1 DC-coupled, 5 V/div, 1 ms/div, *Measure* → Vavg and Vpp.
 
 - [ ] Idle DC voltage, and the ripple/noise in Vpp (expected: 26–29 V, up to 32 V while ringing)
+- [ ] Highest DC voltage while the bell rings (ring at the door during the capture): at most 32 V allows 35 V
+  capacitors for C2 and C3 ([Bus-Power.md](Bus-Power.md#smaller-c2-and-c3-decide-after-the-measurements))
 - [ ] Screenshot
 
 ### 2. Data frame
